@@ -1,24 +1,33 @@
-import Banner from "../Common/Banner";
+// src/components/Layout/UserLayout.jsx
+import { Outlet, useLocation } from "react-router-dom";
 import Header from "../Common/Header";
+import Banner from "../Common/Banner";
+import Category from "../Common/Category";
+import GoldProductList from "../Products/GoldProductsList";
 import Footer from "../Common/Footer";
-import Category from "../Common/Category.jsx";
-import GoldProductList from "../Products/GoldProductsList"; 
 
 const UserLayout = () => {
+  const { pathname } = useLocation();
+  const isHome = pathname === "/";
+
   return (
     <>
-        {/* Header */}
-        <Header> </Header>
-        {/* Main */}
-        <Banner></Banner>
-        {/* body */}
-        <Category></Category>
-        {/* Products */}
-        <GoldProductList></GoldProductList>
-        {/* Footer */}
-        <Footer></Footer>
+      <Header />
+
+      {isHome && (
+        <>
+          <Banner />
+          <Category />
+          <GoldProductList />
+        </>
+      )}
+
+      {/* Renders CartPage or CheckoutPage when you visit /cart or /checkout */}
+      <Outlet />
+
+      <Footer />
     </>
   );
 };
 
-export default UserLayout
+export default UserLayout;

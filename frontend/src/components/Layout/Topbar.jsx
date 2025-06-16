@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/components/Common/Topbar.jsx
+import React, { useState } from "react";
 import { TbBrandMeta } from "react-icons/tb";
 import { IoLogoInstagram } from "react-icons/io";
 import { RiTwitterXLine } from "react-icons/ri";
@@ -7,9 +8,11 @@ import { BsCart3 } from "react-icons/bs";
 import { MdLogin } from "react-icons/md";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
+import { useCart } from "../../context/CartContext";  // ✅ import the hook
 
 const Topbar = () => {
-  const cartCount = 3;
+  const { cartItems } = useCart();                   // ✅ get cartItems
+  const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
   const [showSearch, setShowSearch] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
@@ -39,13 +42,18 @@ const Topbar = () => {
 
           {/* Center Logo */}
           <div className="flex justify-center flex-grow">
-          <Link to="/">
-          <img src="../logo.svg" alt="Shanthi Gold" className="h-14 cursor-pointer" />
-          </Link>
+            <Link to="/">
+              <img
+                src="../logo.svg"
+                alt="Shanthi Gold"
+                className="h-14 cursor-pointer"
+              />
+            </Link>
           </div>
 
           {/* Right Icons */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Search Icon */}
             <button
               onClick={() => setShowSearch(true)}
               className="hover:text-gray-600"
@@ -54,10 +62,11 @@ const Topbar = () => {
               <FiSearch className="h-5 w-5" />
             </button>
 
+            {/* Cart Icon */}
             <div className="relative">
-              <a href="/cart" className="hover:text-gray-600" title="Cart">
+              <Link to="/cart" className="hover:text-gray-600" title="Cart">
                 <BsCart3 className="h-5 w-5" />
-              </a>
+              </Link>
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                   {cartCount}
@@ -65,22 +74,22 @@ const Topbar = () => {
               )}
             </div>
 
-            <a href="/signin" className="hover:text-gray-600" title="Sign In">
+            {/* Sign In / Sign Up */}
+            <Link to="/signin" className="hover:text-gray-600" title="Sign In">
               <MdLogin className="h-5 w-5" />
-            </a>
-            <a href="/signup" className="hover:text-gray-600" title="Sign Up">
+            </Link>
+            <Link to="/signup" className="hover:text-gray-600" title="Sign Up">
               <FiUser className="h-5 w-5" />
-            </a>
-            
-            {/* ✅ Admin Panel Button */}
-            <a
-               href="/admin/login"
-                className="ml-2 bg-yellow-600 text-white text-xs px-3 py-1 rounded hover:bg-yellow-700 transition"
-                title="Admin Panel"
-              >
-                Admin
-              </a>
+            </Link>
 
+            {/* Admin Panel */}
+            <Link
+              to="/admin/login"
+              className="ml-2 bg-yellow-600 text-white text-xs px-3 py-1 rounded hover:bg-yellow-700 transition"
+              title="Admin Panel"
+            >
+              Admin
+            </Link>
           </div>
         </div>
       </div>

@@ -1,9 +1,10 @@
-import { useContext } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { CartContext } from "../context/CartContext";
+import { useCart } from "../context/CartContext"; // ✅ Correct hook import
+
 
 const CartPage = () => {
-  const { cartItems, updateQuantity, clearCart } = useContext(CartContext);
+  const { cartItems, removeFromCart, clearCart } = useCart();
 
   const total = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -11,88 +12,57 @@ const CartPage = () => {
   );
 
   return (
-    <div className="bg-gradient-to-b from-yellow-50 to-white min-h-screen py-12 px-4 sm:px-8">
-      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg p-8 sm:p-12">
-        <h2 className="text-4xl font-extrabold text-yellow-600 mb-8 text-center">
-          🛒 Your Shopping Cart
-        </h2>
+    <div className="max-w-screen-md mx-auto p-6">
+      <h2 className="text-3xl font-bold mb-6 text-yellow-800">🛒 Your Cart</h2>
 
-        {cartItems.length === 0 ? (
-          <div className="text-center text-gray-500 py-20">
-            <p className="text-xl">😔 Your cart is empty. Let's shop!</p>
-            <Link
-              to="/"
-              className="mt-6 inline-block bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-3 rounded-lg shadow transition"
+      {cartItems.length === 0 ? (
+        <p className="text-gray-500">Your cart is empty.</p>
+      ) : (
+        <>
+          <ul className="space-y-4">
+            {cartItems.map((item) => (
+              <li
+                key={item.id}
+                className="border p-4 rounded shadow flex justify-between items-center"
+              >
+                <div>
+                  <p className="font-semibold">{item.name}</p>
+                  <p className="text-sm text-gray-600">
+                    ₹ {item.price.toLocaleString()} x {item.quantity}
+                  </p>
+                </div>
+                <button
+                  className="text-red-500 hover:text-red-700 text-sm"
+                  onClick={() => removeFromCart(item.id)}
+                >
+                  ❌ Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6 text-right text-lg font-bold">
+            Total: ₹ {total.toLocaleString()}
+          </div>
+
+          <div className="mt-6 flex justify-between">
+            <button
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              onClick={clearCart}
             >
-              🛍️ Continue Shopping
+              🧹 Clear Cart
+            </button>
+            <Link
+              to="/checkout"
+              className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+            >
+              🧾 Proceed to Checkout
             </Link>
           </div>
-        ) : (
-          <>
-            <div className="divide-y divide-gray-200">
-              {cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex flex-col sm:flex-row items-center justify-between py-6"
-                >
-                  <div className="flex items-center gap-6 w-full sm:w-auto">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-24 h-24 object-cover rounded-lg shadow border"
-                    />
-                    <div>
-                      <h3 className="text-xl font-semibold">{item.name}</h3>
-                      <p className="text-yellow-600 font-bold text-lg mt-1">
-                        ₹ {item.price.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-3 mt-4 sm:mt-0">
-                    <button
-                      onClick={() => updateQuantity(item.id, -1)}
-                      className="text-lg font-bold w-9 h-9 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full"
-                    >
-                      −
-                    </button>
-                    <span className="text-xl font-semibold">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.id, 1)}
-                      className="text-lg font-bold w-9 h-9 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
 
-            {/* Summary & Actions */}
-            <div className="mt-12 sm:mt-14 text-right space-y-6">
-              <p className="text-3xl font-extrabold text-gray-800">
-                Total: ₹ {total.toLocaleString()}
-              </p>
-
-              <div className="flex flex-col sm:flex-row justify-end gap-4">
-                <button
-                  onClick={clearCart}
-                  className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition"
-                >
-                  🧹 Clear Cart
-                </button>
-
-                <Link
-                  to="/checkout"
-                  className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition text-center"
-                >
-                  ✅ Proceed to Checkout
-                </Link>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };

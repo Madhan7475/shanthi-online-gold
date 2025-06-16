@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import useCart from "../context/useCart";
+import { useCart } from "../context/CartContext"; // ✅ Correct import
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
+
   const [customer, setCustomer] = useState({
     name: "",
     email: "",
@@ -10,7 +11,10 @@ const CheckoutPage = () => {
     phone: "",
   });
 
-  const total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const total = cartItems.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
 
   const handleChange = (e) => {
     setCustomer({ ...customer, [e.target.name]: e.target.value });
@@ -26,22 +30,22 @@ const CheckoutPage = () => {
       date: new Date().toISOString(),
     };
 
-    // Save to localStorage (simulate backend call)
-    const allOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-    localStorage.setItem("orders", JSON.stringify([...allOrders, order]));
+    // Save to localStorage (simulate backend)
+    const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
+    localStorage.setItem("orders", JSON.stringify([...existingOrders, order]));
 
     clearCart();
-    alert("Order placed successfully!");
+    alert("🎉 Order placed successfully!");
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-4">Checkout</h2>
+      <h2 className="text-2xl font-bold mb-6 text-yellow-800">🧾 Checkout</h2>
 
       <div className="bg-white p-4 rounded shadow mb-6">
         <h3 className="text-lg font-semibold mb-3">Your Cart</h3>
         {cartItems.length === 0 ? (
-          <p>Your cart is empty.</p>
+          <p className="text-gray-500">Your cart is empty.</p>
         ) : (
           <ul className="divide-y">
             {cartItems.map((item) => (
@@ -49,58 +53,70 @@ const CheckoutPage = () => {
                 <span>
                   {item.name} x {item.quantity}
                 </span>
-                <span>₹ {item.price * item.quantity}</span>
+                <span>₹ {(item.price * item.quantity).toLocaleString()}</span>
               </li>
             ))}
           </ul>
         )}
-        <p className="mt-4 font-bold">Total: ₹ {total.toLocaleString()}</p>
+        <p className="mt-4 font-bold text-right">
+          Total: ₹ {total.toLocaleString()}
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4">
-        <h3 className="text-lg font-semibold">Delivery Information</h3>
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          value={customer.name}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={customer.email}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="text"
-          name="phone"
-          placeholder="Phone Number"
-          value={customer.phone}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        />
-        <textarea
-          name="address"
-          placeholder="Delivery Address"
-          value={customer.address}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        />
-        <button
-          type="submit"
-          className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+      {cartItems.length > 0 && (
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-6 rounded shadow space-y-4"
         >
-          Place Order
-        </button>
-      </form>
+          <h3 className="text-lg font-semibold">Delivery Information</h3>
+
+          <input
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            value={customer.name}
+            onChange={handleChange}
+            required
+            className="w-full border p-2 rounded"
+          />
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={customer.email}
+            onChange={handleChange}
+            required
+            className="w-full border p-2 rounded"
+          />
+
+          <input
+            type="text"
+            name="phone"
+            placeholder="Phone Number"
+            value={customer.phone}
+            onChange={handleChange}
+            required
+            className="w-full border p-2 rounded"
+          />
+
+          <textarea
+            name="address"
+            placeholder="Delivery Address"
+            value={customer.address}
+            onChange={handleChange}
+            required
+            className="w-full border p-2 rounded"
+          />
+
+          <button
+            type="submit"
+            className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+          >
+            🛍️ Place Order
+          </button>
+        </form>
+      )}
     </div>
   );
 };
