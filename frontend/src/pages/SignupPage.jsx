@@ -1,66 +1,113 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth, RecaptchaVerifier } from "../firebase";
-import { createUserWithEmailAndPassword, signInWithPhoneNumber } from "firebase/auth";
+import { signInWithPhoneNumber } from "firebase/auth";
 
 const SignupPage = () => {
-  const [form, setForm] = useState({ name: "", phone: "", address: "", email: "", password: "", confirm: "" });
+  const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState("");
 
-  const handleInput = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
   const sendOtp = async () => {
-    if (!form.phone.match(/^[6-9]\d{9}$/)) return setError("Invalid phone number");
+    if (!phone.match(/^[6-9]\d{9}$/)) {
+      setError("Invalid phone number");
+      return;
+    }
 
-    window.recaptchaVerifier = new RecaptchaVerifier("recaptcha-container", { size: "invisible" }, auth);
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      "recaptcha-container",
+      { size: "invisible" },
+      auth
+    );
+
     try {
-      const result = await signInWithPhoneNumber(auth, `+91${form.phone}`, window.recaptchaVerifier);
+      const result = await signInWithPhoneNumber(auth, `+91${phone}`, window.recaptchaVerifier);
       setConfirmation(result);
-      setError("OTP sent!");
+      setError("OTP sent to your mobile number");
     } catch (err) {
-    console.error("An error occurred:", err);
-    setError("Something went wrong. Please try again.");
-}
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+    }
   };
 
   const verifyOtp = async () => {
     try {
       await confirmation.confirm(otp);
-      // Now create account using email/password
-      await createUserWithEmailAndPassword(auth, form.email, form.password);
       setError("Signup successful");
     } catch {
-      setError("Invalid OTP or signup failed");
+      setError("Invalid OTP. Please try again.");
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-yellow-50">
-      <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4 text-center text-yellow-800">Create Account</h2>
+    <div className="flex justify-center items-center min-h-[65vh] bg-white text-black">
+      <form className="w-full max-w-md bg-white rounded-md border border-gray-200 p-8 shadow-sm">
+        <h2 className="text-2xl font-semibold text-center mb-1">Sign Up</h2>
+        <p className="text-sm text-center mb-6 text-gray-500">
+          Please Sign Up to your Shanthi Online Gold.
+        </p>
 
-        <input name="name" onChange={handleInput} placeholder="Full Name" className="w-full p-2 border rounded mb-2" />
-        <input name="phone" onChange={handleInput} placeholder="Phone Number" className="w-full p-2 border rounded mb-2" />
-        <input name="address" onChange={handleInput} placeholder="Address" className="w-full p-2 border rounded mb-2" />
-        <input name="email" onChange={handleInput} placeholder="Email" className="w-full p-2 border rounded mb-2" />
-        <input name="password" onChange={handleInput} placeholder="Password" type="password" className="w-full p-2 border rounded mb-2" />
-        <input name="confirm" onChange={handleInput} placeholder="Confirm Password" type="password" className="w-full p-2 border rounded mb-4" />
+        <label className="block text-center mb-2 text-sm font-medium">Enter Your Mobile Number</label>
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="10-digit mobile number"
+          className="w-full p-2 border-b-2 border-gray-300 focus:outline-none focus:border-black mb-6 text-center"
+        />
+
+        <p className="text-xs text-center text-gray-500 mb-6">
+          By clicking on Submit, you are agreeing to our terms & conditions
+          and our privacy policy.
+        </p>
 
         {!confirmation ? (
-          <button onClick={sendOtp} type="button" className="bg-yellow-600 w-full text-white p-2 rounded">Send OTP</button>
+          <button
+            type="button"
+            onClick={sendOtp}
+            className="w-full bg-black text-white py-2 rounded hover:opacity-90 transition"
+          >
+            SUBMIT
+          </button>
         ) : (
           <>
-            <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Enter OTP" className="w-full p-2 border rounded mb-2" />
-            <button onClick={verifyOtp} type="button" className="bg-yellow-700 w-full text-white p-2 rounded">Verify OTP & Sign Up</button>
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Enter OTP"
+              className="w-full p-2 border-b-2 border-gray-300 focus:outline-none focus:border-black mb-4 text-center"
+            />
+            <button
+              type="button"
+              onClick={verifyOtp}
+              className="w-full bg-black text-white py-2 rounded hover:opacity-90 transition"
+            >
+              VERIFY OTP
+            </button>
           </>
         )}
 
-        <div id="recaptcha-container" className="mt-2"></div>
+        <div id="recaptcha-container" className="mt-2" />
 
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        <p className="mt-4 text-sm text-center">Already have an account? <Link to="/signin" className="text-yellow-600">Sign In</Link></p>
+        {error && (
+          <p className="text-red-500 text-center text-sm mt-4">{error}</p>
+        )}
+
+        <div className="mt-6 text-center text-sm">
+          <p className="mb-1">
+            <Link to="/forgot-password" className="font-semibold underline">
+              Forgot Password ?
+            </Link>
+          </p>
+          <p>
+            Already have an account with us?{" "}
+            <Link to="/signin" className="font-semibold underline">
+              Sign In
+            </Link>
+          </p>
+        </div>
       </form>
     </div>
   );
