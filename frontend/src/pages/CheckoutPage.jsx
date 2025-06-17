@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useCart } from "../context/CartContext"; // ✅ Correct import
+import { useCart } from "../context/CartContext";
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
@@ -30,7 +30,6 @@ const CheckoutPage = () => {
       date: new Date().toISOString(),
     };
 
-    // Save to localStorage (simulate backend)
     const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
     localStorage.setItem("orders", JSON.stringify([...existingOrders, order]));
 
@@ -39,26 +38,28 @@ const CheckoutPage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6 text-yellow-800">🧾 Checkout</h2>
+    <div className="max-w-4xl mx-auto p-6 bg-[#fffdf6] text-[#3e2f1c] min-h-[90vh]">
+      <h2 className="text-3xl font-bold mb-6 text-[#d4af37] text-center">
+        🧾 Checkout
+      </h2>
 
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-lg font-semibold mb-3">Your Cart</h3>
+      <div className="bg-white p-6 rounded-xl border border-[#f4e0b9] shadow-md mb-8">
+        <h3 className="text-xl font-semibold mb-4 text-[#3e2f1c]">Your Cart</h3>
         {cartItems.length === 0 ? (
-          <p className="text-gray-500">Your cart is empty.</p>
+          <p className="text-[#8a7653]">Your cart is empty.</p>
         ) : (
-          <ul className="divide-y">
+          <ul className="divide-y divide-[#f4e0b9]">
             {cartItems.map((item) => (
-              <li key={item.id} className="py-2 flex justify-between">
+              <li key={item.id} className="py-2 flex justify-between text-sm">
                 <span>
-                  {item.name} x {item.quantity}
+                  {item.name} × {item.quantity}
                 </span>
                 <span>₹ {(item.price * item.quantity).toLocaleString()}</span>
               </li>
             ))}
           </ul>
         )}
-        <p className="mt-4 font-bold text-right">
+        <p className="mt-4 font-bold text-right text-[#c29d5f]">
           Total: ₹ {total.toLocaleString()}
         </p>
       </div>
@@ -66,9 +67,11 @@ const CheckoutPage = () => {
       {cartItems.length > 0 && (
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-6 rounded shadow space-y-4"
+          className="bg-white p-6 rounded-xl border border-[#f4e0b9] shadow-md space-y-4"
         >
-          <h3 className="text-lg font-semibold">Delivery Information</h3>
+          <h3 className="text-xl font-semibold text-[#3e2f1c]">
+            Delivery Information
+          </h3>
 
           <input
             type="text"
@@ -77,7 +80,7 @@ const CheckoutPage = () => {
             value={customer.name}
             onChange={handleChange}
             required
-            className="w-full border p-2 rounded"
+            className="w-full border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f] p-2 bg-[#fffdf6]"
           />
 
           <input
@@ -87,7 +90,7 @@ const CheckoutPage = () => {
             value={customer.email}
             onChange={handleChange}
             required
-            className="w-full border p-2 rounded"
+            className="w-full border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f] p-2 bg-[#fffdf6]"
           />
 
           <input
@@ -97,7 +100,7 @@ const CheckoutPage = () => {
             value={customer.phone}
             onChange={handleChange}
             required
-            className="w-full border p-2 rounded"
+            className="w-full border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f] p-2 bg-[#fffdf6]"
           />
 
           <textarea
@@ -106,12 +109,12 @@ const CheckoutPage = () => {
             value={customer.address}
             onChange={handleChange}
             required
-            className="w-full border p-2 rounded"
+            className="w-full border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f] p-2 bg-[#fffdf6]"
           />
 
           <button
             type="submit"
-            className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+            className="w-full bg-gradient-to-r from-[#f4c57c] to-[#ffdc9a] text-[#3e2f1c] font-semibold py-2 rounded hover:opacity-90 transition"
           >
             🛍️ Place Order
           </button>

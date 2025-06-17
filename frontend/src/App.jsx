@@ -5,7 +5,8 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import SigninPage from "./pages/SigninPage";
 import SignupPage from "./pages/SignupPage";
-
+import Login from "./pages/Login"; // or wherever your Login.jsx is
+import Panel from "./pages/Panel";
 
 const App = () => {
   return (
@@ -25,6 +26,12 @@ const App = () => {
           {/* Auth routes */}
           <Route path="/signin" element={<SigninPage />} />
           <Route path="/signup" element={<SignupPage />} />
+
+          {/* other routes */}
+          <Route path="/admin/login" element={<Login />} />
+
+          {/* admin panel */}
+          <Route path="/admin/panel" element={<Panel/>} />
 
 
 
