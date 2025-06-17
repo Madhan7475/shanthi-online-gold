@@ -5,6 +5,8 @@ import Banner from "../Common/Banner";
 import Category from "../Common/Category";
 import GoldProductList from "../Products/GoldProductsList";
 import Footer from "../Common/Footer";
+import Celebrationedit from "../Common/Celebration";
+import HerJewelleryBanner from "../Common/HerJewelleryBanner";
 
 const UserLayout = () => {
   const { pathname } = useLocation();
@@ -18,7 +20,11 @@ const UserLayout = () => {
         <>
           <Banner />
           <Category />
+          <HerJewelleryBanner/>
           <GoldProductList />
+          <Celebrationedit/>
+
+
         </>
       )}
 

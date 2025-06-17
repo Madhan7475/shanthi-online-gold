@@ -1,5 +1,3 @@
-
-
 const goldProducts = [
   {
     id: 1,
@@ -30,24 +28,6 @@ const goldProducts = [
     name: "Gold Bangle",
     price: 18999,
     image: "/gold/bangle.jpg",
-  },
-  {
-    id: 6,
-    name: "Gold Pendant",
-    price: 8999,
-    image: "/gold/pendant.jpg",
-  },
-  {
-    id: 7,
-    name: "Gold Bracelet",
-    price: 12999,
-    image: "/gold/bracelet.jpg",
-  },
-  {
-    id: 8,
-    name: "Gold Anklet",
-    price: 7999,
-    image: "/gold/anklet.jpg",
   },
 ];
 

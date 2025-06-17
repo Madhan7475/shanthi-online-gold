@@ -1,13 +1,13 @@
-// src/components/Products/GoldProductList.jsx
 import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
 import goldProducts from "./products";
 import { useCart } from "../../context/CartContext";
+import { Heart, ShoppingCart } from "lucide-react";
 
 const GoldProductList = () => {
   const { addToCart, cartItems } = useCart();
 
   const handleAddToCart = (product) => {
-    console.log("🛒 Adding to cart:", product);
     addToCart(product);
   };
 
@@ -16,31 +16,49 @@ const GoldProductList = () => {
   }, [cartItems]);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-screen-xl mx-auto p-6">
-        <h2 className="text-3xl font-bold mb-6 text-center text-yellow-800">
-          ✨ Gold Products
+    <div className="bg-white py-12">
+      <div className="max-w-screen-xl mx-auto px-4">
+        <h2 className="text-3xl font-semibold text-center mb-10">
+          Exclusive jewellery for you
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {goldProducts.map((product) => (
             <div
               key={product.id}
-              className="border rounded-xl shadow-lg p-4 text-center bg-white hover:shadow-xl transition"
+              className="border rounded-xl p-4 bg-white relative group hover:shadow-lg transition"
             >
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-40 object-cover rounded mb-4"
-              />
-              <h3 className="font-semibold text-lg">{product.name}</h3>
-              <p className="text-yellow-700 font-bold mt-1">
-                ₹ {product.price.toLocaleString()}
+              {/* Wishlist Icon */}
+              <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500">
+                <Heart size={18} />
+              </button>
+
+              {/* Clickable Image */}
+              <Link to={`/product/${product.id}`}>
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-48 object-contain mb-4 transform group-hover:scale-105 transition-transform duration-200"
+                />
+              </Link>
+
+              {/* Product Name */}
+              <h3 className="text-base font-medium text-gray-800">
+                {product.name}
+              </h3>
+
+              {/* Price */}
+              <p className="text-black font-semibold mt-1">
+                ₹{product.price.toLocaleString()}
               </p>
+
+              {/* Add to Cart Icon */}
               <button
                 onClick={() => handleAddToCart(product)}
-                className="mt-4 px-4 py-2 bg-yellow-600 text-white font-semibold rounded hover:bg-yellow-700 transition"
+                className="absolute bottom-2 right-2 text-gray-500 hover:text-yellow-600"
+                title="Add to Cart"
               >
-                🛒 Add to Cart
+                <ShoppingCart size={20} />
               </button>
             </div>
           ))}

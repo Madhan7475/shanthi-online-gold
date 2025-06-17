@@ -28,8 +28,8 @@ const categories = [
 
 const Category = () => {
   return (
-    <section className="py-10 bg-white">
-      <h2 className="text-3xl font-semibold text-center mb-10">Trending Categories</h2>
+    <section className="py-20 bg-white">
+      <h2 className="text-4xl font-semibold text-center mb-10">Trending Categories</h2>
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 px-4">
         {categories.map((cat, index) => (
           <div
@@ -39,7 +39,7 @@ const Category = () => {
             <img
               src={cat.image}
               alt={cat.title}
-              className="w-24 h-24 mx-auto object-contain mb-4"
+              className="w-40 h-40 mx-auto object-contain mb-4"
             />
             <p className="text-sm mb-2">{cat.description}</p>
             <span className="text-black font-medium border-b-2 border-yellow-400 pb-0.5">
