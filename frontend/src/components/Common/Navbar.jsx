@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 
 const menuData = {
@@ -36,14 +36,23 @@ const menuData = {
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeMenu, setActiveMenu] = useState(null);
+  const [hoveredMenu, setHoveredMenu] = useState(null);
+  const timeoutRef = useRef(null);
+
+  const handleMouseEnter = (index) => {
+    clearTimeout(timeoutRef.current);
+    setHoveredMenu(index);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setHoveredMenu(null);
+    }, 100); // 2 seconds delay before hiding
+  };
 
   return (
     <nav className="bg-gradient-to-r from-[#f7e2b8] to-[#FFCD7B] shadow-md border-t z-100 relative">
-      {/* Top Container */}
       <div className="flex justify-center items-center px-4 py-4 max-w-screen-xl mx-auto">
-
-        {/* Hamburger Button */}
         <button
           className="md:hidden text-white text-2xl"
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -54,33 +63,39 @@ const Navbar = () => {
         {/* Desktop Menu */}
         <ul className="hidden md:flex justify-center gap-8 text-sm font-semibold text-gray-600 relative">
           {Object.entries(menuData).map(([menuItem, subItems], index) => (
-            <li key={index} className="relative group">
+            <li
+              key={index}
+              className="relative"
+              onMouseEnter={() => handleMouseEnter(index)}
+              onMouseLeave={handleMouseLeave}
+            >
               <div className="cursor-pointer hover:text-yellow-600 transition">
                 {menuItem}
               </div>
 
-              {/* Desktop Dropdown */}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 w-[700px] mt-5 bg-white shadow-2xl py-10 px-10 z-50 opacity-0 scale-y-95 group-hover:opacity-100 group-hover:scale-y-100 transition-all duration-100 ease-in-out origin-top pointer-events-none group-hover:pointer-events-auto">
-                <div className="flex justify-center gap-10 flex-wrap max-w-screen-xl mx-auto">
-
-                  {subItems.map((item, i) => (
-                    <a
-                      key={i}
-                      href={item.href}
-                      className="flex flex-col items-center w-40 hover:bg-yellow-50 p-2 rounded-md transition"
-                    >
-                      <img
-                        src={item.img}
-                        alt={item.name}
-                        className="w-32 h-32 object-cover rounded-full border mb-2"
-                      />
-                      <h3 className="text-xs text-gray-700 hover:text-yellow-600 text-center">
-                        {item.name}
-                      </h3>
-                    </a>
-                  ))}
+              {/* Dropdown */}
+              {hoveredMenu === index && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[700px] mt-4 bg-white shadow-2xl py-10 px-10 z-50 transition-all duration-50 ease-in-out origin-top">
+                  <div className="flex justify-center gap-10 flex-wrap max-w-screen-xl mx-auto">
+                    {subItems.map((item, i) => (
+                      <a
+                        key={i}
+                        href={item.href}
+                        className="flex flex-col items-center w-40 hover:bg-yellow-50 p-2 rounded-md transition"
+                      >
+                        <img
+                          src={item.img}
+                          alt={item.name}
+                          className="w-32 h-32 object-cover rounded-full border mb-2"
+                        />
+                        <h3 className="text-xs text-gray-700 hover:text-yellow-600 text-center">
+                          {item.name}
+                        </h3>
+                      </a>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </li>
           ))}
         </ul>
@@ -98,7 +113,7 @@ const Navbar = () => {
               <button
                 className="w-full text-left font-semibold text-lg text-[#A4874F]"
                 onClick={() =>
-                  setActiveMenu(activeMenu === index ? null : index)
+                  setHoveredMenu(hoveredMenu === index ? null : index)
                 }
               >
                 {menuItem}
@@ -107,7 +122,7 @@ const Navbar = () => {
               {/* Mobile Submenu */}
               <div
                 className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                  activeMenu === index ? "max-h-[1000px] py-4" : "max-h-0"
+                  hoveredMenu === index ? "max-h-[1000px] py-4" : "max-h-0"
                 }`}
               >
                 <div className="grid grid-cols-2 gap-4">
