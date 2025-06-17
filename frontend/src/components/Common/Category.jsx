@@ -2,27 +2,27 @@ const categories = [
   {
     title: "Gold Earring",
     description: "Minimalist designs to modern styles.",
-    image: "/images/earring.png", // Replace with actual image path
+    image: "/Gold Earring.png", // Replace with actual image path
   },
   {
     title: "Diamond Ring",
     description: "Pure, perfect and priceless designs.",
-    image: "/images/diamond-ring.png",
+    image: "/DiamondRing.png",
   },
   {
     title: "Gold Bangles",
     description: "Trendy, traditional, designer & more.",
-    image: "/images/gold-bangle.png",
+    image: "/Gold Bangles.png",
   },
   {
     title: "Diamond Pendant",
     description: "Where beauty and elegance combine!",
-    image: "/images/diamond-pendant.png",
+    image: "/Diamond Pendant.png",
   },
   {
     title: "Mangalsutra",
     description: "Inspired by traditions; crafted to perfection.",
-    image: "/images/mangalsutra.png",
+    image: "/Mangalsutra.png",
   },
 ];
 
@@ -34,7 +34,7 @@ const Category = () => {
         {categories.map((cat, index) => (
           <div
             key={index}
-            className="bg-white rounded shadow-sm p-4 text-center hover:shadow-lg transition"
+            className="bg-gray-50  rounded shadow-sm p-4 text-center hover:shadow-lg transition"
           >
             <img
               src={cat.image}

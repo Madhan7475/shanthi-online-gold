@@ -1,4 +1,3 @@
-// src/pages/CartPage.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
@@ -6,7 +5,7 @@ import { useCart } from "../context/CartContext";
 const CartPage = () => {
   const {
     cartItems,
-    updateQuantity,      // ✅ now available
+    updateQuantity,
     removeFromCart,
     clearCart
   } = useCart();
@@ -17,78 +16,121 @@ const CartPage = () => {
   );
 
   return (
-    <div className="max-w-screen-md mx-auto p-6">
-      <h2 className="text-3xl font-bold mb-6 text-yellow-800">🛒 Your Cart</h2>
+    <div className="bg-white px-4 lg:px-20 py-10 text-gray-800">
+      <Link to="/products" className="text-sm text-gray-600 underline mb-4 inline-block">Continue Shopping</Link>
 
-      {cartItems.length === 0 ? (
-        <p className="text-gray-500">Your cart is empty.</p>
-      ) : (
-        <>
-          <ul className="space-y-4">
-            {cartItems.map((item) => (
-              <li
-                key={item.id}
-                className="border p-4 rounded shadow flex flex-col sm:flex-row justify-between items-center"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold">{item.name}</p>
-                  <p className="text-sm text-gray-600">
-                    ₹ {item.price.toLocaleString()}
-                  </p>
-                </div>
+      <h2 className="text-2xl font-medium mb-6">Shopping Bag ({cartItems.length})</h2>
 
-                {/* Quantity Controls */}
-                <div className="flex items-center space-x-2 my-2 sm:my-0">
-                  <button
-                    onClick={() => updateQuantity(item.id, -1)}
-                    className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded"
-                  >
-                    −
-                  </button>
-                  <span className="w-6 text-center">{item.quantity}</span>
-                  <button
-                    onClick={() => updateQuantity(item.id, 1)}
-                    className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded"
-                  >
-                    +
-                  </button>
-                </div>
-
-                <div className="flex-1 text-right space-y-2">
-                  <p className="font-bold">
-                    ₹ {(item.price * item.quantity).toLocaleString()}
-                  </p>
-                  <button
-                    onClick={() => removeFromCart(item.id)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    ❌ Remove
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-6 text-right text-lg font-bold">
-            Total: ₹ {total.toLocaleString()}
-          </div>
-
-          <div className="mt-6 flex justify-between">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Section: Cart Items */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="text-right">
             <button
               onClick={clearCart}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              className="text-sm border border-yellow-600 text-yellow-600 px-4 py-1 rounded hover:bg-yellow-50"
             >
-              🧹 Clear Cart
+              REMOVE ALL
             </button>
-            <Link
-              to="/checkout"
-              className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
-            >
-              🧾 Proceed to Checkout
-            </Link>
           </div>
-        </>
-      )}
+
+          {cartItems.map((item) => (
+            <div
+              key={item.id}
+              className="border-b pb-6 flex flex-col sm:flex-row justify-between gap-4"
+            >
+              {/* Product Image */}
+              <img
+                src={item.img || "/placeholder.png"}
+                alt={item.name}
+                className="w-24 h-24 object-contain"
+              />
+
+              {/* Product Info */}
+              <div className="flex-1">
+                <h3 className="font-semibold">{item.name}</h3>
+                <p className="text-xs text-gray-500">SKU : {item.id}</p>
+                <p className="text-sm mt-2">
+                  <span className="text-gray-600">Stock:</span>{" "}
+                  <span className="text-red-600 font-medium">Only few left</span>
+                </p>
+                <p className="text-sm text-gray-500 mt-1">Size : </p>
+                <p className="text-xs text-yellow-700 mt-1 underline">Save for Later</p>
+              </div>
+
+              {/* Price + Quantity */}
+              <div className="flex flex-col items-end justify-between">
+                <div className="flex items-center space-x-2 mb-2">
+                  <select
+                    className="border px-2 py-1 text-sm"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      updateQuantity(item.id, parseInt(e.target.value))
+                    }
+                  >
+                    {[1, 2, 3, 4, 5].map((q) => (
+                      <option key={q} value={q}>{q}</option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-lg font-semibold">
+                  ₹{(item.price * item.quantity).toLocaleString()}
+                </p>
+                <button
+                  onClick={() => removeFromCart(item.id)}
+                  className="text-xs text-gray-500 mt-1 hover:text-red-500"
+                >
+                  ✖
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {/* Payment Icons */}
+          <div className="pt-6">
+            <img
+              src="/images/payment-icons.png" // Update this path
+              alt="Payment Methods"
+              className="w-full max-w-xl"
+            />
+          </div>
+        </div>
+
+        {/* Right Section: Summary */}
+        <div className="bg-gray-50 p-6 rounded shadow-sm h-fit">
+          <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Price ({cartItems.length} items)</span>
+              <span>₹{total.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Coupon Discount</span>
+              <span className="text-yellow-600">Can Apply Coupons</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Delivery Charge (Standard)</span>
+              <span>Free</span>
+            </div>
+          </div>
+          <hr className="my-4" />
+          <div className="flex justify-between font-bold text-md">
+            <span>Estimated Total</span>
+            <span>₹{total.toLocaleString()}</span>
+          </div>
+
+          <Link
+            to="/checkout"
+            className="mt-6 block w-full bg-[#B28972] text-white py-2 rounded text-center hover:bg-[#9f7865] transition"
+          >
+            CONTINUE TO CHECKOUT
+          </Link>
+
+          <div className="mt-4 text-center text-xs text-gray-500">
+            <div>✔ Safe and secure payments. Easy returns.</div>
+            <div>100% Authentic products</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
