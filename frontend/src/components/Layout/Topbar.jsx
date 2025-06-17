@@ -68,7 +68,7 @@ const Topbar = () => {
                 <BsCart3 className="h-5 w-5" />
               </Link>
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                <span className="absolute -top-2 -right-2 bg-yellow-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                   {cartCount}
                 </span>
               )}
