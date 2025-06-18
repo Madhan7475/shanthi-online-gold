@@ -6,6 +6,7 @@ import SigninPage from "./pages/SigninPage";
 import SignupPage from "./pages/SignupPage";
 import Login from "./pages/Login"; // Admin login
 import Panel from "./pages/Panel"; // Admin dashboard
+import OTPLogin from "./pages/OTPLogin";
 
 const App = () => {
   return (
@@ -22,7 +23,15 @@ const App = () => {
         {/* Admin-only routes (no UserLayout wrapper) */}
         <Route path="/admin/login" element={<Login />} />
         <Route path="/admin/panel" element={<Panel />} />
+
+        {/* Login with otp */}
+        <Route path="/login" element={<OTPLogin />} />
+
       </Routes>
+
+
+
+
     </BrowserRouter>
   );
 };

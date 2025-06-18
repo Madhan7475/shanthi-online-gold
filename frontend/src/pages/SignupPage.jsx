@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { auth, RecaptchaVerifier } from "../firebase";
-import { signInWithPhoneNumber } from "firebase/auth";
+import { auth } from "../firebase/config"; // adjust path if needed
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+
+
 
 const SignupPage = () => {
   const [phone, setPhone] = useState("");

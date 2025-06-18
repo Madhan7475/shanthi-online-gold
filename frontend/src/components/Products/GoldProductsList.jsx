@@ -1,13 +1,22 @@
 import React, { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import goldProducts from "./products";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
+
 import { Heart, ShoppingCart } from "lucide-react";
 
 const GoldProductList = () => {
   const { addToCart, cartItems } = useCart();
+  const { user } = useAuth(); // 👈 get auth user
+  const navigate = useNavigate();
 
   const handleAddToCart = (product) => {
+    if (!user) {
+      alert("❌ Please sign in to add products to your cart.");
+      navigate("/signin"); // redirect to signin if not logged in
+      return;
+    }
     addToCart(product);
   };
 
@@ -28,12 +37,10 @@ const GoldProductList = () => {
               key={product.id}
               className="border rounded-xl p-4 bg-white relative group hover:shadow-lg transition"
             >
-              {/* Wishlist Icon */}
               <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500">
                 <Heart size={18} />
               </button>
 
-              {/* Clickable Image */}
               <Link to={`/product/${product.id}`}>
                 <img
                   src={product.image}
@@ -42,17 +49,14 @@ const GoldProductList = () => {
                 />
               </Link>
 
-              {/* Product Name */}
               <h3 className="text-base font-medium text-gray-800">
                 {product.name}
               </h3>
 
-              {/* Price */}
               <p className="text-black font-semibold mt-1">
                 ₹{product.price.toLocaleString()}
               </p>
 
-              {/* Add to Cart Icon */}
               <button
                 onClick={() => handleAddToCart(product)}
                 className="absolute bottom-2 right-2 text-gray-500 hover:text-yellow-600"
