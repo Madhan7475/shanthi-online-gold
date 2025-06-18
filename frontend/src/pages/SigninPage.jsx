@@ -23,7 +23,7 @@ const SigninPage = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[65vh] bg-[#fff9e8] text-[#3b3b3b] px-4">
+    <div className="flex justify-center items-center min-h-[75vh] bg-[#fff9e8] text-[#3b3b3b] px-4">
       <div className="w-full max-w-md p-[2px] rounded-xl bg-gradient-to-r from-[#f5e1a4] via-[#ffd700] to-[#f5e1a4] shadow-lg">
         <form
           onSubmit={handleSignin}
