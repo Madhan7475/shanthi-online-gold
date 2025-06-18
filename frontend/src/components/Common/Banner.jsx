@@ -23,7 +23,7 @@ const Banner = () => {
   }, [totalSlides]);
 
   return (
-    <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
+    <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[500px] overflow-hidden">
       {/* Slides container */}
       <div
         className="flex transition-transform duration-1000 ease-in-out"
