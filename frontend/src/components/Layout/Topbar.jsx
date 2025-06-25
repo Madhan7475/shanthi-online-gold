@@ -26,12 +26,7 @@ const Topbar = () => {
       {/* Top Navigation Bar */}
       <div className="bg-[#400F45] text-white relative z-20">
         <div className="container mx-auto flex justify-between items-center py-4 px-4">
-          {/* Left - Social Media Icons */}
-          <div className="hidden md:flex items-center space-x-4 text-[#FEC878]">
-            <a href="#" className="hover:text-white transition"><TbBrandMeta className="h-5 w-5" /></a>
-            <a href="#" className="hover:text-white transition"><IoLogoInstagram className="h-5 w-5" /></a>
-            <a href="#" className="hover:text-white transition"><RiTwitterXLine className="h-4 w-4" /></a>
-          </div>
+       
 
           {/* Center - Logo */}
           <div className="flex justify-center flex-grow">
