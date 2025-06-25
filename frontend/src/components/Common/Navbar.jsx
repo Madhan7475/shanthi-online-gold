@@ -63,7 +63,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-[#1F0F23] text-[#FEC878] relative shadow-md z-50">
+    <nav className="bg-[#1F0F23] text-[#FEC878] sticky top-0 shadow-md z-50">
       <div className="flex justify-center items-center px-4 py-3 max-w-screen-xl mx-auto">
         <button
           className="md:hidden text-[#FEC878] text-2xl"
