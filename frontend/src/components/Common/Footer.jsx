@@ -1,102 +1,84 @@
 const Footer = () => {
   return (
-    <footer className="bg-yellow-50 border-t text-black pt-10 pb-6 text-sm">
-      <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-5 gap-8">
-        {/* Column 1 */}
+    <footer className="bg-[#400F45] text-[#e2c98d] pt-12 pb-6 text-sm">
+      <div className="max-w-screen-xl mx-auto px-6 grid grid-cols-1 md:grid-cols-5 gap-8">
+
+        {/* Column 1 - Logo & App */}
         <div>
-          <h3 className="font-semibold mb-3">SHOPPING</h3>
-          <ul className="space-y-1">
+          <h1 className="text-3xl font-bold text-white tracking-widest mb-2">
+            <span className="text-[#e2c98d]">SOG</span>
+          </h1>
+          <p className="uppercase text-xs tracking-wide mb-3">Legacy of Purity</p>
+          <p className="mb-3 text-sm">Scan for app</p>
+          <img src="/qr-code.png" alt="QR Code" className="w-24 mb-3" />
+          <div className="flex space-x-2">
+            <img src="/google-play.png" alt="Google Play" className="h-8" />
+            <img src="/app-store.png" alt="App Store" className="h-8" />
+          </div>
+        </div>
+
+        {/* Column 2 - Shopping */}
+        <div>
+          <h3 className="text-[#e2c98d] font-semibold mb-3">SHOPPING</h3>
+          <ul className="space-y-2">
             <li><a href="#">Gold Jewellery</a></li>
             <li><a href="#">Diamond Jewellery</a></li>
             <li><a href="#">Platinum Jewellery</a></li>
             <li><a href="#">Gold Coin</a></li>
-            <li><a href="#">Digi Gold</a></li>
             <li><a href="#">Blog</a></li>
-            <li><a href="#">CSR</a></li>
             <li><a href="#">Gold Rate</a></li>
           </ul>
         </div>
 
-        {/* Column 2 */}
+        {/* Column 3 - Useful Links */}
         <div>
-          <h3 className="font-semibold mb-3">CUSTOMER SERVICES</h3>
-          <ul className="space-y-1">
-            <li><a href="#">Terms of Use</a></li>
-            <li><a href="#">Scheme Payment</a></li>
-            <li><a href="#">Shipping Policy</a></li>
-            <li><a href="#">Cancellation Policy</a></li>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">Return / Exchange Policy</a></li>
-            <li><a href="#">Gift Card Policy</a></li>
-            <li><a href="#">Customize Product</a></li>
-            <li><a href="#">Gold Coin Make On Request</a></li>
+          <h3 className="text-[#e2c98d] font-semibold mb-3">Useful Links</h3>
+          <ul className="space-y-2">
+            <li><a href="#">Delivery Information</a></li>
+            <li><a href="#">International Shipping</a></li>
+            <li><a href="#">Payment Options</a></li>
+            <li><a href="#">Track your Order</a></li>
+            <li><a href="#">Returns</a></li>
+            <li><a href="#">Find a Store</a></li>
           </ul>
         </div>
 
-        {/* Column 3 */}
+        {/* Column 4 - Our Company */}
         <div>
-          <h3 className="font-semibold mb-3">LET US HELP YOU</h3>
-          <ul className="space-y-1">
-            <li><a href="#">FAQ</a></li>
+          <h3 className="text-[#e2c98d] font-semibold mb-3">OUR COMPANY</h3>
+          <ul className="space-y-2">
+            <li><a href="#">About us</a></li>
             <li><a href="#">Contact Us</a></li>
-            <li><a href="#">Payment FAQ</a></li>
-            <li><a href="#">Ring Size Guide</a></li>
-            <li><a href="#">Bangle Size Guide</a></li>
-            <li><a href="#">Education</a></li>
-            <li><a href="#">Offer Zone</a></li>
-            <li><a href="#">Sitemap</a></li>
-            <li><a href="#">HUID FAQ</a></li>
+            <li><a href="#">Store Location</a></li>
           </ul>
         </div>
 
-        {/* Column 4 */}
+        {/* Column 5 - Customer Support */}
         <div>
-          <h3 className="font-semibold mb-3">OUR COMPANY</h3>
-          <ul className="space-y-1">
-            <li><a href="#">About Us</a></li>
-            <li><a href="#">History</a></li>
-            <li><a href="#">Career</a></li>
-            <li><a href="#">Store Locator</a></li>
-            <li><a href="#">Feedback</a></li>
-            <li><a href="#">Media</a></li>
+          <h3 className="text-[#e2c98d] font-semibold mb-3">Customer Support</h3>
+          <ul className="space-y-2">
+            <li><a href="#">Terms & Conditions</a></li>
+            <li><a href="#">Privacy Policies</a></li>
+            <li><a href="#">Disclaimer</a></li>
           </ul>
-        </div>
-
-        {/* Column 5 */}
-        <div className="md:col-span-1">
-          <h3 className="font-semibold mb-3">
-            SHOP FROM SHANTHI ONLINE. ANYTIME. ANYWHERE
-          </h3>
-          <p className="text-xs mb-3">
-            Find the best Gold & Diamond Jewellery with just a click. Our online store
-            brings you the latest designs with the safest shopping experience.
-          </p>
-          <div className="flex space-x-4 items-start">
-            <img
-              src="/qr-code.png"
-              alt="QR Code"
-              className="w-20 h-20 object-contain"
-            />
-            <div className="space-y-2">
-              <img src="/google-play.png" alt="Google Play" className="h-8" />
-              <img src="/app-store.png" alt="App Store" className="h-8" />
-            </div>
+          <div className="mt-4 space-y-1 text-sm">
+            <p className="text-[#e2c98d] font-semibold">Contact Us</p>
+            <p>+91 999 999 9999</p>
+            <p className="text-[#e2c98d] font-semibold mt-2">Chat With Us</p>
+            <p>+91 999 999 9999</p>
+          </div>
+          <div className="mt-4 space-x-4 flex text-white text-lg">
+            <a href="#"><i className="fab fa-facebook" /></a>
+            <a href="#"><i className="fab fa-x-twitter" /></a>
+            <a href="#"><i className="fab fa-instagram" /></a>
+            <a href="#"><i className="fab fa-youtube" /></a>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t mt-10 pt-4 flex flex-col md:flex-row items-center justify-between text-xs px-4">
-        <p>
-          © 2025 Shanthi Online Gold. All rights reserved. Unauthorized use strictly prohibited.
-        </p>
-        <div className="flex space-x-4 mt-2 md:mt-0">
-          <a href="#"><i className="fab fa-facebook-f" /></a>
-          <a href="#"><i className="fab fa-x-twitter" /></a>
-          <a href="#"><i className="fab fa-instagram" /></a>
-          <a href="#"><i className="fab fa-youtube" /></a>
-          <a href="#"><i className="fas fa-envelope" /></a>
-        </div>
+      <div className="mt-10 border-t bg-[#400F45] border-[#5e2e6d] pt-4 px-6 text-center text-xs text-[#ffffff]">
+        © 2025 Shanthi Online Gold. All rights reserved. Unauthorized use strictly prohibited.
       </div>
     </footer>
   );

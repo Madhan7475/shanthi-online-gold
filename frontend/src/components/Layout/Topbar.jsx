@@ -1,4 +1,3 @@
-// src/components/Common/Topbar.jsx
 import React, { useState } from "react";
 import { TbBrandMeta } from "react-icons/tb";
 import { IoLogoInstagram } from "react-icons/io";
@@ -8,10 +7,10 @@ import { BsCart3 } from "react-icons/bs";
 import { MdLogin } from "react-icons/md";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import { useCart } from "../../context/CartContext";  // ✅ import the hook
+import { useCart } from "../../context/CartContext";
 
 const Topbar = () => {
-  const { cartItems } = useCart();                   // ✅ get cartItems
+  const { cartItems } = useCart();
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
   const [showSearch, setShowSearch] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -24,68 +23,62 @@ const Topbar = () => {
 
   return (
     <>
-      {/* Topbar */}
-      <div className="bg-yellow-50 border-t text-black relative z-20">
-        <div className="container mx-auto flex justify-between items-center py-3 px-4">
-          {/* Left Social Icons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <a href="#" className="hover:text-gray-500">
-              <TbBrandMeta className="h-5 w-5" />
-            </a>
-            <a href="#" className="hover:text-gray-500">
-              <IoLogoInstagram className="h-5 w-5" />
-            </a>
-            <a href="#" className="hover:text-gray-500">
-              <RiTwitterXLine className="h-4 w-4" />
-            </a>
+      {/* Top Navigation Bar */}
+      <div className="bg-[#400F45] text-white relative z-20">
+        <div className="container mx-auto flex justify-between items-center py-4 px-4">
+          {/* Left - Social Media Icons */}
+          <div className="hidden md:flex items-center space-x-4 text-[#FEC878]">
+            <a href="#" className="hover:text-white transition"><TbBrandMeta className="h-5 w-5" /></a>
+            <a href="#" className="hover:text-white transition"><IoLogoInstagram className="h-5 w-5" /></a>
+            <a href="#" className="hover:text-white transition"><RiTwitterXLine className="h-4 w-4" /></a>
           </div>
 
-          {/* Center Logo */}
+          {/* Center - Logo */}
           <div className="flex justify-center flex-grow">
             <Link to="/">
               <img
-                src="../logo.svg"
+                src="/logo.svg"
                 alt="Shanthi Gold"
-                className="h-14 cursor-pointer"
+                className="h-16 cursor-pointer"
               />
             </Link>
           </div>
 
-          {/* Right Icons */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* Search Icon */}
+          {/* Right - Actions */}
+          <div className="hidden md:flex items-center space-x-4 text-[#FEC878]">
+            {/* Search */}
             <button
               onClick={() => setShowSearch(true)}
-              className="hover:text-gray-600"
               title="Search"
+              className="hover:text-white transition"
             >
               <FiSearch className="h-5 w-5" />
             </button>
 
-            {/* Cart Icon */}
+            {/* Cart */}
             <div className="relative">
-              <Link to="/cart" className="hover:text-gray-600" title="Cart">
+              <Link to="/cart" title="Cart" className="hover:text-white transition">
                 <BsCart3 className="h-5 w-5" />
               </Link>
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-yellow-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                <span className="absolute -top-2 -right-2 bg-[#FEC878] text-black text-[10px] px-1.5 py-0.5 rounded-full">
                   {cartCount}
                 </span>
               )}
             </div>
 
-            {/* Sign In / Sign Up */}
-            <Link to="/signin" className="hover:text-gray-600" title="Sign In">
+            {/* Auth Links */}
+            <Link to="/signin" className="hover:text-white transition" title="Sign In">
               <MdLogin className="h-5 w-5" />
             </Link>
-            <Link to="/signup" className="hover:text-gray-600" title="Sign Up">
+            <Link to="/signup" className="hover:text-white transition" title="Sign Up">
               <FiUser className="h-5 w-5" />
             </Link>
 
-            {/* Admin Panel */}
+            {/* Admin Button */}
             <Link
               to="/admin/login"
-              className="ml-2 bg-yellow-600 text-white text-xs px-3 py-1 rounded hover:bg-yellow-700 transition"
+              className="ml-2 bg-[#FEC878] text-black text-xs px-3 py-1 rounded hover:bg-white hover:text-[#2f0a38] transition"
               title="Admin Panel"
             >
               Admin
@@ -94,7 +87,7 @@ const Topbar = () => {
         </div>
       </div>
 
-      {/* Full-Width Search Overlay */}
+      {/* Search Overlay */}
       {showSearch && (
         <div className="fixed top-0 left-0 w-full bg-white shadow-md z-50 px-4 py-6">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
