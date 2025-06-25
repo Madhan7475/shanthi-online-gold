@@ -1,21 +1,26 @@
 const Footer = () => {
   return (
-    <footer className="bg-[#400F45] text-[#e2c98d] pt-12 pb-6 text-sm">
-      <div className="max-w-screen-xl mx-auto px-6 grid grid-cols-1 md:grid-cols-5 gap-8">
+    <footer className="bg-[#400F45] text-[#e2c98d] pt-10 pb-6 text-sm">
+      <div className="max-w-screen-xl mx-auto px-6 grid grid-cols-1 md:grid-cols-6 gap-10">
 
         {/* Column 1 - Logo & App */}
-        <div>
-          <h1 className="text-3xl font-bold text-white tracking-widest mb-2">
-            <span className="text-[#e2c98d]">SOG</span>
-          </h1>
-          <p className="uppercase text-xs tracking-wide mb-3">Legacy of Purity</p>
-          <p className="mb-3 text-sm">Scan for app</p>
-          <img src="/qr-code.png" alt="QR Code" className="w-24 mb-3" />
-          <div className="flex space-x-2">
-            <img src="/google-play.png" alt="Google Play" className="h-8" />
-            <img src="/app-store.png" alt="App Store" className="h-8" />
-          </div>
+        <div className="flex flex-col items-center text-center">
+        <img
+          src="/logo.svg"  // Ensure this matches your actual logo path
+          alt="SOG - Legacy of Purity"
+          className="h-14 mb-2"
+        />
+
+        <p className="mb-2 text-sm">Scan for app</p>
+
+        <img src="/qr.svg" alt="QR Code" className="w-24 mb-3" />
+
+        <div className="flex space-x-2">
+          <img src="/google-play.svg" alt="Google Play" className="h-8" />
+          <img src="/app-store-01.svg" alt="App Store" className="h-8" />
         </div>
+      </div>
+
 
         {/* Column 2 - Shopping */}
         <div>
@@ -61,8 +66,12 @@ const Footer = () => {
             <li><a href="#">Privacy Policies</a></li>
             <li><a href="#">Disclaimer</a></li>
           </ul>
+        </div>
+
+        <div>
+          <h3 className="text-[#e2c98d] font-semibold mb-3">Contact Us</h3>
           <div className="mt-4 space-y-1 text-sm">
-            <p className="text-[#e2c98d] font-semibold">Contact Us</p>
+            <p className="text-[#e2c98d] font-semibold">Phone</p>
             <p>+91 999 999 9999</p>
             <p className="text-[#e2c98d] font-semibold mt-2">Chat With Us</p>
             <p>+91 999 999 9999</p>
@@ -74,10 +83,11 @@ const Footer = () => {
             <a href="#"><i className="fab fa-youtube" /></a>
           </div>
         </div>
+
       </div>
 
       {/* Bottom Bar */}
-      <div className="mt-10 border-t bg-[#400F45] border-[#5e2e6d] pt-4 px-6 text-center text-xs text-[#ffffff]">
+      <div className="mt-10 pt-4 px-6 text-center text-xs text-[#ffffff]">
         © 2025 Shanthi Online Gold. All rights reserved. Unauthorized use strictly prohibited.
       </div>
     </footer>
