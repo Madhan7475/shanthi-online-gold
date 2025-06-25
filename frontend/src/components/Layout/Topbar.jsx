@@ -25,7 +25,7 @@ const Topbar = () => {
     <>
       {/* Top Navigation Bar */}
       <div className="bg-[#400F45] text-white relative z-20">
-        <div className="container mx-auto flex justify-between items-center py-4 px-4">
+        <div className="container mx-auto flex justify-between items-center py-4 px-2">
        
 
           {/* Center - Logo */}
@@ -73,7 +73,7 @@ const Topbar = () => {
             {/* Admin Button */}
             <Link
               to="/admin/login"
-              className="ml-2 bg-[#FEC878] text-black text-xs px-3 py-1 rounded hover:bg-white hover:text-[#2f0a38] transition"
+              className="ml-2 bg-[#FEC878] text-black text-xs px-2 py-1 rounded hover:bg-white hover:text-[#2f0a38] transition"
               title="Admin Panel"
             >
               Admin
