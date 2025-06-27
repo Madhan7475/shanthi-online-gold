@@ -1,49 +1,80 @@
 import React, { useState, useRef } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const menuData = {
-  "All Jewellery": [
-    { name: "Chains", img: "/gold/chain.jpg", href: "/gold/chains" },
-    { name: "Rings", img: "/gold/ring.jpg", href: "/gold/rings" },
-    { name: "Earrings", img: "/gold/earrings.jpg", href: "/gold/earrings" },
-  ],
-  "Gold": [
-    { name: "Necklaces", img: "/diamond/necklace.jpg", href: "/diamond/necklaces" },
-    { name: "Bracelets", img: "/diamond/bracelet.jpg", href: "/diamond/bracelets" },
-    { name: "Studs", img: "/diamond/studs.jpg", href: "/diamond/studs" },
-  ],
-  "Diamond": [
-    { name: "Bands", img: "/platinum/band.jpg", href: "/platinum/bands" },
-    { name: "Rings", img: "/platinum/ring.jpg", href: "/platinum/rings" },
-  ],
-  "Silver": [
-    { name: "Light Chains", img: "/daily/lightchain.jpg", href: "/daily/chains" },
-    { name: "Small Pendants", img: "/daily/pendant.jpg", href: "/daily/pendants" },
-  ],
-  "Earrings": [
-    { name: "Gold Coins", img: "/coins/coin.jpg", href: "/coins" },
-    { name: "Gift Cards", img: "/gifts/gift.jpg", href: "/gifts" },
-  ],
-  "Rings": [
-    { name: "Buy Online", img: "/digi/buy.jpg", href: "/digi/buy" },
-    { name: "Track Prices", img: "/digi/track.jpg", href: "/digi/track" },
-  ],
-  "Daily Wear": [
-    { name: "Monthly Plans", img: "/scheme/plan.jpg", href: "/scheme/monthly" },
-    { name: "Refer & Earn", img: "/scheme/refer.jpg", href: "/scheme/refer" },
-  ],
-  "Baby Items": [
-    { name: "Monthly Plans", img: "/scheme/plan.jpg", href: "/scheme/monthly" },
-    { name: "Refer & Earn", img: "/scheme/refer.jpg", href: "/scheme/refer" },
-  ],
-  "Wedding": [
-    { name: "Monthly Plans", img: "/scheme/plan.jpg", href: "/scheme/monthly" },
-    { name: "Refer & Earn", img: "/scheme/refer.jpg", href: "/scheme/refer" },
-  ],
-  "Special Collection": [
-    { name: "Monthly Plans", img: "/scheme/plan.jpg", href: "/scheme/monthly" },
-    { name: "Refer & Earn", img: "/scheme/refer.jpg", href: "/scheme/refer" },
-  ],
+  "All Jewellery": {
+    href: "/category/all-jewellery",
+    items: [
+      { name: "Chains", img: "/gold/chain.jpg", href: "/gold/chains" },
+      { name: "Rings", img: "/gold/ring.jpg", href: "/gold/rings" },
+      { name: "Earrings", img: "/gold/earrings.jpg", href: "/gold/earrings" },
+    ],
+  },
+  "Gold": {
+    href: "/category/gold",
+    items: [
+      { name: "Necklaces", img: "/diamond/necklace.jpg", href: "/diamond/necklaces" },
+      { name: "Bracelets", img: "/diamond/bracelet.jpg", href: "/diamond/bracelets" },
+      { name: "Studs", img: "/diamond/studs.jpg", href: "/diamond/studs" },
+    ],
+  },
+  "Diamond": {
+    href: "/category/diamond",
+    items: [
+      { name: "Bands", img: "/platinum/band.jpg", href: "/platinum/bands" },
+      { name: "Rings", img: "/platinum/ring.jpg", href: "/platinum/rings" },
+    ],
+  },
+  "Silver": {
+    href: "/category/silver",
+    items: [
+      { name: "Light Chains", img: "/daily/lightchain.jpg", href: "/daily/chains" },
+      { name: "Small Pendants", img: "/daily/pendant.jpg", href: "/daily/pendants" },
+    ],
+  },
+  "Earrings": {
+    href: "/category/earrings",
+    items: [
+      { name: "Gold Coins", img: "/coins/coin.jpg", href: "/coins" },
+      { name: "Gift Cards", img: "/gifts/gift.jpg", href: "/gifts" },
+    ],
+  },
+  "Rings": {
+    href: "/category/rings",
+    items: [
+      { name: "Buy Online", img: "/digi/buy.jpg", href: "/digi/buy" },
+      { name: "Track Prices", img: "/digi/track.jpg", href: "/digi/track" },
+    ],
+  },
+  "Daily Wear": {
+    href: "/category/daily-wear",
+    items: [
+      { name: "Monthly Plans", img: "/scheme/plan.jpg", href: "/scheme/monthly" },
+      { name: "Refer & Earn", img: "/scheme/refer.jpg", href: "/scheme/refer" },
+    ],
+  },
+  "Baby Items": {
+    href: "/category/baby-items",
+    items: [
+      { name: "Monthly Plans", img: "/scheme/plan.jpg", href: "/scheme/monthly" },
+      { name: "Refer & Earn", img: "/scheme/refer.jpg", href: "/scheme/refer" },
+    ],
+  },
+  "Wedding": {
+    href: "/category/wedding",
+    items: [
+      { name: "Monthly Plans", img: "/scheme/plan.jpg", href: "/scheme/monthly" },
+      { name: "Refer & Earn", img: "/scheme/refer.jpg", href: "/scheme/refer" },
+    ],
+  },
+  "Special Collection": {
+    href: "/category/special-collection",
+    items: [
+      { name: "Monthly Plans", img: "/scheme/plan.jpg", href: "/scheme/monthly" },
+      { name: "Refer & Earn", img: "/scheme/refer.jpg", href: "/scheme/refer" },
+    ],
+  },
 };
 
 const Navbar = () => {
@@ -74,24 +105,27 @@ const Navbar = () => {
 
         {/* Desktop Menu */}
         <ul className="hidden md:flex justify-center gap-10 text-sm font-medium tracking-wide">
-          {Object.entries(menuData).map(([menuItem, subItems], index) => (
+          {Object.entries(menuData).map(([menuItem, { href, items }], index) => (
             <li
               key={index}
               className="relative"
               onMouseEnter={() => handleMouseEnter(index)}
               onMouseLeave={handleMouseLeave}
             >
-              <div className="cursor-pointer hover:text-[#ffffff] transition-all duration-200">
+              <Link
+                to={href}
+                className="cursor-pointer hover:text-white transition-all duration-200"
+              >
                 {menuItem}
-              </div>
+              </Link>
 
               {hoveredMenu === index && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 w-[700px] mt-4 bg-white shadow-2xl py-10 px-10 z-50 rounded-md">
                   <div className="flex justify-center gap-10 flex-wrap">
-                    {subItems.map((item, i) => (
-                      <a
+                    {items.map((item, i) => (
+                      <Link
                         key={i}
-                        href={item.href}
+                        to={item.href}
                         className="flex flex-col items-center w-36 hover:bg-[#fff9e8] p-2 rounded-md transition"
                       >
                         <img
@@ -102,7 +136,7 @@ const Navbar = () => {
                         <h3 className="text-xs text-[#3b3b3b] hover:text-[#c29d5f] text-center">
                           {item.name}
                         </h3>
-                      </a>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -119,16 +153,24 @@ const Navbar = () => {
         } overflow-hidden`}
       >
         <ul className="flex flex-col p-4 space-y-4 text-[#3b3b3b]">
-          {Object.entries(menuData).map(([menuItem, subItems], index) => (
+          {Object.entries(menuData).map(([menuItem, { href, items }], index) => (
             <li key={index} className="border-b pb-2">
-              <button
-                className="w-full text-left font-semibold text-lg text-[#A4874F]"
-                onClick={() =>
-                  setHoveredMenu(hoveredMenu === index ? null : index)
-                }
-              >
-                {menuItem}
-              </button>
+              <div className="flex justify-between items-center">
+                <Link
+                  to={href}
+                  className="font-semibold text-lg text-[#A4874F]"
+                >
+                  {menuItem}
+                </Link>
+                <button
+                  className="text-sm"
+                  onClick={() =>
+                    setHoveredMenu(hoveredMenu === index ? null : index)
+                  }
+                >
+                  ▼
+                </button>
+              </div>
 
               {/* Mobile Submenu */}
               <div
@@ -137,10 +179,10 @@ const Navbar = () => {
                 }`}
               >
                 <div className="grid grid-cols-2 gap-4">
-                  {subItems.map((item, i) => (
-                    <a
+                  {items.map((item, i) => (
+                    <Link
                       key={i}
-                      href={item.href}
+                      to={item.href}
                       className="flex flex-col items-center hover:bg-[#fff9e8] p-2 rounded-md transition"
                     >
                       <img
@@ -151,7 +193,7 @@ const Navbar = () => {
                       <h3 className="text-xs text-gray-700 text-center">
                         {item.name}
                       </h3>
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
