@@ -10,6 +10,8 @@ import OTPLogin from "./pages/OTPLogin";
 
 import ProductUpload from "./components/Admin/products/ProductUpload";
 
+import AllJewellery from "./pages/category/AllJewellery";
+
 
 const App = () => {
   return (
@@ -32,6 +34,9 @@ const App = () => {
 
         {/* Product routing */}
         <Route path="/admin/products" element={<ProductUpload />} />
+
+        {/* other routes */}
+        <Route path="/category/all-jewellery" element={<AllJewellery />} />
 
 
       </Routes>
