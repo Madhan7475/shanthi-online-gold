@@ -11,7 +11,7 @@ const menuData = {
       { name: "Earrings", img: "/gold/earrings.jpg", href: "/gold/earrings" },
     ],
   },
-  "Gold": {
+  Gold: {
     href: "/category/gold",
     items: [
       { name: "Necklaces", img: "/diamond/necklace.jpg", href: "/diamond/necklaces" },
@@ -19,28 +19,28 @@ const menuData = {
       { name: "Studs", img: "/diamond/studs.jpg", href: "/diamond/studs" },
     ],
   },
-  "Diamond": {
+  Diamond: {
     href: "/category/diamond",
     items: [
       { name: "Bands", img: "/platinum/band.jpg", href: "/platinum/bands" },
       { name: "Rings", img: "/platinum/ring.jpg", href: "/platinum/rings" },
     ],
   },
-  "Silver": {
+  Silver: {
     href: "/category/silver",
     items: [
       { name: "Light Chains", img: "/daily/lightchain.jpg", href: "/daily/chains" },
       { name: "Small Pendants", img: "/daily/pendant.jpg", href: "/daily/pendants" },
     ],
   },
-  "Earrings": {
+  Earrings: {
     href: "/category/earrings",
     items: [
       { name: "Gold Coins", img: "/coins/coin.jpg", href: "/coins" },
       { name: "Gift Cards", img: "/gifts/gift.jpg", href: "/gifts" },
     ],
   },
-  "Rings": {
+  Rings: {
     href: "/category/rings",
     items: [
       { name: "Buy Online", img: "/digi/buy.jpg", href: "/digi/buy" },
@@ -61,7 +61,7 @@ const menuData = {
       { name: "Refer & Earn", img: "/scheme/refer.jpg", href: "/scheme/refer" },
     ],
   },
-  "Wedding": {
+  Wedding: {
     href: "/category/wedding",
     items: [
       { name: "Monthly Plans", img: "/scheme/plan.jpg", href: "/scheme/monthly" },
@@ -119,9 +119,19 @@ const Navbar = () => {
                 {menuItem}
               </Link>
 
-              {hoveredMenu === index && (
-              <div className="fixed top-[140px] left-0 w-full bg-white shadow-2xl z-40 border-t">
-                <div className="max-w-screen-xl mx-auto px-6 py-10 flex justify-center gap-10 flex-wrap">
+              {/* Dropdown */}
+              <div
+                className={`fixed left-0 w-full bg-white shadow-2xl z-40 border-t overflow-hidden transition-all duration-300 ease-in-out ${
+                  hoveredMenu === index
+                    ? "opacity-100 max-h-[500px] py-10 pointer-events-auto"
+                    : "opacity-0 max-h-0 py-0 pointer-events-none"
+                }`}
+                style={{
+                  top: "140px",
+                  transitionDelay: hoveredMenu === index ? "100ms" : "0ms",
+                }}
+              >
+                <div className="max-w-screen-xl mx-auto px-6 flex justify-center gap-10 flex-wrap transition-opacity duration-300">
                   {items.map((item, i) => (
                     <Link
                       key={i}
@@ -137,10 +147,9 @@ const Navbar = () => {
                         {item.name}
                       </h3>
                     </Link>
-                    ))}
-                  </div>
+                  ))}
                 </div>
-              )}
+              </div>
             </li>
           ))}
         </ul>
