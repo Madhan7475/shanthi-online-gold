@@ -1,26 +1,26 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Layout from "../../components/Common/Layout";
+import Layout from "../../components/Common/Layout"; // Adjust path if necessary
 
-const AllJewellery = () => {
+const BabyItemsPage = () => {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
     axios
       .get("http://localhost:5000/api/products")
       .then((res) => {
-        const allJewellery = res.data.filter(
-          (p) => p.category.toLowerCase() === "all jewellery"
+        const filtered = res.data.filter(
+          (p) => p.category.toLowerCase() === "baby items"
         );
-        setProducts(allJewellery);
+        setProducts(filtered);
       })
-      .catch((err) => console.error("Failed to load products", err));
+      .catch((err) => console.error("Failed to load Baby Items", err));
   }, []);
 
   return (
     <Layout>
       <div className="p-6">
-        <h1 className="text-2xl font-semibold mb-4">All Jewellery</h1>
+        <h1 className="text-2xl font-semibold mb-4">Baby Items</h1>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {products.map((product) => (
             <div
@@ -43,4 +43,4 @@ const AllJewellery = () => {
   );
 };
 
-export default AllJewellery;
+export default BabyItemsPage;

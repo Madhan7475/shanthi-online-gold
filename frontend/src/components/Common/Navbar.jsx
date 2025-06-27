@@ -2,6 +2,8 @@ import React, { useState, useRef } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
+
+
 const menuData = {
   "All Jewellery": {
     href: "/category/all-jewellery",

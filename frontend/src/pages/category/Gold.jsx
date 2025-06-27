@@ -1,26 +1,27 @@
+// src/pages/category/Gold/GoldPage.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../../components/Common/Layout";
 
-const AllJewellery = () => {
+const GoldPage = () => {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
     axios
       .get("http://localhost:5000/api/products")
       .then((res) => {
-        const allJewellery = res.data.filter(
-          (p) => p.category.toLowerCase() === "all jewellery"
+        const goldItems = res.data.filter(
+          (p) => p.category.toLowerCase() === "gold"
         );
-        setProducts(allJewellery);
+        setProducts(goldItems);
       })
-      .catch((err) => console.error("Failed to load products", err));
+      .catch((err) => console.error("Failed to load gold products", err));
   }, []);
 
   return (
     <Layout>
       <div className="p-6">
-        <h1 className="text-2xl font-semibold mb-4">All Jewellery</h1>
+        <h1 className="text-2xl font-semibold mb-4">Gold Jewellery</h1>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {products.map((product) => (
             <div
@@ -43,4 +44,4 @@ const AllJewellery = () => {
   );
 };
 
-export default AllJewellery;
+export default GoldPage;
