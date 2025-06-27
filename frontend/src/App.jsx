@@ -30,7 +30,7 @@ const App = () => {
         {/* Login with otp */}
         <Route path="/login" element={<OTPLogin />} />
 
-
+        {/* Product routing */}
         <Route path="/admin/products" element={<ProductUpload />} />
 
 

@@ -3,17 +3,12 @@ import React from "react";
 const Banner = () => {
   return (
     <div className="relative w-full h-[50vh] overflow-hidden">
-      {/* Video Background */}
-      <video
+      {/* Image Background */}
+      <img
+        src="/gold6.jpg" // Replace with your actual image path
+        alt="SOG Banner"
         className="absolute top-0 left-0 w-full h-full object-cover z-0"
-        autoPlay
-        loop
-        muted
-        playsInline
-      >
-        <source src="/banner.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      />
 
       {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-30 z-10"></div>
