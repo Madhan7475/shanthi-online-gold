@@ -7,7 +7,9 @@ import SignupPage from "./pages/SignupPage";
 import Login from "./pages/Login"; // Admin login
 import Panel from "./pages/Panel"; // Admin dashboard
 import OTPLogin from "./pages/OTPLogin";
-import AdminProductUpload from "./components/Admin/AdminProductUpload";
+
+import ProductUpload from "./components/Admin/products/ProductUpload";
+
 
 const App = () => {
   return (
@@ -28,8 +30,8 @@ const App = () => {
         {/* Login with otp */}
         <Route path="/login" element={<OTPLogin />} />
 
-        {/* Admin product upload */}
-        <Route path="/admin/upload" element={<AdminProductUpload />} />
+
+        <Route path="/admin/products" element={<ProductUpload />} />
 
 
       </Routes>
