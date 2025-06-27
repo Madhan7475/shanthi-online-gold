@@ -120,23 +120,23 @@ const Navbar = () => {
               </Link>
 
               {hoveredMenu === index && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[700px] mt-4 bg-white shadow-2xl py-10 px-10 z-50 rounded-md">
-                  <div className="flex justify-center gap-10 flex-wrap">
-                    {items.map((item, i) => (
-                      <Link
-                        key={i}
-                        to={item.href}
-                        className="flex flex-col items-center w-36 hover:bg-[#fff9e8] p-2 rounded-md transition"
-                      >
-                        <img
-                          src={item.img}
-                          alt={item.name}
-                          className="w-24 h-24 object-cover rounded-full border mb-2"
-                        />
-                        <h3 className="text-xs text-[#3b3b3b] hover:text-[#c29d5f] text-center">
-                          {item.name}
-                        </h3>
-                      </Link>
+              <div className="fixed top-[140px] left-0 w-full bg-white shadow-2xl z-40 border-t">
+                <div className="max-w-screen-xl mx-auto px-6 py-10 flex justify-center gap-10 flex-wrap">
+                  {items.map((item, i) => (
+                    <Link
+                      key={i}
+                      to={item.href}
+                      className="flex flex-col items-center w-36 hover:bg-[#fff9e8] p-2 rounded-md transition"
+                    >
+                      <img
+                        src={item.img}
+                        alt={item.name}
+                        className="w-24 h-24 object-cover rounded-full border mb-2"
+                      />
+                      <h3 className="text-xs text-[#3b3b3b] hover:text-[#c29d5f] text-center">
+                        {item.name}
+                      </h3>
+                    </Link>
                     ))}
                   </div>
                 </div>
