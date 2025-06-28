@@ -7,7 +7,11 @@ import SignupPage from "./pages/SignupPage";
 import Login from "./pages/Login"; // Admin login
 import Panel from "./pages/Panel"; // Admin dashboard
 import OTPLogin from "./pages/OTPLogin";
+
 import ProductUpload from "./components/Admin/products/ProductUpload";
+import ProductList from "./components/Admin/products/ProductList";
+import ProductEdit from "./components/Admin/products/ProductEdit";
+
 import AllJewellery from "./pages/category/AllJewellery";
 import GoldPage from "./pages/category/Gold";
 import DiamondPage from "./pages/category/Diamond";
@@ -18,6 +22,9 @@ import DailyWearPage from "./pages/category/DailyWear";
 import BabyItemsPage from "./pages/category/BabyItems";
 import WeddingPage from "./pages/category/Wedding";
 import SpecialCollectionPage from "./pages/category/Specialcollection";
+
+
+
 
 const App = () => {
   return (
@@ -52,6 +59,8 @@ const App = () => {
         <Route path="/category/baby-items" element={<BabyItemsPage />} />
         <Route path="/category/wedding" element={<WeddingPage />} />
         <Route path="/category/special-collection" element={<SpecialCollectionPage />} />
+        <Route path="/admin/products/list" element={<ProductList />} />
+        <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
 
 
       </Routes>

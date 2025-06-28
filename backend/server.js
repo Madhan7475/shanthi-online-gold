@@ -87,6 +87,37 @@ app.delete("/api/products/:id", async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Error deleting product" });
   }
+  // Get single product
+app.get("/api/products/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Not found" });
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching product" });
+  }
+});
+
+// Update product
+app.put("/api/products/:id", async (req, res) => {
+  try {
+    const { title, description, category, price } = req.body;
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      { title, description, category, price },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: "Error updating product" });
+  }
+});
+
+
+
+
+
+
 });
 
 // Start Server
