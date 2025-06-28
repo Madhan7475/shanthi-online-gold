@@ -22,6 +22,8 @@ import DailyWearPage from "./pages/category/DailyWear";
 import BabyItemsPage from "./pages/category/BabyItems";
 import WeddingPage from "./pages/category/Wedding";
 import SpecialCollectionPage from "./pages/category/Specialcollection";
+import OrderManagement from "./components/Admin/products/AdminOrderList"; 
+
 
 
 
@@ -45,9 +47,6 @@ const App = () => {
         {/* Login with otp */}
         <Route path="/login" element={<OTPLogin />} />
 
-        {/* Product routing */}
-        <Route path="/admin/products" element={<ProductUpload />} />
-
         {/* other routes */}
         <Route path="/category/all-jewellery" element={<AllJewellery />} />
         <Route path="/category/gold" element={<GoldPage />} />
@@ -59,8 +58,12 @@ const App = () => {
         <Route path="/category/baby-items" element={<BabyItemsPage />} />
         <Route path="/category/wedding" element={<WeddingPage />} />
         <Route path="/category/special-collection" element={<SpecialCollectionPage />} />
+
+        {/* Product routing */}
+        <Route path="/admin/products" element={<ProductUpload />} />
         <Route path="/admin/products/list" element={<ProductList />} />
         <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
+        <Route path="/admin/orders" element={<OrderManagement />} />
 
 
       </Routes>
