@@ -47,7 +47,11 @@ const ProductUpload = () => {
       Object.entries(formData).forEach(([key, val]) => data.append(key, val));
       images.forEach((img) => data.append("images", img));
 
-      await axios.post("http://localhost:5000/api/products", data);
+        await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL || "http://localhost:9000"}/api/products`,
+      data
+          );
+
 
       setMessage("✅ Product uploaded successfully!");
       setFormData({
