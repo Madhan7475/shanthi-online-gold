@@ -3,14 +3,20 @@ import React from "react";
 import Header from "./Header";
 import Footer from "./Footer";
 
-
 const Layout = ({ children }) => {
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
       <Header />
-      <main>{children}</main>
+
+      {/* Main Content */}
+      <main className="flex-grow px-4 py-6 max-w-7xl mx-auto w-full">
+        {children}
+      </main>
+
+      {/* Footer */}
       <Footer />
-    </>
+    </div>
   );
 };
 

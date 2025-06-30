@@ -37,6 +37,8 @@ import WeddingPage from "./pages/category/Wedding";
 import SpecialCollectionPage from "./pages/category/Specialcollection";
 import AdminAnalytics from "./pages/AdminAnalytics";
 
+import ProductDetail from "./pages/ProductDetail";
+
 // Optional: Add route protection wrapper
 // import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -82,6 +84,10 @@ const App = () => {
         <Route path="/admin/products/list" element={<ProductList />} />
         <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
         <Route path="/admin/orders" element={<OrderManagement />} />
+
+        <Route path="/product/:id" element={<ProductDetail />} />
+
+        
       </Routes>
     </BrowserRouter>
   );
