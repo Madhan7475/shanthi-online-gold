@@ -1,17 +1,30 @@
+// src/App.jsx
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+// Layouts
 import UserLayout from "./components/Layout/UserLayout";
+
+// User Pages
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import SigninPage from "./pages/SigninPage";
 import SignupPage from "./pages/SignupPage";
-import Login from "./pages/Login"; // Admin login
-import Panel from "./pages/Panel"; // Admin dashboard
 import OTPLogin from "./pages/OTPLogin";
 
+// Admin Pages
+import AdminLogin from "./pages/login";
+import AdminPanel from "./pages/Panel";
+import AdminAuth from "./pages/AdminAuth";
+
+// Admin Features
 import ProductUpload from "./components/Admin/products/ProductUpload";
 import ProductList from "./components/Admin/products/ProductList";
 import ProductEdit from "./components/Admin/products/ProductEdit";
+import OrderManagement from "./components/Admin/products/AdminOrderList";
+import AdminProfiles from "./pages/AdminProfiles";
 
+// Category Pages
 import AllJewellery from "./pages/category/AllJewellery";
 import GoldPage from "./pages/category/Gold";
 import DiamondPage from "./pages/category/Diamond";
@@ -22,17 +35,16 @@ import DailyWearPage from "./pages/category/DailyWear";
 import BabyItemsPage from "./pages/category/BabyItems";
 import WeddingPage from "./pages/category/Wedding";
 import SpecialCollectionPage from "./pages/category/Specialcollection";
-import OrderManagement from "./components/Admin/products/AdminOrderList"; 
+import AdminAnalytics from "./pages/AdminAnalytics";
 
-
-
-
+// Optional: Add route protection wrapper
+// import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* User-facing routes wrapped with layout */}
+        {/* 🛍️ User Public Routes */}
         <Route path="/" element={<UserLayout />}>
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
@@ -40,14 +52,7 @@ const App = () => {
           <Route path="signup" element={<SignupPage />} />
         </Route>
 
-        {/* Admin-only routes (no UserLayout wrapper) */}
-        <Route path="/admin/login" element={<Login />} />
-        <Route path="/admin/panel" element={<Panel />} />
-
-        {/* Login with otp */}
-        <Route path="/login" element={<OTPLogin />} />
-
-        {/* other routes */}
+        {/* 💍 Category Pages */}
         <Route path="/category/all-jewellery" element={<AllJewellery />} />
         <Route path="/category/gold" element={<GoldPage />} />
         <Route path="/category/diamond" element={<DiamondPage />} />
@@ -59,18 +64,25 @@ const App = () => {
         <Route path="/category/wedding" element={<WeddingPage />} />
         <Route path="/category/special-collection" element={<SpecialCollectionPage />} />
 
-        {/* Product routing */}
+        {/* 🔐 Admin Login */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* 📲 OTP Login */}
+        <Route path="/login" element={<OTPLogin />} />
+
+        {/* 🛡️ Admin Panel & Features */}
+        <Route path="/admin/panel" element={<AdminPanel />} />
+        <Route path="/admin/auth" element={<AdminAuth />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/admin/profiles" element={<AdminProfiles />} />
+
+
+
         <Route path="/admin/products" element={<ProductUpload />} />
         <Route path="/admin/products/list" element={<ProductList />} />
         <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
         <Route path="/admin/orders" element={<OrderManagement />} />
-
-
       </Routes>
-
-
-
-
     </BrowserRouter>
   );
 };
