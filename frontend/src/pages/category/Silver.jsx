@@ -1,40 +1,99 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Layout from "../../components/Common/Layout"; // Adjust based on your layout path
+import Layout from "../../components/Common/Layout";
+import { FaHeart, FaShoppingCart } from "react-icons/fa";
+import { useCart } from "../../context/CartContext";
+import { useNavigate } from "react-router-dom";
 
 const SilverPage = () => {
   const [products, setProducts] = useState([]);
+  const { cartItems, addToCart } = useCart();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/products")
-      .then((res) => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/products");
         const silverItems = res.data.filter(
-          (p) => p.category.toLowerCase() === "silver"
+          (p) => p.category?.toLowerCase() === "silver"
         );
         setProducts(silverItems);
-      })
-      .catch((err) => console.error("Failed to load silver products", err));
+      } catch (err) {
+        console.error("❌ Failed to load silver products:", err);
+      }
+    };
+
+    fetchProducts();
   }, []);
+
+  const isAuthenticated = () => {
+    return !!localStorage.getItem("userToken");
+  };
+
+  const handleAddToCart = (product) => {
+    if (!isAuthenticated()) {
+      alert("Please sign in to add items to your cart.");
+      return navigate("/signin");
+    }
+
+    const exists = cartItems.find((item) => item._id === product._id);
+    if (exists) {
+      alert("Item already in cart");
+    } else {
+      addToCart(product);
+      alert("Item added to cart");
+    }
+  };
 
   return (
     <Layout>
-      <div className="p-6">
-        <h1 className="text-2xl font-semibold mb-4">Silver Jewellery</h1>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="p-6 max-w-7xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">Silver Jewellery</h1>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {products.map((product) => (
             <div
               key={product._id}
-              className="border p-4 rounded shadow hover:shadow-lg transition"
+              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
             >
-              <img
-                src={`http://localhost:5000/uploads/${product.images[0]}`}
-                alt={product.title}
-                className="w-full h-40 object-cover rounded"
-              />
-              <h2 className="mt-2 font-medium">{product.title}</h2>
-              <p className="text-sm text-gray-600">{product.category}</p>
-              <p className="text-[#c29d5f] font-semibold">₹{product.price}</p>
+              {/* Wishlist Icon */}
+              <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10">
+                <FaHeart />
+              </button>
+
+              {/* Product Image */}
+              <div className="w-full h-72 bg-white">
+                <img
+                  src={
+                    product.images?.[0]
+                      ? `http://localhost:5000/uploads/${product.images[0]}`
+                      : "/placeholder.png"
+                  }
+                  alt={product.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Product Info */}
+              <div className="p-4">
+                <h2 className="text-sm font-medium text-gray-800 truncate">
+                  {product.title}
+                </h2>
+                <p className="text-sm text-gray-600 mb-1 truncate">
+                  {product.category}
+                </p>
+                <p className="text-base font-semibold text-[#1a1a1a]">
+                  ₹{product.price.toLocaleString()}
+                </p>
+              </div>
+
+              {/* Cart Icon */}
+              <div
+                className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f] cursor-pointer"
+                onClick={() => handleAddToCart(product)}
+              >
+                <FaShoppingCart />
+              </div>
             </div>
           ))}
         </div>
