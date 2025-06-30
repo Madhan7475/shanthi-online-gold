@@ -26,38 +26,29 @@ const AllJewellery = () => {
     fetchProducts();
   }, []);
 
-  const isAuthenticated = () => {
-    return !!localStorage.getItem("userToken");
-  };
-
-  const handleAddToCart = (product) => {
-    if (!isAuthenticated()) {
-      alert("Please sign in to add items to your cart.");
-      return navigate("/signin");
-    }
-
-    const exists = cartItems.find((item) => item._id === product._id);
-    if (exists) {
-      alert("Item already in cart");
-    } else {
-      addToCart(product);
-      alert("Item added to cart");
-    }
+  const handleProductClick = (id) => {
+    navigate(`/product/${id}`);
   };
 
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">All Jewellery</h1>
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+          All Jewellery
+        </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {products.map((product) => (
             <div
               key={product._id}
-              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
+              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+              onClick={() => handleProductClick(product._id)}
             >
               {/* Wishlist Icon */}
-              <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
+                onClick={(e) => e.stopPropagation()} // prevent redirect
+              >
                 <FaHeart />
               </button>
 
@@ -89,8 +80,21 @@ const AllJewellery = () => {
 
               {/* Cart Icon */}
               <div
-                className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f] cursor-pointer"
-                onClick={() => handleAddToCart(product)}
+                className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!localStorage.getItem("userToken")) {
+                    alert("Please sign in to add items to your cart.");
+                    return navigate("/signin");
+                  }
+                  const exists = cartItems.find((item) => item._id === product._id);
+                  if (exists) {
+                    alert("Item already in cart");
+                  } else {
+                    addToCart(product);
+                    alert("Item added to cart");
+                  }
+                }}
               >
                 <FaShoppingCart />
               </div>

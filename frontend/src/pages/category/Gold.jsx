@@ -26,12 +26,12 @@ const GoldPage = () => {
     fetchProducts();
   }, []);
 
-  const isAuthenticated = () => {
-    return !!localStorage.getItem("userToken");
+  const handleProductClick = (id) => {
+    navigate(`/product/${id}`);
   };
 
   const handleAddToCart = (product) => {
-    if (!isAuthenticated()) {
+    if (!localStorage.getItem("userToken")) {
       alert("Please sign in to add items to your cart.");
       return navigate("/signin");
     }
@@ -48,16 +48,22 @@ const GoldPage = () => {
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">Gold Jewellery</h1>
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+          Gold Jewellery
+        </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {products.map((product) => (
             <div
               key={product._id}
-              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
+              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+              onClick={() => handleProductClick(product._id)}
             >
               {/* Wishlist Icon */}
-              <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <FaHeart />
               </button>
 
@@ -90,7 +96,10 @@ const GoldPage = () => {
               {/* Cart Icon */}
               <div
                 className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f] cursor-pointer"
-                onClick={() => handleAddToCart(product)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddToCart(product);
+                }}
               >
                 <FaShoppingCart />
               </div>

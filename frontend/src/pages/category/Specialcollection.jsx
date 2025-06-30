@@ -26,12 +26,14 @@ const SpecialCollectionPage = () => {
     fetchProducts();
   }, []);
 
-  const isAuthenticated = () => {
-    return !!localStorage.getItem("userToken");
+  const handleProductClick = (id) => {
+    navigate(`/product/${id}`);
   };
 
-  const handleAddToCart = (product) => {
-    if (!isAuthenticated()) {
+  const handleAddToCart = (product, e) => {
+    e.stopPropagation();
+
+    if (!localStorage.getItem("userToken")) {
       alert("Please sign in to add items to your cart.");
       return navigate("/signin");
     }
@@ -56,10 +58,14 @@ const SpecialCollectionPage = () => {
           {products.map((product) => (
             <div
               key={product._id}
-              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
+              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+              onClick={() => handleProductClick(product._id)}
             >
               {/* Wishlist Icon */}
-              <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <FaHeart />
               </button>
 
@@ -92,7 +98,7 @@ const SpecialCollectionPage = () => {
               {/* Cart Icon */}
               <div
                 className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f] cursor-pointer"
-                onClick={() => handleAddToCart(product)}
+                onClick={(e) => handleAddToCart(product, e)}
               >
                 <FaShoppingCart />
               </div>

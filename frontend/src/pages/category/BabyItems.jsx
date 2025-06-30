@@ -56,10 +56,14 @@ const BabyItemsPage = () => {
           {products.map((product) => (
             <div
               key={product._id}
-              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
+              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+              onClick={() => navigate(`/product/${product._id}`)}
             >
               {/* Wishlist Icon */}
-              <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
+                onClick={(e) => e.stopPropagation()} // Prevent navigation
+              >
                 <FaHeart />
               </button>
 
@@ -92,7 +96,10 @@ const BabyItemsPage = () => {
               {/* Cart Icon */}
               <div
                 className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f] cursor-pointer"
-                onClick={() => handleAddToCart(product)}
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent navigation
+                  handleAddToCart(product);
+                }}
               >
                 <FaShoppingCart />
               </div>
