@@ -2,62 +2,80 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../../components/Common/Layout";
 import { FaHeart, FaShoppingCart } from "react-icons/fa";
+import { useCart } from "../../context/CartContext";
+import { useNavigate } from "react-router-dom";
 
 const AllJewellery = () => {
   const [products, setProducts] = useState([]);
+  const { cartItems, addToCart } = useCart();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/products")
-      .then((res) => {
-        const allJewellery = res.data.filter(
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/products");
+        const filtered = res.data.filter(
           (p) => p.category?.toLowerCase() === "all jewellery"
         );
-        setProducts(allJewellery);
-      })
-      .catch((err) => console.error("Failed to load products", err));
+        setProducts(filtered);
+      } catch (err) {
+        console.error("❌ Failed to load products:", err);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
-  const handleAddToCart = (product) => {
-    const existingCart = JSON.parse(localStorage.getItem("cart")) || [];
-    const productExists = existingCart.find((item) => item._id === product._id);
+  const isAuthenticated = () => {
+    return !!localStorage.getItem("userToken");
+  };
 
-    if (productExists) {
+  const handleAddToCart = (product) => {
+    if (!isAuthenticated()) {
+      alert("Please sign in to add items to your cart.");
+      return navigate("/signin");
+    }
+
+    const exists = cartItems.find((item) => item._id === product._id);
+    if (exists) {
       alert("Item already in cart");
     } else {
-      existingCart.push({ ...product, quantity: 1 });
-      localStorage.setItem("cart", JSON.stringify(existingCart));
+      addToCart(product);
       alert("Item added to cart");
     }
   };
 
   return (
     <Layout>
-      <div className="p-6 flex flex-col items-center">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">All Jewellery</h1>
+      <div className="p-6 max-w-7xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">All Jewellery</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {products.map((product) => (
             <div
               key={product._id}
-              className="w-72 relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
+              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
             >
               {/* Wishlist Icon */}
               <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10">
                 <FaHeart />
               </button>
 
-              {/* Product Image with increased height */}
+              {/* Product Image */}
               <div className="w-full h-72 bg-white">
                 <img
-                  src={`http://localhost:5000/uploads/${product.images?.[0]}`}
+                  src={
+                    product.images?.[0]
+                      ? `http://localhost:5000/uploads/${product.images[0]}`
+                      : "/placeholder.png"
+                  }
                   alt={product.title}
                   className="w-full h-full object-cover"
                 />
               </div>
 
               {/* Product Info */}
-              <div className="p-3">
+              <div className="p-4">
                 <h2 className="text-sm font-medium text-gray-800 truncate">
                   {product.title}
                 </h2>

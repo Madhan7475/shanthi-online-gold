@@ -2,31 +2,57 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../../components/Common/Layout";
 import { FaHeart, FaShoppingCart } from "react-icons/fa";
+import { useCart } from "../../context/CartContext";
+import { useNavigate } from "react-router-dom";
 
 const WeddingPage = () => {
   const [products, setProducts] = useState([]);
+  const { cartItems, addToCart } = useCart();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/products")
-      .then((res) => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/products");
         const filtered = res.data.filter(
-          (p) => p.category.toLowerCase() === "wedding"
+          (p) => p.category?.toLowerCase() === "wedding"
         );
         setProducts(filtered);
-      })
-      .catch((err) =>
-        console.error("Failed to load Wedding Collection products", err)
-      );
+      } catch (err) {
+        console.error("❌ Failed to load Wedding Collection products:", err);
+      }
+    };
+
+    fetchProducts();
   }, []);
+
+  const isAuthenticated = () => {
+    return !!localStorage.getItem("userToken");
+  };
+
+  const handleAddToCart = (product) => {
+    if (!isAuthenticated()) {
+      alert("Please sign in to add items to your cart.");
+      return navigate("/signin");
+    }
+
+    const exists = cartItems.find((item) => item._id === product._id);
+    if (exists) {
+      alert("Item already in cart");
+    } else {
+      addToCart(product);
+      alert("Item added to cart");
+    }
+  };
 
   return (
     <Layout>
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">
+      <div className="p-6 max-w-7xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">
           Wedding Collection
         </h1>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {products.map((product) => (
             <div
               key={product._id}
@@ -38,16 +64,20 @@ const WeddingPage = () => {
               </button>
 
               {/* Product Image */}
-              <div className="w-full h-40 bg-white">
+              <div className="w-full h-72 bg-white">
                 <img
-                  src={`http://localhost:5000/uploads/${product.images?.[0]}`}
+                  src={
+                    product.images?.[0]
+                      ? `http://localhost:5000/uploads/${product.images[0]}`
+                      : "/placeholder.png"
+                  }
                   alt={product.title}
                   className="w-full h-full object-cover"
                 />
               </div>
 
               {/* Product Info */}
-              <div className="p-3">
+              <div className="p-4">
                 <h2 className="text-sm font-medium text-gray-800 truncate">
                   {product.title}
                 </h2>
@@ -60,7 +90,10 @@ const WeddingPage = () => {
               </div>
 
               {/* Cart Icon */}
-              <div className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f] cursor-pointer">
+              <div
+                className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f] cursor-pointer"
+                onClick={() => handleAddToCart(product)}
+              >
                 <FaShoppingCart />
               </div>
             </div>
