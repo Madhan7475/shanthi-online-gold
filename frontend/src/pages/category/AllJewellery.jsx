@@ -13,7 +13,7 @@ const AllJewellery = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/products");
+       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
         const filtered = res.data.filter(
           (p) => p.category?.toLowerCase() === "all jewellery"
         );
@@ -57,7 +57,7 @@ const AllJewellery = () => {
                 <img
                   src={
                     product.images?.[0]
-                      ? `http://localhost:5000/uploads/${product.images[0]}`
+                      ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${product.images[0]}`
                       : "/placeholder.png"
                   }
                   alt={product.title}

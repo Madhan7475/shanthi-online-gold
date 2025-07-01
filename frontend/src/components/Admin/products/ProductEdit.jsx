@@ -36,7 +36,7 @@ const ProductEdit = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/products/${id}`)
+    axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`)
       .then((res) => {
         setFormData(res.data);
       })
@@ -51,7 +51,7 @@ const ProductEdit = () => {
       Object.entries(formData).forEach(([key, val]) => data.append(key, val));
       images.forEach((img) => data.append("images", img));
 
-      await axios.put(`http://localhost:5000/api/products/${id}`, data);
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`, data);
       setMessage("✅ Product updated successfully!");
       setTimeout(() => navigate("/admin/products/list"), 1500);
     } catch (err) {

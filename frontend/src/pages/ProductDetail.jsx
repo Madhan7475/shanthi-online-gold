@@ -13,13 +13,17 @@ const ProductDetails = () => {
   const [tab, setTab] = useState("details");
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:5000/api/products/${id}`)
-      .then((res) => {
+    const fetchProduct = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`);
         setProduct(res.data);
         setSelectedImage(res.data.images?.[0] || null);
-      })
-      .catch((err) => console.error("❌ Error loading product:", err));
+      } catch (err) {
+        console.error("❌ Error loading product:", err);
+      }
+    };
+
+    fetchProduct();
   }, [id]);
 
   const handleAddToCart = () => {
@@ -36,12 +40,13 @@ const ProductDetails = () => {
     }
   };
 
-  if (!product)
+  if (!product) {
     return (
       <div className="flex justify-center items-center min-h-[60vh] text-xl font-semibold text-gray-600">
         Loading...
       </div>
     );
+  }
 
   return (
     <Layout>
@@ -51,9 +56,7 @@ const ProductDetails = () => {
           <span className="text-[#4b1e59] font-semibold">{product.title}</span>
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-2">
-          {product.title}
-        </h1>
+        <h1 className="text-3xl font-bold text-center mb-2">{product.title}</h1>
         <p className="text-center text-2xl text-[#4b1e59] font-bold mb-6">
           ₹{product.price?.toLocaleString()}
           <br />
@@ -63,12 +66,12 @@ const ProductDetails = () => {
         </p>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Images */}
+          {/* Image Section */}
           <div className="flex flex-col items-center">
             <div className="w-full border rounded-lg mb-4 overflow-hidden bg-white">
               {selectedImage ? (
                 <img
-                  src={`http://localhost:5000/uploads/${selectedImage}`}
+                  src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${selectedImage}`}
                   alt={product.title}
                   className="w-full h-[300px] object-contain"
                 />
@@ -78,11 +81,13 @@ const ProductDetails = () => {
                 </div>
               )}
             </div>
+
+            {/* Thumbnails */}
             <div className="flex space-x-4">
               {product.images?.map((img, idx) => (
                 <img
                   key={idx}
-                  src={`http://localhost:5000/uploads/${img}`}
+                  src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${img}`}
                   onClick={() => setSelectedImage(img)}
                   className={`w-20 h-20 object-cover border rounded-md cursor-pointer ${
                     selectedImage === img
@@ -95,7 +100,7 @@ const ProductDetails = () => {
             </div>
           </div>
 
-          {/* Details Section */}
+          {/* Info Section */}
           <div>
             {/* Tabs */}
             <div className="flex mb-6 border-b border-gray-300">
@@ -127,31 +132,31 @@ const ProductDetails = () => {
                 <div>
                   <h4 className="font-semibold text-gray-700 mb-2">Metal Details</h4>
                   <ul className="space-y-1 text-gray-600">
-                    <li>18K Karatage</li>
-                    <li>Yellow Material Colour</li>
-                    <li>{product.weight}g Gross Weight</li>
-                    <li>Gold Metal</li>
-                    <li>16.40 MM Size</li>
+                    <li>{product.karatage} Karatage</li>
+                    <li>{product.materialColour} Material Colour</li>
+                    <li>{product.grossWeight}g Gross Weight</li>
+                    <li>{product.metal} Metal</li>
+                    <li>{product.size} MM Size</li>
                   </ul>
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-700 mb-2">Diamond Details</h4>
                   <ul className="space-y-1 text-gray-600">
-                    <li>SI2 Diamond Clarity</li>
-                    <li>G-H Diamond Color</li>
-                    <li>11 No. of Diamonds</li>
-                    <li>Prong Diamond Setting</li>
-                    <li>Round Diamond Shape</li>
+                    <li>{product.diamondClarity} Diamond Clarity</li>
+                    <li>{product.diamondColor} Diamond Color</li>
+                    <li>{product.numberOfDiamonds} No. of Diamonds</li>
+                    <li>{product.diamondSetting} Diamond Setting</li>
+                    <li>{product.diamondShape} Diamond Shape</li>
                   </ul>
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-700 mb-2">General Details</h4>
                   <ul className="space-y-1 text-gray-600">
-                    <li>Diamond Jewellery</li>
-                    <li>Brand: Shanthi Online Gold</li>
-                    <li>Collection: Into Eternity</li>
-                    <li>Gender: Women</li>
-                    <li>Occasion: Modern Wear</li>
+                    <li>{product.jewelleryType}</li>
+                    <li>Brand: {product.brand}</li>
+                    <li>Collection: {product.collection}</li>
+                    <li>Gender: {product.gender}</li>
+                    <li>Occasion: {product.occasion}</li>
                   </ul>
                 </div>
               </div>
@@ -166,11 +171,7 @@ const ProductDetails = () => {
             {/* Description */}
             <div className="mt-6">
               <h4 className="font-semibold text-gray-800 mb-2">Description</h4>
-              <p className="text-gray-600 leading-relaxed">
-                Gleaming diamonds and luminous gold make gentle pirouettes like a ballerina.
-                <br />
-                Catch a glint of timeless elegance in classy designs from our Into Eternity collection.
-              </p>
+              <p className="text-gray-600 leading-relaxed">{product.description}</p>
             </div>
 
             {/* Add to Cart Button */}

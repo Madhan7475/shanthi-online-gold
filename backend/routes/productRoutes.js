@@ -1,4 +1,3 @@
-// routes/productRoutes.js
 const express = require("express");
 const Product = require("../models/Product");
 const { upload } = require("../middleware/upload");
@@ -8,7 +7,7 @@ const router = express.Router();
 /**
  * @route   POST /api/products
  * @desc    Upload a new product with multiple images
- * @access  Public (can be secured later)
+ * @access  Public
  */
 router.post("/", upload.array("images", 5), async (req, res) => {
   try {
@@ -19,10 +18,8 @@ router.post("/", upload.array("images", 5), async (req, res) => {
       gender, occasion
     } = req.body;
 
-    // Extract uploaded image filenames
     const imageFilenames = req.files?.map((file) => file.filename) || [];
 
-    // Create a new Product instance
     const newProduct = new Product({
       title,
       description,
@@ -46,7 +43,6 @@ router.post("/", upload.array("images", 5), async (req, res) => {
       images: imageFilenames,
     });
 
-    // Save to MongoDB
     await newProduct.save();
 
     res.status(201).json({
@@ -65,6 +61,7 @@ router.post("/", upload.array("images", 5), async (req, res) => {
 /**
  * @route   GET /api/products
  * @desc    Fetch all products
+ * @access  Public
  */
 router.get("/", async (req, res) => {
   try {
@@ -73,6 +70,24 @@ router.get("/", async (req, res) => {
   } catch (err) {
     console.error("❌ Error fetching products:", err);
     res.status(500).json({ error: "Failed to fetch products" });
+  }
+});
+
+/**
+ * @route   GET /api/products/:id
+ * @desc    Fetch single product by ID
+ * @access  Public
+ */
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    res.json(product);
+  } catch (err) {
+    console.error("❌ Error fetching product by ID:", err);
+    res.status(500).json({ error: "Failed to fetch product" });
   }
 });
 

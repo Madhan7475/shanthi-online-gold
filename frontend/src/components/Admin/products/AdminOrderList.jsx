@@ -5,14 +5,14 @@ const AdminOrderList = () => {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/orders")
+    axios.get(`${import.meta.env.VITE_API_BASE_URL/api/orders}`)
       .then((res) => setOrders(res.data))
       .catch((err) => console.error("Error fetching orders:", err));
   }, []);
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await axios.put(`http://localhost:5000/api/orders/${id}`, { status: newStatus });
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${id}`, { status: newStatus });
       setOrders((prev) =>
         prev.map((o) => (o._id === id ? { ...o, status: newStatus } : o))
       );

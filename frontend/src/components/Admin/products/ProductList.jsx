@@ -5,22 +5,24 @@ import { Link } from "react-router-dom";
 const ProductList = () => {
   const [products, setProducts] = useState([]);
 
-  useEffect(() => {
-    axios.get("http://localhost:5000/api/products")
-      .then((res) => setProducts(res.data))
-      .catch((err) => console.error("Failed to fetch products", err));
-  }, []);
+ useEffect(() => {
+  axios
+    .get(`${import.meta.env.VITE_API_BASE_URL}/api/products`)
+    .then((res) => setProducts(res.data))
+    .catch((err) => console.error("Failed to fetch products", err));
+}, []);
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Delete this product?")) {
-      try {
-        await axios.delete(`http://localhost:5000/api/products/${id}`);
-        setProducts(products.filter((p) => p._id !== id));
-      } catch (err) {
-        console.error("Delete failed", err);
-      }
+const handleDelete = async (id) => {
+  if (window.confirm("Delete this product?")) {
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`);
+      setProducts(products.filter((p) => p._id !== id));
+    } catch (err) {
+      console.error("Delete failed", err);
     }
-  };
+  }
+};
+
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
