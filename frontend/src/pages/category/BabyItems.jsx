@@ -13,11 +13,11 @@ const BabyItemsPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL/api/products}`);
-        const filtered = res.data.filter(
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
+        const babyItems = res.data.filter(
           (p) => p.category?.toLowerCase() === "baby items"
         );
-        setProducts(filtered);
+        setProducts(babyItems);
       } catch (err) {
         console.error("❌ Failed to load Baby Items:", err);
       }
@@ -26,9 +26,7 @@ const BabyItemsPage = () => {
     fetchProducts();
   }, []);
 
-  const isAuthenticated = () => {
-    return !!localStorage.getItem("userToken");
-  };
+  const isAuthenticated = () => !!localStorage.getItem("userToken");
 
   const handleAddToCart = (product) => {
     if (!isAuthenticated()) {
@@ -45,6 +43,10 @@ const BabyItemsPage = () => {
     }
   };
 
+  const handleProductClick = (id) => {
+    navigate(`/product/${id}`);
+  };
+
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
@@ -57,12 +59,12 @@ const BabyItemsPage = () => {
             <div
               key={product._id}
               className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
-              onClick={() => navigate(`/product/${product._id}`)}
+              onClick={() => handleProductClick(product._id)}
             >
               {/* Wishlist Icon */}
               <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
-                onClick={(e) => e.stopPropagation()} // Prevent navigation
+                onClick={(e) => e.stopPropagation()}
               >
                 <FaHeart />
               </button>
@@ -97,7 +99,7 @@ const BabyItemsPage = () => {
               <div
                 className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f] cursor-pointer"
                 onClick={(e) => {
-                  e.stopPropagation(); // prevent navigation
+                  e.stopPropagation();
                   handleAddToCart(product);
                 }}
               >

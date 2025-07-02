@@ -13,7 +13,7 @@ const GoldPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL/api/products}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
         const goldItems = res.data.filter(
           (p) => p.category?.toLowerCase() === "gold"
         );

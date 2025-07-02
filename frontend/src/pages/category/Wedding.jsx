@@ -13,18 +13,20 @@ const WeddingPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL/api/products}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
         const filtered = res.data.filter(
           (p) => p.category?.toLowerCase() === "wedding"
         );
         setProducts(filtered);
-      } catch (err) {
-        console.error("❌ Failed to load Wedding Collection products:", err);
+      } catch (error) {
+        console.error("❌ Failed to load Wedding Collection products:", error);
       }
     };
 
     fetchProducts();
   }, []);
+
+  const isAuthenticated = () => !!localStorage.getItem("userToken");
 
   const handleProductClick = (id) => {
     navigate(`/product/${id}`);
@@ -33,7 +35,7 @@ const WeddingPage = () => {
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
 
-    if (!localStorage.getItem("userToken")) {
+    if (!isAuthenticated()) {
       alert("Please sign in to add items to your cart.");
       return navigate("/signin");
     }

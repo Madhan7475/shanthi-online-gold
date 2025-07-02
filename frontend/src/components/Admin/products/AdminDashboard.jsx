@@ -31,8 +31,6 @@ const Panel = () => {
           <NavItem to="/admin/orders" icon={<ShoppingCart size={18} />} label="Orders" />
           <NavItem to="/admin/profiles" icon={<Users size={18} />} label="Profiles" />
           <NavItem to="/admin/invoices" icon={<FileText size={18} />} label="Invoices" />
-          <NavItem to="/admin/tools" icon={<Search size={18} />} label="Search & Notifications" />
-          <NavItem to="/admin/settings" icon={<Lock size={18} />} label="Settings" />
         </nav>
       </aside>
 
@@ -42,12 +40,6 @@ const Panel = () => {
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-[#400F45]">Sales Dashboard</h2>
           <div className="flex items-center gap-4">
-            <input
-              type="text"
-              placeholder="Search"
-              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none"
-            />
-            <button className="bg-[#400F45] text-white px-4 py-2 rounded-md">+</button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"

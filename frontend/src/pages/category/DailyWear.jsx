@@ -14,10 +14,10 @@ const DailyWearPage = () => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
-        const filtered = res.data.filter(
+        const dailyWearItems = res.data.filter(
           (p) => p.category?.toLowerCase() === "daily wear"
         );
-        setProducts(filtered);
+        setProducts(dailyWearItems);
       } catch (err) {
         console.error("❌ Failed to load Daily Wear items:", err);
       }
@@ -26,12 +26,14 @@ const DailyWearPage = () => {
     fetchProducts();
   }, []);
 
+  const isAuthenticated = () => !!localStorage.getItem("userToken");
+
   const handleProductClick = (id) => {
     navigate(`/product/${id}`);
   };
 
   const handleAddToCart = (product) => {
-    if (!localStorage.getItem("userToken")) {
+    if (!isAuthenticated()) {
       alert("Please sign in to add items to your cart.");
       return navigate("/signin");
     }

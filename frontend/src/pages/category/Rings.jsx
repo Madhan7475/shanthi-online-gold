@@ -13,11 +13,11 @@ const RingsPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL/api/products}`);
-        const filtered = res.data.filter(
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
+        const rings = res.data.filter(
           (p) => p.category?.toLowerCase() === "rings"
         );
-        setProducts(filtered);
+        setProducts(rings);
       } catch (err) {
         console.error("❌ Failed to load rings:", err);
       }
@@ -26,12 +26,14 @@ const RingsPage = () => {
     fetchProducts();
   }, []);
 
+  const isAuthenticated = () => !!localStorage.getItem("userToken");
+
   const handleProductClick = (id) => {
     navigate(`/product/${id}`);
   };
 
   const handleAddToCart = (product) => {
-    if (!localStorage.getItem("userToken")) {
+    if (!isAuthenticated()) {
       alert("Please sign in to add items to your cart.");
       return navigate("/signin");
     }

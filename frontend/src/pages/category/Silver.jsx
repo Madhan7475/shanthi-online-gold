@@ -13,7 +13,7 @@ const SilverPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL/api/products}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
         const silverItems = res.data.filter(
           (p) => p.category?.toLowerCase() === "silver"
         );
@@ -26,12 +26,14 @@ const SilverPage = () => {
     fetchProducts();
   }, []);
 
+  const isAuthenticated = () => !!localStorage.getItem("userToken");
+
   const handleProductClick = (id) => {
     navigate(`/product/${id}`);
   };
 
   const handleAddToCart = (product) => {
-    if (!localStorage.getItem("userToken")) {
+    if (!isAuthenticated()) {
       alert("Please sign in to add items to your cart.");
       return navigate("/signin");
     }

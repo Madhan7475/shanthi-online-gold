@@ -13,7 +13,7 @@ const SpecialCollectionPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL/api/products}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
         const filtered = res.data.filter(
           (p) => p.category?.toLowerCase() === "special collection"
         );
@@ -26,14 +26,15 @@ const SpecialCollectionPage = () => {
     fetchProducts();
   }, []);
 
+  const isAuthenticated = () => !!localStorage.getItem("userToken");
+
   const handleProductClick = (id) => {
     navigate(`/product/${id}`);
   };
 
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
-
-    if (!localStorage.getItem("userToken")) {
+    if (!isAuthenticated()) {
       alert("Please sign in to add items to your cart.");
       return navigate("/signin");
     }

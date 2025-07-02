@@ -17,16 +17,19 @@ import OTPLogin from "./pages/OTPLogin";
 
 // Admin Pages
 import AdminLogin from "./pages/login";
-import AdminPanel from "./pages/Panel";
 import AdminAuth from "./pages/AdminAuth";
 import AdminProfiles from "./pages/AdminProfiles";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import Invoice from "./pages/Invoice"; // ✅ this path matches your file
+
+
 
 // Admin Features
 import ProductUpload from "./components/Admin/products/ProductUpload";
 import ProductList from "./components/Admin/products/ProductList";
 import ProductEdit from "./components/Admin/products/ProductEdit";
 import OrderManagement from "./components/Admin/products/AdminOrderList";
+import AdminDashboard from "./components/Admin/products/AdminDashboard";
 
 // Category Pages
 import AllJewellery from "./pages/category/AllJewellery";
@@ -42,6 +45,7 @@ import SpecialCollectionPage from "./pages/category/Specialcollection";
 
 // Product
 import ProductDetail from "./pages/ProductDetail";
+
 
 const App = () => {
   return (
@@ -72,7 +76,6 @@ const App = () => {
 
             {/* 🔐 Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/panel" element={<AdminPanel />} />
             <Route path="/admin/auth" element={<AdminAuth />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/admin/profiles" element={<AdminProfiles />} />
@@ -80,9 +83,16 @@ const App = () => {
             <Route path="/admin/products/list" element={<ProductList />} />
             <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
             <Route path="/admin/orders" element={<OrderManagement />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard/>} />
+            <Route path="/admin/invoices" element={<Invoice />} />
+
+
 
             {/* 🛒 Product Detail */}
             <Route path="/product/:id" element={<ProductDetail />} />
+
+
+
           </Routes>
         </BrowserRouter>
       </CartProvider>
