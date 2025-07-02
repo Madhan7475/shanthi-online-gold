@@ -1,72 +1,132 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
+import { motion, AnimatePresence } from "framer-motion";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    // Dummy authentication (replace with real backend logic)
-    if (email === "admin@shanthigold.com" && password === "admin123") {
-      localStorage.setItem("isAdminAuthenticated", "true");
-      navigate("/admin/dashboard");
-    } else {
-      alert("Invalid email or password");
-    }
+    setTimeout(() => {
+      const isValid = email === "admin@shanthigold.com" && password === "admin123";
+      if (isValid) {
+        localStorage.setItem("isAdminAuthenticated", "true");
+        toast.success("✅ Login successful!", {
+          position: "top-center",
+          autoClose: 1800,
+          theme: "colored",
+        });
+        setShowWelcome(true);
+        setTimeout(() => navigate("/admin/dashboard"), 2000);
+      } else {
+        toast.error("❌ Invalid email or password", {
+          position: "top-center",
+          autoClose: 2500,
+          theme: "colored",
+        });
+        setLoading(false);
+      }
+    }, 1000);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <img
-            src="/logo_admin.svg"
-            alt="Shanthi Gold Logo"
-            className="h-14 w-auto object-contain"
-          />
-        </div>
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 bg-[#faf5fb] overflow-hidden">
+      {/* Background pattern with vignette */}
+      <div
+        className="absolute inset-0 bg-[url('/logo_admin.svg')] bg-repeat opacity-5 z-0"
+        style={{ backgroundSize: "100px" }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#00000033] via-transparent to-[#00000055] z-0 pointer-events-none" />
 
-        <h2 className="text-2xl font-semibold mb-6 text-center text-[#400F45]">
-          Admin Login
-        </h2>
+      {/* Logo */}
+      <motion.img
+        src="/logo_admin.svg"
+        alt="Shanthi Gold Logo"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.7 }}
+        className="w-40 h-auto mb-6 z-10"
+      />
 
-        <form onSubmit={handleLogin}>
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Email</label>
-            <input
-              type="email"
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#400F45]"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@shanthigold.com"
-              required
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block mb-1 font-medium">Password</label>
-            <input
-              type="password"
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#400F45]"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-[#400F45] text-white py-2 rounded-md hover:bg-purple-800 transition"
+      {/* Animate Content */}
+      <AnimatePresence mode="wait">
+        {!showWelcome ? (
+          <motion.div
+            key="login"
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="z-10 bg-white bg-opacity-90 backdrop-blur-lg p-10 rounded-2xl shadow-2xl border border-[#eaddea] w-full max-w-md"
           >
-            Login
-          </button>
-        </form>
-      </div>
+            <h2 className="text-3xl font-bold text-center text-[#400F45] mb-6">
+              Admin Login
+            </h2>
+
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-[#400F45] mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@shanthigold.com"
+                  required
+                  className="w-full px-4 py-2 border border-[#d6c3e1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#400F45] transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#400F45] mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full px-4 py-2 border border-[#d6c3e1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#400F45] transition"
+                />
+              </div>
+
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                disabled={loading}
+                className="w-full bg-[#400F45] text-white py-2 rounded-lg shadow-md hover:bg-[#330d37] transition disabled:opacity-50"
+              >
+                {loading ? "Authenticating..." : "Login"}
+              </motion.button>
+            </form>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="welcome"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className="z-10 text-center text-[#400F45] text-xl font-semibold bg-white bg-opacity-90 backdrop-blur-lg p-10 rounded-2xl shadow-2xl border border-[#eaddea]"
+          >
+            Welcome back, Admin!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ToastContainer />
     </div>
   );
 };
