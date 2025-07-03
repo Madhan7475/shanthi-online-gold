@@ -108,7 +108,7 @@ const BabyItemsPage = () => {
 
   return (
     <Layout>
-      <div className="pt-[60px] px-4 sm:px-6 md:px-8 max-w-7xl mx-auto relative">
+      <div className="pt-[30px] px-4 sm:px-6 md:px-8 max-w-7xl mx-auto relative">
         {/* Title */}
         <h1 className="text-2xl font-bold mb-4 text-gray-800 text-center">
           Baby Items

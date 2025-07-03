@@ -91,7 +91,7 @@ const AllJewellery = () => {
 
   return (
     <Layout>
-      <div className="pt-[60px] px-4 sm:px-6 md:px-8 max-w-7xl mx-auto relative">
+      <div className="pt-[30px] px-4 sm:px-6 md:px-8 max-w-7xl mx-auto relative">
         <h1 className="text-2xl font-bold mb-4 text-gray-800 text-center">All Jewellery</h1>
 
         {/* Filter Toggle Button */}
