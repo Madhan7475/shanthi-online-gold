@@ -26,12 +26,12 @@ const Footer = () => {
         <div>
           <h3 className="text-[#e2c98d] font-semibold mb-3">SHOPPING</h3>
           <ul className="space-y-2">
-            <li><a href="#">Gold Jewellery</a></li>
-            <li><a href="#">Diamond Jewellery</a></li>
-            <li><a href="#">Silver Jewellery</a></li>
-            <li><a href="#">Daily Were</a></li>
-            <li><a href="#">Baby Items</a></li>
-            <li><a href="#">Wedding</a></li>
+            <li><a href="/category/all-jewellery">Gold Jewellery</a></li>
+            <li><a href="/category/diamond">Diamond Jewellery</a></li>
+            <li><a href="/category/silver">Silver Jewellery</a></li>
+            <li><a href="/category/daily-wear">Daily Were</a></li>
+            <li><a href="/category/baby-items">Baby Items</a></li>
+            <li><a href="/category/wedding">Wedding</a></li>
             
           </ul>
         </div>
