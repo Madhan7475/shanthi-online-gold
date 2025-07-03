@@ -28,10 +28,11 @@ const Footer = () => {
           <ul className="space-y-2">
             <li><a href="#">Gold Jewellery</a></li>
             <li><a href="#">Diamond Jewellery</a></li>
-            <li><a href="#">Platinum Jewellery</a></li>
-            <li><a href="#">Gold Coin</a></li>
-            <li><a href="#">Blog</a></li>
-            <li><a href="#">Gold Rate</a></li>
+            <li><a href="#">Silver Jewellery</a></li>
+            <li><a href="#">Daily Were</a></li>
+            <li><a href="#">Baby Items</a></li>
+            <li><a href="#">Wedding</a></li>
+            
           </ul>
         </div>
 
