@@ -57,7 +57,6 @@ const FILTER_DATA = {
   ]
 };
 
-
 const BabyItemsPage = () => {
   const [products, setProducts] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -77,7 +76,6 @@ const BabyItemsPage = () => {
         console.error("❌ Failed to load Baby Items:", err);
       }
     };
-
     fetchProducts();
   }, []);
 
@@ -92,7 +90,6 @@ const BabyItemsPage = () => {
       alert("Please sign in to add items to your cart.");
       return navigate("/signin");
     }
-
     const exists = cartItems.find((item) => item._id === product._id);
     if (exists) {
       alert("Item already in cart");
@@ -102,19 +99,22 @@ const BabyItemsPage = () => {
     }
   };
 
-  const handleProductClick = (id) => {
-    navigate(`/product/${id}`);
-  };
+  const handleProductClick = (id) => navigate(`/product/${id}`);
 
   return (
     <Layout>
-      <div className="pt-[30px] px-4 sm:px-6 md:px-8 max-w-7xl mx-auto relative">
-        {/* Title */}
-        <h1 className="text-2xl font-bold mb-4 text-gray-800 text-center">
-          Baby Items
-        </h1>
 
-        {/* Filter Toggle Button */}
+      {/* ✅ Full-width Banner just below Navbar with no top space */}
+      <div className="w-screen h-40 md:h-72 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+        <img
+          src="/gold11.jpg"
+          alt="Jewellery Banner"
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      <div className="pt-[30px] px-4 sm:px-6 md:px-8 max-w-7xl mx-auto relative">
+        <h1 className="text-2xl font-bold mb-4 text-gray-800 text-center">Baby Items</h1>
         <div className="flex justify-start mb-6">
           <button
             className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-full text-sm text-[#400F45] hover:bg-gray-100"
@@ -126,7 +126,6 @@ const BabyItemsPage = () => {
           </button>
         </div>
 
-        {/* Overlay */}
         <div
           className={`fixed inset-0 bg-black bg-opacity-30 z-30 transition-opacity duration-300 ${
             showFilters ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
@@ -134,7 +133,6 @@ const BabyItemsPage = () => {
           onClick={() => setShowFilters(false)}
         />
 
-        {/* Sidebar */}
         <div
           className={`fixed top-0 left-0 w-80 h-full bg-white z-40 p-6 shadow-lg overflow-y-auto transform transition-transform duration-300 ease-in-out ${
             showFilters ? "translate-x-0" : "-translate-x-full"
@@ -176,7 +174,6 @@ const BabyItemsPage = () => {
           </div>
         </div>
 
-        {/* Product Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {products.map((product) => (
             <div
@@ -202,12 +199,8 @@ const BabyItemsPage = () => {
                 />
               </div>
               <div className="p-4">
-                <h2 className="text-sm font-medium text-gray-800 truncate">
-                  {product.title}
-                </h2>
-                <p className="text-sm text-gray-600 mb-1 truncate">
-                  {product.category}
-                </p>
+                <h2 className="text-sm font-medium text-gray-800 truncate">{product.title}</h2>
+                <p className="text-sm text-gray-600 mb-1 truncate">{product.category}</p>
                 <p className="text-base font-semibold text-[#1a1a1a]">
                   ₹{product.price.toLocaleString()}
                 </p>

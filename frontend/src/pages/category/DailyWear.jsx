@@ -108,6 +108,15 @@ const DailyWearPage = () => {
 
   return (
     <Layout>
+      {/* ✅ Full-width Banner just below Navbar with no top space */}
+      <div className="w-screen h-40 md:h-72 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+        <img
+          src="/gold9.jpg"
+          alt="Jewellery Banner"
+          className="w-full h-full object-cover"
+        />
+      </div>
+      
       <div className="pt-[30px] px-4 sm:px-6 md:px-8 max-w-7xl mx-auto relative">
         <h1 className="text-2xl font-bold mb-4 text-gray-800 text-center">Daily Wear</h1>
 
