@@ -1,33 +1,43 @@
 import React, { useState } from "react";
-import { TbBrandMeta } from "react-icons/tb";
-import { IoLogoInstagram } from "react-icons/io";
-import { RiTwitterXLine } from "react-icons/ri";
-import { FiSearch, FiUser } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 import { BsCart3 } from "react-icons/bs";
 import { MdLogin } from "react-icons/md";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 
 const Topbar = () => {
   const { cartItems } = useCart();
+  const { user, isAuthenticated, logout, loading } = useAuth(); // ⬅️ Include loading
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+
   const [showSearch, setShowSearch] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    console.log("Searching for:", searchValue);
+    console.log("🔍 Searching for:", searchValue);
     setShowSearch(false);
   };
+
+  // 🔍 Logs to trace auth state
+  console.log("🧠 Topbar AuthContext:", {
+    loading,
+    isAuthenticated,
+    user,
+    userInStorage: localStorage.getItem("user"),
+    tokenInStorage: localStorage.getItem("token"),
+  });
+
+  // ⏳ While loading, show nothing (or a placeholder)
+  if (loading) return null;
 
   return (
     <>
       {/* Top Navigation Bar */}
       <div className="bg-[#400F45] text-white relative z-20">
         <div className="container mx-auto flex justify-between items-center py-4 px-2">
-       
-
           {/* Center - Logo */}
           <div className="flex justify-center flex-grow">
             <Link to="/">
@@ -62,15 +72,25 @@ const Topbar = () => {
               )}
             </div>
 
-            {/* Auth Links */}
-            <Link to="/signin" className="hover:text-white transition" title="Sign In">
-              <MdLogin className="h-5 w-5" />
-            </Link>
-            <Link to="/signup" className="hover:text-white transition" title="Sign Up">
-              <FiUser className="h-5 w-5" />
-            </Link>
+            {/* Auth */}
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">{user?.name || user?.email || "User"}</span>
+                <button
+                  onClick={logout}
+                  title="Logout"
+                  className="hover:text-white transition text-sm"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link to="/signin" className="hover:text-white transition" title="Sign In">
+                <MdLogin className="h-5 w-5" />
+              </Link>
+            )}
 
-            {/* Admin Button */}
+            {/* Admin Panel */}
             <Link
               to="/admin/login"
               className="ml-2 bg-[#FEC878] text-black text-xs px-2 py-1 rounded hover:bg-white hover:text-[#2f0a38] transition"

@@ -1,31 +1,22 @@
-// routes/orderRoutes.js
 const express = require("express");
 const router = express.Router();
-const Order = require("../models/Order"); // import your Mongoose model
+const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const Order = require("../models/Order");
 
-// GET all orders
-router.get("/", async (req, res) => {
-  try {
-    const orders = await Order.find();
-    res.json(orders);
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
-  }
-});
+router.post("/", verifyFirebaseToken, async (req, res) => {
+  const uid = req.user.uid;
+  const { products, total, address } = req.body;
 
-// UPDATE order status
-router.put("/:id", async (req, res) => {
-  try {
-    const { status } = req.body;
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    res.json(order);
-  } catch (err) {
-    res.status(500).json({ error: "Update failed" });
-  }
+  const order = new Order({
+    user: uid,
+    products,
+    total,
+    address,
+  });
+
+  await order.save();
+
+  res.status(201).json({ message: "Order placed", order });
 });
 
 module.exports = router;

@@ -1,9 +1,8 @@
 // src/App.jsx
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route } from "react-router-dom"; // ✅ removed BrowserRouter
 
-// Context
-import { CartProvider } from "./context/CartContext";
+import { setupAuthListener } from "./utils/setupAuthListener";
 
 // Layouts
 import UserLayout from "./components/Layout/UserLayout";
@@ -12,8 +11,6 @@ import UserLayout from "./components/Layout/UserLayout";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import SigninPage from "./pages/SigninPage";
-import SignupPage from "./pages/SignupPage";
-import OTPLogin from "./pages/OTPLogin";
 
 // Admin Pages
 import AdminLogin from "./pages/login";
@@ -43,50 +40,52 @@ import SpecialCollectionPage from "./pages/category/Specialcollection";
 // Product
 import ProductDetail from "./pages/ProductDetail";
 
+// Debug Utility
+import DebugFirebaseToken from "./utils/DebugFirebaseToken";
+
 const App = () => {
+  useEffect(() => {
+    setupAuthListener();
+  }, []);
+
   return (
-    <React.StrictMode>
-      <CartProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* 🛍️ User Routes */}
-            <Route path="/" element={<UserLayout />}>
-              <Route path="cart" element={<CartPage />} />
-              <Route path="checkout" element={<CheckoutPage />} />
-              <Route path="signin" element={<SigninPage />} />
-              <Route path="signup" element={<SignupPage />} />
-              <Route path="login" element={<OTPLogin />} />
-            </Route>
+    <>
+      <DebugFirebaseToken />
+      <Routes>
+        {/* 🛍️ User Routes */}
+        <Route path="/" element={<UserLayout />}>
+          <Route path="cart" element={<CartPage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="signin" element={<SigninPage />} />
+        </Route>
 
-            {/* 💍 Category Pages */}
-            <Route path="/category/all-jewellery" element={<AllJewellery />} />
-            <Route path="/category/gold" element={<GoldPage />} />
-            <Route path="/category/diamond" element={<DiamondPage />} />
-            <Route path="/category/silver" element={<SilverPage />} />
-            <Route path="/category/earrings" element={<EarringsPage />} />
-            <Route path="/category/rings" element={<RingsPage />} />
-            <Route path="/category/daily-wear" element={<DailyWearPage />} />
-            <Route path="/category/baby-items" element={<BabyItemsPage />} />
-            <Route path="/category/wedding" element={<WeddingPage />} />
-            <Route path="/category/special-collection" element={<SpecialCollectionPage />} />
+        {/* 💍 Category Pages */}
+        <Route path="/category/all-jewellery" element={<AllJewellery />} />
+        <Route path="/category/gold" element={<GoldPage />} />
+        <Route path="/category/diamond" element={<DiamondPage />} />
+        <Route path="/category/silver" element={<SilverPage />} />
+        <Route path="/category/earrings" element={<EarringsPage />} />
+        <Route path="/category/rings" element={<RingsPage />} />
+        <Route path="/category/daily-wear" element={<DailyWearPage />} />
+        <Route path="/category/baby-items" element={<BabyItemsPage />} />
+        <Route path="/category/wedding" element={<WeddingPage />} />
+        <Route path="/category/special-collection" element={<SpecialCollectionPage />} />
 
-            {/* 🔐 Admin Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/panel" element={<AdminPanel />} />
-            <Route path="/admin/auth" element={<AdminAuth />} />
-            <Route path="/admin/analytics" element={<AdminAnalytics />} />
-            <Route path="/admin/profiles" element={<AdminProfiles />} />
-            <Route path="/admin/products" element={<ProductUpload />} />
-            <Route path="/admin/products/list" element={<ProductList />} />
-            <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
-            <Route path="/admin/orders" element={<OrderManagement />} />
+        {/* 🔐 Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/panel" element={<AdminPanel />} />
+        <Route path="/admin/auth" element={<AdminAuth />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/admin/profiles" element={<AdminProfiles />} />
+        <Route path="/admin/products" element={<ProductUpload />} />
+        <Route path="/admin/products/list" element={<ProductList />} />
+        <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
+        <Route path="/admin/orders" element={<OrderManagement />} />
 
-            {/* 🛒 Product Detail */}
-            <Route path="/product/:id" element={<ProductDetail />} />
-          </Routes>
-        </BrowserRouter>
-      </CartProvider>
-    </React.StrictMode>
+        {/* 🛒 Product Detail */}
+        <Route path="/product/:id" element={<ProductDetail />} />
+      </Routes>
+    </>
   );
 };
 

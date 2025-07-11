@@ -15,8 +15,13 @@ connectDB();
 // Initialize express app
 const app = express();
 
+// === CORS ===
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN || "http://localhost:5173", // Use env var in prod
+  credentials: true // Allows sending cookies or Authorization headers
+}));
+
 // === Middleware ===
-app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -33,32 +38,32 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// === Product Upload Route (only for image upload) ===
-const Product = require('./models/Product');
-app.post('/api/upload-product', upload.array('images', 10), async (req, res) => {
-  try {
-    const { title, description, category, price } = req.body;
-    const images = req.files.map(file => file.filename);
-
-    const product = new Product({ title, description, category, price, images });
-    await product.save();
-
-    res.status(201).json({ message: 'Product uploaded successfully!', product });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error uploading product' });
-  }
-});
-
 // === Import Routes ===
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const authRoutes = require('./routes/authRoutes');
+const otpRoutes = require('./routes/otpRoutes');
+
+
+// === Root route for health check ===
+app.get("/", (req, res) => {
+  res.send("🟢 Backend is running");
+});
 
 // === Use Routes ===
-app.use('/api/users', userRoutes);          // /api/users/register, /api/users/login
-app.use('/api/products', productRoutes);    // GET/PUT/DELETE products
-app.use('/api/orders', orderRoutes);        // Order routes
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/auth', otpRoutes); // ✅ mounts /send-otp and /verify-otp
+
+
+// === Global Error Handler (optional) ===
+app.use((err, req, res, next) => {
+  console.error('❌ Global Error:', err.stack);
+  res.status(500).json({ message: 'Server error', error: err.message });
+});
 
 // === Start Server ===
 const PORT = process.env.PORT || 5000;
