@@ -9,8 +9,8 @@ const Layout = ({ children }) => {
       {/* Header */}
       <Header />
 
-      {/* Main Content */}
-      <main className="flex-grow px-4 py-6 max-w-7xl mx-auto w-full">
+      {/* Main Content - Removed py-6 and px-4 */}
+      <main className="flex-grow w-full">
         {children}
       </main>
 
