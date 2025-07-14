@@ -1,5 +1,10 @@
+# Node and build artifacts
 node_modules
 dist
 .vite
-
 .DS_Store
+
+# Env and secret files
+.env
+.env.local
+firebase-service-account.json

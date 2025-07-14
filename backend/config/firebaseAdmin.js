@@ -1,27 +1,24 @@
 // backend/config/firebaseAdmin.js
 const admin = require("firebase-admin");
-const fs = require("fs");
-const path = require("path");
 
-let serviceAccount;
+const {
+  FIREBASE_PROJECT_ID,
+  FIREBASE_CLIENT_EMAIL,
+  FIREBASE_PRIVATE_KEY,
+} = process.env;
 
-try {
-  const keyPath = path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH);
-
-  if (!fs.existsSync(keyPath)) {
-    throw new Error(`File not found at path: ${keyPath}`);
-  }
-
-  const rawData = fs.readFileSync(keyPath, "utf8");
-  serviceAccount = JSON.parse(rawData);
-} catch (err) {
-  console.error("❌ Firebase service account key error:", err.message);
-  process.exit(1); // Exit if critical
+if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) {
+  console.error("❌ Missing Firebase env variables. Check .env file.");
+  process.exit(1);
 }
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert({
+      projectId: FIREBASE_PROJECT_ID,
+      clientEmail: FIREBASE_CLIENT_EMAIL,
+      privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    }),
   });
 }
 
