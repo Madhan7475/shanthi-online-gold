@@ -1,19 +1,25 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { useRequireAuth } from "../utils/useRequireAuth";
 
 const CartPage = () => {
+  const { checkPageAccess, loading, isAuthenticated } = useRequireAuth();
+  checkPageAccess(); // ✅ Only this is needed for auth + toast + redirect
+
   const {
     cartItems,
     updateQuantity,
     removeFromCart,
-    clearCart
+    clearCart,
   } = useCart();
 
   const total = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
   );
+
+  if (loading || !isAuthenticated) return <div className="text-center py-20">Loading...</div>;
 
   return (
     <div className="bg-[#fffdf6] px-4 lg:px-20 py-10 text-[#3e2f1c] min-h-screen">
@@ -29,7 +35,7 @@ const CartPage = () => {
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Section: Cart Items */}
+        {/* Left Section */}
         <div className="lg:col-span-2 space-y-6">
           <div className="text-right">
             <button
@@ -45,14 +51,11 @@ const CartPage = () => {
               key={item.id}
               className="border-b border-[#f4e0b9] pb-6 flex flex-col sm:flex-row justify-between gap-4"
             >
-              {/* Product Image */}
               <img
                 src={item.img || "/placeholder.png"}
                 alt={item.name}
                 className="w-24 h-24 object-contain border border-[#f4e0b9] rounded"
               />
-
-              {/* Product Info */}
               <div className="flex-1">
                 <h3 className="font-semibold text-[#3e2f1c]">{item.name}</h3>
                 <p className="text-xs text-[#9e886e]">SKU : {item.id}</p>
@@ -65,22 +68,18 @@ const CartPage = () => {
                   Save for Later
                 </p>
               </div>
-
-              {/* Price + Quantity */}
               <div className="flex flex-col items-end justify-between">
-                <div className="flex items-center space-x-2 mb-2">
-                  <select
-                    className="border border-[#f4e0b9] px-2 py-1 text-sm rounded"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateQuantity(item.id, parseInt(e.target.value))
-                    }
-                  >
-                    {[1, 2, 3, 4, 5].map((q) => (
-                      <option key={q} value={q}>{q}</option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  className="border border-[#f4e0b9] px-2 py-1 text-sm rounded mb-2"
+                  value={item.quantity}
+                  onChange={(e) =>
+                    updateQuantity(item.id, parseInt(e.target.value))
+                  }
+                >
+                  {[1, 2, 3, 4, 5].map((q) => (
+                    <option key={q} value={q}>{q}</option>
+                  ))}
+                </select>
                 <p className="text-lg font-semibold text-[#3e2f1c]">
                   ₹{(item.price * item.quantity).toLocaleString()}
                 </p>
@@ -94,7 +93,6 @@ const CartPage = () => {
             </div>
           ))}
 
-          {/* Payment Icons */}
           <div className="pt-6 flex justify-center">
             <img
               src="/payment-icons.png"
@@ -104,7 +102,7 @@ const CartPage = () => {
           </div>
         </div>
 
-        {/* Right Section: Summary */}
+        {/* Right Section */}
         <div className="bg-white border border-[#f4e0b9] p-6 rounded-xl shadow-md h-fit">
           <h3 className="text-xl font-semibold mb-4 text-[#3e2f1c]">Order Summary</h3>
           <div className="space-y-2 text-sm text-[#3e2f1c]">

@@ -87,7 +87,13 @@ const App = () => {
         <Route path="/admin/invoices" element={<Invoice />} />
 
         {/* 🛒 Product Detail */}
-        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/" element={<UserLayout />}>
+          <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="cart" element={<CartPage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="signin" element={<SigninPage />} />
+        </Route>
+
       </Routes>
     </>
   );
