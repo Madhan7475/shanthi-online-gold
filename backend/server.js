@@ -12,7 +12,7 @@ dotenv.config();
 // Connect to MongoDB
 connectDB();
 
-// Initialize express app
+// Initialize Express app
 const app = express();
 
 // === CORS ===
@@ -25,18 +25,35 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// === Multer Config ===
+// === Multer Config (for product images) ===
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath);
-    cb(null, uploadPath);
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+    cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
 const upload = multer({ storage });
+
+// === Product Upload Endpoint ===
+const Product = require('./models/Product');
+app.post('/api/upload-product', upload.array('images', 10), async (req, res) => {
+  try {
+    const { title, description, category, price } = req.body;
+    const images = req.files.map(file => file.filename);
+
+    const newProduct = new Product({ title, description, category, price, images });
+    await newProduct.save();
+
+    res.status(201).json({ message: '✅ Product uploaded successfully!', product: newProduct });
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ message: '❌ Failed to upload product.' });
+  }
+});
 
 // === Import Routes ===
 const userRoutes = require('./routes/userRoutes');
@@ -44,7 +61,7 @@ const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const authRoutes = require('./routes/authRoutes');
 const otpRoutes = require('./routes/otpRoutes');
-
+const invoiceRoutes = require('./routes/invoiceRoutes'); // 🧾 Invoices
 
 // === Root route for health check ===
 app.get("/", (req, res) => {
@@ -52,12 +69,12 @@ app.get("/", (req, res) => {
 });
 
 // === Use Routes ===
-app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/auth', otpRoutes); // ✅ mounts /send-otp and /verify-otp
-
+app.use('/api/users', userRoutes);        // /register, /login
+app.use('/api/products', productRoutes);  // GET, PUT, DELETE
+app.use('/api/orders', orderRoutes);      // Order CRUD
+app.use('/api/auth', authRoutes);         // Google/Firebase auth
+app.use('/api/auth', otpRoutes);          // Phone OTP auth
+app.use('/api/invoices', invoiceRoutes);  // Invoices API
 
 // === Global Error Handler (optional) ===
 app.use((err, req, res, next) => {

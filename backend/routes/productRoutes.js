@@ -91,4 +91,61 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+/**
+ * @route   PUT /api/products/:id
+ * @desc    Update a product by ID
+ * @access  Public
+ */
+router.put("/:id", upload.array("images", 5), async (req, res) => {
+  try {
+    const {
+      title, description, category, price, karatage, materialColour,
+      grossWeight, metal, size, diamondClarity, diamondColor, numberOfDiamonds,
+      diamondSetting, diamondShape, jewelleryType, brand, collection,
+      gender, occasion
+    } = req.body;
+
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+
+    // Update fields
+    Object.assign(product, {
+      title,
+      description,
+      category,
+      price,
+      karatage,
+      materialColour,
+      grossWeight,
+      metal,
+      size,
+      diamondClarity,
+      diamondColor,
+      numberOfDiamonds,
+      diamondSetting,
+      diamondShape,
+      jewelleryType,
+      brand,
+      collection,
+      gender,
+      occasion,
+    });
+
+    // Update images if new ones uploaded
+    if (req.files?.length > 0) {
+      product.images = req.files.map((file) => file.filename);
+    }
+
+    await product.save();
+
+    res.json({
+      message: "✅ Product updated successfully",
+      product,
+    });
+  } catch (err) {
+    console.error("❌ Error updating product:", err);
+    res.status(500).json({ error: "Failed to update product", details: err.message });
+  }
+});
+
 module.exports = router;

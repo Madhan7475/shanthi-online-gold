@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useEffect } from "react";
-import { Routes, Route } from "react-router-dom"; // ✅ removed BrowserRouter
+import { Routes, Route } from "react-router-dom";
 
 import { setupAuthListener } from "./utils/setupAuthListener";
 
@@ -14,16 +14,18 @@ import SigninPage from "./pages/SigninPage";
 
 // Admin Pages
 import AdminLogin from "./pages/login";
-import AdminPanel from "./pages/Panel";
 import AdminAuth from "./pages/AdminAuth";
 import AdminProfiles from "./pages/AdminProfiles";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import Invoice from "./pages/Invoice"; // ✅ Keep this
+import AdminPanel from "./pages/Panel"; // ✅ was only in your branch
 
 // Admin Features
 import ProductUpload from "./components/Admin/products/ProductUpload";
 import ProductList from "./components/Admin/products/ProductList";
 import ProductEdit from "./components/Admin/products/ProductEdit";
 import OrderManagement from "./components/Admin/products/AdminOrderList";
+import AdminDashboard from "./components/Admin/products/AdminDashboard";
 
 // Category Pages
 import AllJewellery from "./pages/category/AllJewellery";
@@ -40,7 +42,7 @@ import SpecialCollectionPage from "./pages/category/Specialcollection";
 // Product
 import ProductDetail from "./pages/ProductDetail";
 
-// Debug Utility
+// Debug Utility (✅ from your branch)
 import DebugFirebaseToken from "./utils/DebugFirebaseToken";
 
 const App = () => {
@@ -81,6 +83,8 @@ const App = () => {
         <Route path="/admin/products/list" element={<ProductList />} />
         <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
         <Route path="/admin/orders" element={<OrderManagement />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/invoices" element={<Invoice />} />
 
         {/* 🛒 Product Detail */}
         <Route path="/product/:id" element={<ProductDetail />} />

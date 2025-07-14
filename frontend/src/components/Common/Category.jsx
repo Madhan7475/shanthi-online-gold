@@ -1,55 +1,65 @@
+import React from "react";
+import { Link } from "react-router-dom";
+
 const categories = [
   {
-    title: "Gold Earring",
-    description: "Minimalist designs to modern styles.",
-    image: "/Gold Earring.png", // Replace with actual image path
+    title: "Gold Necklace",
+    image: "/Gold Necklace.jpg",
+    slug: "gold-necklace",
   },
   {
     title: "Diamond Ring",
-    description: "Pure, perfect and priceless designs.",
-    image: "/DiamondRing.png",
+    image: "/Diamond Ring.jpg",
+    slug: "diamond-ring",
+  },
+  {
+    title: "Bridal Set",
+    image: "/Bridal Set.jpg",
+    slug: "bridal-set",
   },
   {
     title: "Gold Bangles",
-    description: "Trendy, traditional, designer & more.",
-    image: "/Gold Bangles.png",
-  },
-  {
-    title: "Diamond Pendant",
-    description: "Where beauty and elegance combine!",
-    image: "/Diamond Pendant.png",
-  },
-  {
-    title: "Mangalsutra",
-    description: "Inspired by traditions; crafted to perfection.",
-    image: "/Mangalsutra.png",
+    image: "/Gold Bangles.jpg",
+    slug: "gold-bangles",
   },
 ];
 
-const Category = () => {
+const TrendingCategories = () => {
   return (
-    <section className="py-20 bg-white">
-      <h2 className="text-4xl font-semibold text-center mb-10">Trending Categories</h2>
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 px-4">
-        {categories.map((cat, index) => (
-          <div
-            key={index}
-            className="bg-gray-50  rounded shadow-sm p-4 text-center hover:shadow-lg transition"
+    <section className="py-20 px-4 bg-white">
+      {/* Section Header */}
+      <div className="text-center mb-14">
+        <h2 className="text-3xl md:text-4xl font-bold text-[#400F45]">
+          Trending Categories
+        </h2>
+        <p className="text-base md:text-lg text-[#400F45] mt-2">
+          Discover timeless elegance in every piece
+        </p>
+      </div>
+
+      {/* Categories Grid */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-8">
+        {categories.map(({ title, image, slug }) => (
+          <Link
+            to={`/collection/${slug}`}
+            key={slug}
+            className="group block rounded-xl overflow-hidden shadow-md transition-transform duration-300 hover:scale-105 h-[320px] relative"
           >
             <img
-              src={cat.image}
-              alt={cat.title}
-              className="w-40 h-40 mx-auto object-contain mb-4"
+              src={image}
+              alt={title}
+              className="w-full h-full object-cover"
+              loading="lazy"
             />
-            <p className="text-sm mb-2">{cat.description}</p>
-            <span className="text-black font-medium border-b-2 border-yellow-400 pb-0.5">
-              {cat.title}
-            </span>
-          </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#a14ca2cc] via-transparent to-transparent opacity-90 pointer-events-none" />
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white text-lg md:text-xl font-bold tracking-wide text-center">
+              {title.toUpperCase()}
+            </div>
+          </Link>
         ))}
       </div>
     </section>
   );
 };
 
-export default Category;
+export default TrendingCategories;
