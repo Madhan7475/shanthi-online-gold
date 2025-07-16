@@ -8,10 +8,8 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
   const { uid, email, phone } = req.user;
   const { name } = req.body;
 
-  console.log("🔐 Syncing user:", { uid, email, phone, name });
-
   try {
-    // Match using any identifier
+    // 🔍 Find user by any identifier (important for case #3)
     let user = await User.findOne({
       $or: [
         { firebaseUid: uid },
@@ -27,17 +25,14 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
         user.firebaseUid = uid;
         updated = true;
       }
-
       if (!user.email && email) {
         user.email = email;
         updated = true;
       }
-
       if (!user.phone && phone) {
         user.phone = phone;
         updated = true;
       }
-
       if (!user.name && name) {
         user.name = name;
         updated = true;
@@ -49,13 +44,21 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
       } else {
         console.log("📌 Existing user found:", user._id);
       }
+
     } else {
-      user = await User.create({
+      // 🛡️ Prevent inserting null phone/email
+      if (!email && !phone) {
+        return res.status(400).json({ message: "Phone or Email required." });
+      }
+
+      const newUserData = {
         firebaseUid: uid,
-        email: email || null,
-        phone: phone || null,
         name: name || null,
-      });
+      };
+      if (email) newUserData.email = email;
+      if (phone) newUserData.phone = phone;
+
+      user = await User.create(newUserData);
       console.log("✅ Created new user:", user._id);
     }
 
@@ -65,6 +68,7 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 
 // ✅ For 2Factor-authenticated users (manual OTP login)
