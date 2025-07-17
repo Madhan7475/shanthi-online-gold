@@ -9,8 +9,10 @@ import { useAuth } from "../../context/AuthContext";
 
 const Topbar = () => {
   const { cartItems } = useCart();
-  const { user, isAuthenticated, logout, loading } = useAuth(); // ⬅️ Include loading
-  const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+  const { user, isAuthenticated, logout, loading } = useAuth();
+
+  // ✅ Only calculate and show cart count if the user is authenticated
+  const cartCount = isAuthenticated ? cartItems.reduce((sum, i) => sum + i.quantity, 0) : 0;
 
   const [showSearch, setShowSearch] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -21,16 +23,6 @@ const Topbar = () => {
     setShowSearch(false);
   };
 
-  // 🔍 Logs to trace auth state
-  console.log("🧠 Topbar AuthContext:", {
-    loading,
-    isAuthenticated,
-    user,
-    userInStorage: localStorage.getItem("user"),
-    tokenInStorage: localStorage.getItem("token"),
-  });
-
-  // ⏳ While loading, show nothing (or a placeholder)
   if (loading) return null;
 
   return (
@@ -65,6 +57,7 @@ const Topbar = () => {
               <Link to="/cart" title="Cart" className="hover:text-white transition">
                 <BsCart3 className="h-5 w-5" />
               </Link>
+              {/* ✅ This will now correctly be 0 when logged out */}
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-[#FEC878] text-black text-[10px] px-1.5 py-0.5 rounded-full">
                   {cartCount}

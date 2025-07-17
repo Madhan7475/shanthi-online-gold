@@ -1,18 +1,103 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { onIdTokenChanged, signOut } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { AuthContext } from "./AuthContext";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-toastify";
+import InactivityToast from '../components/Common/InactivityToast';
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
-  const hydratedFromOtp = useRef(false); // ✅ Track OTP-based login
-   const navigate = useNavigate(); 
+  const hydratedFromOtp = useRef(false);
+  const navigate = useNavigate();
+  const warningToastId = useRef(null);
 
-  // 🔃 1. Hydrate from localStorage on initial mount
+  const logout = useCallback(async () => {
+    // Check for items in cart before logging out and set flag
+    try {
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      if (cart.length > 0) {
+        localStorage.setItem("hasPendingCart", "true");
+      }
+    } catch (error) {
+      console.error("Could not check cart before logout:", error);
+    }
+
+    toast.dismiss();
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn("⚠️ Firebase signOut failed:", err.message);
+    }
+
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+
+    hydratedFromOtp.current = false;
+    setUser(null);
+    setToken(null);
+    navigate("/signin");
+  }, [navigate]);
+
+  // AUTO-LOGOUT LOGIC
+  useEffect(() => {
+    let warningTimer;
+    let logoutTimer;
+
+    const resetTimers = () => {
+      clearTimeout(warningTimer);
+      clearTimeout(logoutTimer);
+      if (warningToastId.current) {
+        toast.dismiss(warningToastId.current);
+      }
+
+      if (!localStorage.getItem("token")) {
+        return;
+      }
+
+      const warningTimeout = 14 * 60 * 1000;
+      const finalTimeout = 15 * 60 * 1000;
+
+      warningTimer = setTimeout(() => {
+        warningToastId.current = toast.warn(
+          <InactivityToast onStayLoggedIn={resetTimers} />,
+          {
+            toastId: 'inactivity-warning',
+            autoClose: finalTimeout - warningTimeout,
+            closeOnClick: false,
+            draggable: false,
+            pauseOnHover: true,
+            closeButton: false,
+          }
+        );
+      }, warningTimeout);
+
+      logoutTimer = setTimeout(() => {
+        logout();
+      }, finalTimeout);
+    };
+
+    const activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+
+    activityEvents.forEach(event => {
+      window.addEventListener(event, resetTimers);
+    });
+
+    resetTimers();
+
+    return () => {
+      clearTimeout(warningTimer);
+      clearTimeout(logoutTimer);
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, resetTimers);
+      });
+    };
+  }, [logout]);
+
+
+  // Effect for hydrating from localStorage on initial load
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
@@ -22,21 +107,18 @@ const AuthProvider = ({ children }) => {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         setToken(storedToken);
-        hydratedFromOtp.current = true; // ✅ Set flag
-        console.log("✅ [AuthProvider] Hydrated from localStorage:", parsedUser);
+        hydratedFromOtp.current = true;
       } catch (err) {
-        console.error("❌ Failed to parse localStorage:", err);
         localStorage.removeItem("user");
         localStorage.removeItem("token");
       }
     }
+    setLoading(false);
   }, []);
 
-  // 🔄 2. Listen for Firebase login/logout changes
+  // This effect now only manages the user state
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
-      console.log("🔄 Firebase auth state changed:", firebaseUser);
-
       if (firebaseUser) {
         try {
           const freshToken = await firebaseUser.getIdToken(true);
@@ -50,29 +132,22 @@ const AuthProvider = ({ children }) => {
           localStorage.setItem("token", freshToken);
           setUser(userObj);
           setToken(freshToken);
-          hydratedFromOtp.current = false; // ✅ Firebase takes control
-          console.log("✅ [AuthProvider] Logged in via Firebase:", userObj);
+          hydratedFromOtp.current = false;
         } catch (err) {
           console.error("❌ Failed to get Firebase token:", err);
         }
       } else {
         if (!hydratedFromOtp.current) {
-          // 🛑 Only wipe state if not OTP-based
-          console.log("🚫 [AuthProvider] Firebase user is null and not OTP — clearing auth");
           setUser(null);
           setToken(null);
-        } else {
-          console.log("🟡 [AuthProvider] Ignoring Firebase null, OTP login active");
         }
       }
-
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // 🔁 3. Sync if storage changes from other tabs
   useEffect(() => {
     const syncFromStorage = () => {
       const storedUser = localStorage.getItem("user");
@@ -83,9 +158,8 @@ const AuthProvider = ({ children }) => {
           setUser(JSON.parse(storedUser));
           setToken(storedToken);
           hydratedFromOtp.current = true;
-          console.log("🔁 Synced AuthProvider from another tab");
         } catch (err) {
-          console.error("❌ Storage sync failed:", err);
+          // handle error
         }
       } else {
         setUser(null);
@@ -97,7 +171,6 @@ const AuthProvider = ({ children }) => {
     return () => window.removeEventListener("storage", syncFromStorage);
   }, []);
 
-  // 🔁 Manual force hydrate (used after OTP login)
   const forceHydrate = () => {
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
@@ -107,26 +180,10 @@ const AuthProvider = ({ children }) => {
         setUser(JSON.parse(storedUser));
         setToken(storedToken);
         hydratedFromOtp.current = true;
-        console.log("✅ Forced rehydrate of AuthProvider");
       } catch (err) {
-        console.error("❌ Failed to force hydrate:", err);
+        // handle error
       }
     }
-  };
-
-  const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.warn("⚠️ Firebase signOut failed:", err.message);
-    }
-
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    hydratedFromOtp.current = false;
-    setUser(null);
-    setToken(null);
-    navigate("/signin"); 
   };
 
   return (
@@ -137,7 +194,7 @@ const AuthProvider = ({ children }) => {
         isAuthenticated: !!user,
         logout,
         loading,
-        forceHydrate, // ✅ expose to context consumers
+        forceHydrate,
       }}
     >
       {children}

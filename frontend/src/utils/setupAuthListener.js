@@ -15,8 +15,22 @@ export const setupAuthListener = () => {
         })
       );
     } else {
+      // ✅ Firebase session expired or user signed out
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+
+      // ✅ Also clear 2Factor OTP session if present
+      localStorage.removeItem("otpUserToken");
+      localStorage.removeItem("otpTokenExpiry");
+      localStorage.removeItem("phoneNumber");
     }
   });
+
+  // ✅ Check 2Factor OTP expiry (if used)
+  const otpExpiry = localStorage.getItem("otpTokenExpiry");
+  if (otpExpiry && Date.now() > parseInt(otpExpiry)) {
+    localStorage.removeItem("otpUserToken");
+    localStorage.removeItem("otpTokenExpiry");
+    localStorage.removeItem("phoneNumber");
+  }
 };

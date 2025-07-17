@@ -11,14 +11,15 @@ import UserLayout from "./components/Layout/UserLayout";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import SigninPage from "./pages/SigninPage";
+import RequireAuthPage from "./utils/RequireAuthPage"; // ✅ Import the wrapper
 
 // Admin Pages
 import AdminLogin from "./pages/login";
 import AdminAuth from "./pages/AdminAuth";
 import AdminProfiles from "./pages/AdminProfiles";
 import AdminAnalytics from "./pages/AdminAnalytics";
-import Invoice from "./pages/Invoice"; // ✅ Keep this
-import AdminPanel from "./pages/Panel"; // ✅ was only in your branch
+import Invoice from "./pages/Invoice";
+import AdminPanel from "./pages/Panel";
 
 // Admin Features
 import ProductUpload from "./components/Admin/products/ProductUpload";
@@ -42,7 +43,7 @@ import SpecialCollectionPage from "./pages/category/Specialcollection";
 // Product
 import ProductDetail from "./pages/ProductDetail";
 
-// Debug Utility (✅ from your branch)
+// Debug Utility
 import DebugFirebaseToken from "./utils/DebugFirebaseToken";
 
 const App = () => {
@@ -56,9 +57,13 @@ const App = () => {
       <Routes>
         {/* 🛍️ User Routes */}
         <Route path="/" element={<UserLayout />}>
-          <Route path="cart" element={<CartPage />} />
-          <Route path="checkout" element={<CheckoutPage />} />
+          {/* Public Routes */}
           <Route path="signin" element={<SigninPage />} />
+          <Route path="product/:id" element={<ProductDetail />} />
+
+          {/* ✅ Protected Routes */}
+          <Route path="cart" element={<RequireAuthPage><CartPage /></RequireAuthPage>} />
+          <Route path="checkout" element={<RequireAuthPage><CheckoutPage /></RequireAuthPage>} />
         </Route>
 
         {/* 💍 Category Pages */}
@@ -85,15 +90,6 @@ const App = () => {
         <Route path="/admin/orders" element={<OrderManagement />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/invoices" element={<Invoice />} />
-
-        {/* 🛒 Product Detail */}
-        <Route path="/" element={<UserLayout />}>
-          <Route path="product/:id" element={<ProductDetail />} />
-          <Route path="cart" element={<CartPage />} />
-          <Route path="checkout" element={<CheckoutPage />} />
-          <Route path="signin" element={<SigninPage />} />
-        </Route>
-
       </Routes>
     </>
   );

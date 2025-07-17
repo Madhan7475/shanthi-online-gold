@@ -5,6 +5,7 @@ import { signInWithPopup } from "firebase/auth";
 import axiosInstance from "../utils/axiosInstance";
 import { FcGoogle } from "react-icons/fc";
 import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify";
 
 const SigninPage = () => {
   const [phone, setPhone] = useState("");
@@ -17,7 +18,20 @@ const SigninPage = () => {
   const { forceHydrate } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Resend OTP logic
+  // ✅ This function now handles all post-login logic, including navigation.
+  const handleSuccessfulLogin = () => {
+    forceHydrate(); // Update the auth context immediately
+
+    // Check if there's a cart to restore
+    if (localStorage.getItem("hasPendingCart") === "true") {
+      localStorage.removeItem("hasPendingCart");
+      toast.info("Welcome back! Let's pick up where you left off.");
+      navigate("/cart");
+    } else {
+      navigate("/"); // Default navigation to homepage
+    }
+  };
+
   const [resendAvailable, setResendAvailable] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
 
@@ -74,8 +88,7 @@ const SigninPage = () => {
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-      forceHydrate();
-      navigate("/");
+      handleSuccessfulLogin();
     } catch (err) {
       setMessage("❌ " + (err.response?.data?.message || err.message));
     }
@@ -94,8 +107,7 @@ const SigninPage = () => {
       const { token, user } = res.data;
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-      forceHydrate();
-      navigate("/");
+      handleSuccessfulLogin();
     } catch (err) {
       setMessage("❌ Failed to complete registration.");
     }
@@ -115,8 +127,7 @@ const SigninPage = () => {
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      forceHydrate();
-      navigate("/");
+      handleSuccessfulLogin();
     } catch {
       setMessage("Google sign-in failed.");
     }
@@ -203,11 +214,10 @@ const SigninPage = () => {
           {!awaitingEmail && (
             <button
               type="submit"
-              className={`w-full py-2 rounded font-semibold transition duration-300 text-black shadow ${
-                phone.length === 10
-                  ? "bg-[#f4c57c] hover:bg-[#ffd580] hover:scale-[1.01]"
-                  : "bg-gray-300 cursor-not-allowed"
-              }`}
+              className={`w-full py-2 rounded font-semibold transition duration-300 text-black shadow ${phone.length === 10
+                ? "bg-[#f4c57c] hover:bg-[#ffd580] hover:scale-[1.01]"
+                : "bg-gray-300 cursor-not-allowed"
+                }`}
               disabled={phone.length !== 10}
             >
               {otpSent ? "Verify OTP" : "Send OTP"}

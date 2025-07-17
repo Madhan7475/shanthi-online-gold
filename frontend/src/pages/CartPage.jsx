@@ -1,12 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { useRequireAuth } from "../utils/useRequireAuth";
+import { useAuth } from "../context/AuthContext"; // Use the main auth hook
 
 const CartPage = () => {
-  const { checkPageAccess, loading, isAuthenticated } = useRequireAuth();
-  checkPageAccess(); // ✅ Only this is needed for auth + toast + redirect
-
+  // ✅ Removed the useRequireAuth and checkPageAccess() call
+  const { loading } = useAuth();
   const {
     cartItems,
     updateQuantity,
@@ -19,7 +18,8 @@ const CartPage = () => {
     0
   );
 
-  if (loading || !isAuthenticated) return <div className="text-center py-20">Loading...</div>;
+  // We can still show a loading state, but the redirect is now handled by the router
+  if (loading) return <div className="text-center py-20">Loading...</div>;
 
   return (
     <div className="bg-[#fffdf6] px-4 lg:px-20 py-10 text-[#3e2f1c] min-h-screen">
@@ -35,7 +35,6 @@ const CartPage = () => {
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Section */}
         <div className="lg:col-span-2 space-y-6">
           <div className="text-right">
             <button
@@ -48,20 +47,26 @@ const CartPage = () => {
 
           {cartItems.map((item) => (
             <div
-              key={item.id}
+              key={item._id}
               className="border-b border-[#f4e0b9] pb-6 flex flex-col sm:flex-row justify-between gap-4"
             >
               <img
-                src={item.img || "/placeholder.png"}
-                alt={item.name}
+                src={
+                  item.images?.[0]
+                    ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${item.images[0]}`
+                    : "/placeholder.png"
+                }
+                alt={item.title}
                 className="w-24 h-24 object-contain border border-[#f4e0b9] rounded"
               />
               <div className="flex-1">
-                <h3 className="font-semibold text-[#3e2f1c]">{item.name}</h3>
-                <p className="text-xs text-[#9e886e]">SKU : {item.id}</p>
+                <h3 className="font-semibold text-[#3e2f1c]">{item.title}</h3>
+                <p className="text-xs text-[#9e886e]">SKU : {item._id}</p>
                 <p className="text-sm mt-2">
                   <span className="text-[#6c553f]">Stock:</span>{" "}
-                  <span className="text-red-600 font-medium">Only few left</span>
+                  <span className="text-red-600 font-medium">
+                    Only few left
+                  </span>
                 </p>
                 <p className="text-sm text-[#9e886e] mt-1">Size : </p>
                 <p className="text-xs text-[#c29d5f] mt-1 underline cursor-pointer">
@@ -73,7 +78,7 @@ const CartPage = () => {
                   className="border border-[#f4e0b9] px-2 py-1 text-sm rounded mb-2"
                   value={item.quantity}
                   onChange={(e) =>
-                    updateQuantity(item.id, parseInt(e.target.value))
+                    updateQuantity(item._id, parseInt(e.target.value))
                   }
                 >
                   {[1, 2, 3, 4, 5].map((q) => (
@@ -84,7 +89,7 @@ const CartPage = () => {
                   ₹{(item.price * item.quantity).toLocaleString()}
                 </p>
                 <button
-                  onClick={() => removeFromCart(item.id)}
+                  onClick={() => removeFromCart(item._id)}
                   className="text-xs text-[#9e886e] mt-1 hover:text-red-500"
                 >
                   ✖
@@ -102,7 +107,6 @@ const CartPage = () => {
           </div>
         </div>
 
-        {/* Right Section */}
         <div className="bg-white border border-[#f4e0b9] p-6 rounded-xl shadow-md h-fit">
           <h3 className="text-xl font-semibold mb-4 text-[#3e2f1c]">Order Summary</h3>
           <div className="space-y-2 text-sm text-[#3e2f1c]">
