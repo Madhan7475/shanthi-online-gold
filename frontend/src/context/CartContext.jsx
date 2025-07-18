@@ -4,29 +4,43 @@ import { toast } from "react-toastify";
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
-  const [savedItems, setSavedItems] = useState([]); // ✅ New state for saved items
+  // Initialize state from localStorage or an empty array
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const storedCart = localStorage.getItem("cart");
+      return storedCart ? JSON.parse(storedCart) : [];
+    } catch (error) {
+      console.error("Failed to parse cart from localStorage", error);
+      return [];
+    }
+  });
 
-  // Load cart and saved items from localStorage on mount
+  const [savedItems, setSavedItems] = useState(() => {
+    try {
+      const storedSavedItems = localStorage.getItem("savedItems");
+      return storedSavedItems ? JSON.parse(storedSavedItems) : [];
+    } catch (error) {
+      console.error("Failed to parse saved items from localStorage", error);
+      return [];
+    }
+  });
+
+  // ✅ Effect to SAVE cartItems to localStorage whenever they change
   useEffect(() => {
     try {
-      const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
-      setCartItems(storedCart);
-      const storedSavedItems = JSON.parse(localStorage.getItem("savedItems")) || [];
-      setSavedItems(storedSavedItems);
+      localStorage.setItem("cart", JSON.stringify(cartItems));
     } catch (error) {
-      console.error("Failed to parse from localStorage", error);
+      console.error("Failed to save cart to localStorage", error);
     }
-  }, []);
-
-  // Sync cart to localStorage
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // ✅ Sync saved items to localStorage
+  // ✅ Effect to SAVE savedItems to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("savedItems", JSON.stringify(savedItems));
+    try {
+      localStorage.setItem("savedItems", JSON.stringify(savedItems));
+    } catch (error) {
+      console.error("Failed to save saved items to localStorage", error);
+    }
   }, [savedItems]);
 
   const addToCart = (product) => {
@@ -53,29 +67,24 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
   };
 
-  // ✅ New function to save an item for later
   const saveForItemLater = (itemId) => {
     const itemToSave = cartItems.find(item => item._id === itemId);
     if (itemToSave) {
-      // Add to saved items (if not already there)
       setSavedItems(prev => {
         const exists = prev.find(item => item._id === itemId);
         if (exists) return prev;
         return [...prev, itemToSave];
       });
-      // Remove from cart
       removeFromCart(itemId);
       toast.info("Item saved for later!");
     }
   };
 
-  // ✅ New function to move an item from saved to cart
   const moveToCart = (item) => {
-    addToCart(item); // Use existing addToCart logic
-    removeFromSaved(item._id); // Remove from saved list
+    addToCart(item);
+    removeFromSaved(item._id);
   };
 
-  // ✅ New function to remove an item from the saved list
   const removeFromSaved = (itemId) => {
     setSavedItems(prev => prev.filter(item => item._id !== itemId));
   };
