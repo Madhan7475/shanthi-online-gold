@@ -22,12 +22,16 @@ const SigninPage = () => {
   const handleSuccessfulLogin = () => {
     forceHydrate(); // Update the auth context immediately
 
-    // Check if there's a cart to restore
+    // ✅ Prioritize cart, then saved items, then homepage
     if (localStorage.getItem("hasPendingCart") === "true") {
       localStorage.removeItem("hasPendingCart");
       toast.info("Welcome back! Let's pick up where you left off.");
       navigate("/cart");
     } else {
+      const saved = JSON.parse(localStorage.getItem("savedItems") || "[]");
+      if (saved.length > 0) {
+        toast.info(`You have ${saved.length} item(s) saved for later!`);
+      }
       navigate("/"); // Default navigation to homepage
     }
   };

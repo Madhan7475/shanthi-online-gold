@@ -11,7 +11,8 @@ import UserLayout from "./components/Layout/UserLayout";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import SigninPage from "./pages/SigninPage";
-import RequireAuthPage from "./utils/RequireAuthPage"; // ✅ Import the wrapper
+import RequireAuthPage from "./utils/RequireAuthPage";
+import SavedItemsPage from "./pages/SavedItemsPage"; // ✅ Import the new page
 
 // Admin Pages
 import AdminLogin from "./pages/login";
@@ -61,9 +62,11 @@ const App = () => {
           <Route path="signin" element={<SigninPage />} />
           <Route path="product/:id" element={<ProductDetail />} />
 
-          {/* ✅ Protected Routes */}
+          {/* Protected Routes */}
           <Route path="cart" element={<RequireAuthPage><CartPage /></RequireAuthPage>} />
           <Route path="checkout" element={<RequireAuthPage><CheckoutPage /></RequireAuthPage>} />
+          {/* ✅ Add the new protected route for saved items */}
+          <Route path="saved-items" element={<RequireAuthPage><SavedItemsPage /></RequireAuthPage>} />
         </Route>
 
         {/* 💍 Category Pages */}

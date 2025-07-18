@@ -1,16 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext"; // Use the main auth hook
+import { useRequireAuth } from "../utils/useRequireAuth";
 
 const CartPage = () => {
-  // ✅ Removed the useRequireAuth and checkPageAccess() call
-  const { loading } = useAuth();
+  const { loading, isAuthenticated } = useRequireAuth();
   const {
     cartItems,
     updateQuantity,
     removeFromCart,
     clearCart,
+    saveForItemLater, // ✅ Get the new function
   } = useCart();
 
   const total = cartItems.reduce(
@@ -18,8 +18,7 @@ const CartPage = () => {
     0
   );
 
-  // We can still show a loading state, but the redirect is now handled by the router
-  if (loading) return <div className="text-center py-20">Loading...</div>;
+  if (loading || !isAuthenticated) return <div className="text-center py-20">Loading...</div>;
 
   return (
     <div className="bg-[#fffdf6] px-4 lg:px-20 py-10 text-[#3e2f1c] min-h-screen">
@@ -69,9 +68,13 @@ const CartPage = () => {
                   </span>
                 </p>
                 <p className="text-sm text-[#9e886e] mt-1">Size : </p>
-                <p className="text-xs text-[#c29d5f] mt-1 underline cursor-pointer">
+                {/* ✅ Updated to be a button with an onClick handler */}
+                <button
+                  onClick={() => saveForItemLater(item._id)}
+                  className="text-xs text-[#c29d5f] mt-1 underline cursor-pointer hover:text-[#a8824a]"
+                >
                   Save for Later
-                </p>
+                </button>
               </div>
               <div className="flex flex-col items-end justify-between">
                 <select
