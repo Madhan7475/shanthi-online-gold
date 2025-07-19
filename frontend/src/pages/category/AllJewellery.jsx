@@ -4,6 +4,10 @@ import Layout from "../../components/Common/Layout";
 import { FaHeart, FaShoppingCart, FaFilter, FaTimes } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
+import { useRequireAuth } from "../../utils/useRequireAuth";
+import { toast } from "react-toastify";
+
+
 
 const FILTER_DATA = {
   Price: ["< 25,000", "25,000 - 50,000", "50,000 - 1,00,000", "1,00,000+"],
@@ -46,6 +50,22 @@ const AllJewellery = () => {
   };
 
   const handleProductClick = (id) => navigate(`/product/${id}`);
+  const authWrapper = useRequireAuth();
+  const handleAddToCart = (product) => {
+    authWrapper(() => {
+      console.log("✅ Passed auth check, running add to cart");
+
+      const exists = cartItems.find((item) => item._id === product._id);
+      if (exists) {
+        toast.info("Item already in cart");
+      } else {
+        addToCart(product);
+        toast.info("Item added to cart");
+      }
+    });
+  };
+
+
 
   return (
     <Layout>
@@ -148,21 +168,12 @@ const AllJewellery = () => {
                 className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f]"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!localStorage.getItem("userToken")) {
-                    alert("Please sign in to add items to your cart.");
-                    return navigate("/signin");
-                  }
-                  const exists = cartItems.find((item) => item._id === product._id);
-                  if (exists) {
-                    alert("Item already in cart");
-                  } else {
-                    addToCart(product);
-                    alert("Item added to cart");
-                  }
+                  handleAddToCart(product);
                 }}
               >
                 <FaShoppingCart />
               </div>
+
             </div>
           ))}
         </div>

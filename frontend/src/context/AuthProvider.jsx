@@ -1,81 +1,188 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { onIdTokenChanged, signOut } from "firebase/auth";
+import { auth } from "../firebase/firebaseConfig";
 import { AuthContext } from "./AuthContext";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut,
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-} from "firebase/auth";
-import { app } from "../firebase/config";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import InactivityToast from '../components/Common/InactivityToast';
 
-const auth = getAuth(app);
-
-export const AuthProvider = ({ children }) => {
+const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [confirmationResult, setConfirmationResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const hydratedFromOtp = useRef(false);
+  const navigate = useNavigate();
+  const warningToastId = useRef(null);
 
-  // 🔄 Watch auth state change
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return unsubscribe;
-  }, []);
-
-  // 📲 Send OTP
-  const sendOTP = async (phoneNumber, recaptchaId = "recaptcha-container") => {
-    setLoading(true);
+  const logout = useCallback(async () => {
+    // Check for items in cart before logging out and set flag
     try {
-      // If already exists, reset to avoid duplicate instance error
-      if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(
-          recaptchaId,
-          { size: "invisible" },
-          auth
-        );
-        await window.recaptchaVerifier.render();
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      if (cart.length > 0) {
+        localStorage.setItem("hasPendingCart", "true");
       }
-
-      const result = await signInWithPhoneNumber(
-        auth,
-        `+91${phoneNumber}`,
-        window.recaptchaVerifier
-      );
-
-      setConfirmationResult(result);
-      return { success: true };
     } catch (error) {
-      console.error("📵 Error sending OTP:", error);
-      return { success: false, error };
-    } finally {
-      setLoading(false);
+      console.error("Could not check cart before logout:", error);
     }
-  };
 
-  // 🔐 Verify OTP
-  const verifyOTP = async (otp) => {
-    if (!confirmationResult) {
-      return { success: false, error: "No confirmation available" };
-    }
-    try {
-      const result = await confirmationResult.confirm(otp);
-      setUser(result.user);
-      return { success: true };
-    } catch (error) {
-      console.error("❌ OTP verification failed:", error);
-      return { success: false, error };
-    }
-  };
-
-  // 🚪 Logout
-  const logout = async () => {
+    toast.dismiss();
     try {
       await signOut(auth);
-      setUser(null);
-    } catch (error) {
-      console.error("⚠️ Logout error:", error);
+    } catch (err) {
+      console.warn("⚠️ Firebase signOut failed:", err.message);
+    }
+
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+
+    hydratedFromOtp.current = false;
+    setUser(null);
+    setToken(null);
+    navigate("/signin");
+  }, [navigate]);
+
+  // AUTO-LOGOUT LOGIC
+  useEffect(() => {
+    let warningTimer;
+    let logoutTimer;
+
+    const resetTimers = () => {
+      clearTimeout(warningTimer);
+      clearTimeout(logoutTimer);
+      if (warningToastId.current) {
+        toast.dismiss(warningToastId.current);
+      }
+
+      if (!localStorage.getItem("token")) {
+        return;
+      }
+
+      const warningTimeout = 14 * 60 * 1000;
+      const finalTimeout = 15 * 60 * 1000;
+
+      warningTimer = setTimeout(() => {
+        warningToastId.current = toast.warn(
+          <InactivityToast onStayLoggedIn={resetTimers} />,
+          {
+            toastId: 'inactivity-warning',
+            autoClose: finalTimeout - warningTimeout,
+            closeOnClick: false,
+            draggable: false,
+            pauseOnHover: true,
+            closeButton: false,
+          }
+        );
+      }, warningTimeout);
+
+      logoutTimer = setTimeout(() => {
+        logout();
+      }, finalTimeout);
+    };
+
+    const activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+
+    activityEvents.forEach(event => {
+      window.addEventListener(event, resetTimers);
+    });
+
+    resetTimers();
+
+    return () => {
+      clearTimeout(warningTimer);
+      clearTimeout(logoutTimer);
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, resetTimers);
+      });
+    };
+  }, [logout]);
+
+
+  // Effect for hydrating from localStorage on initial load
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("token");
+
+    if (storedUser && storedToken) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setToken(storedToken);
+        hydratedFromOtp.current = true;
+      } catch (err) {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  // This effect now only manages the user state
+  useEffect(() => {
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const freshToken = await firebaseUser.getIdToken(true);
+          const userObj = {
+            email: firebaseUser.email,
+            name: firebaseUser.displayName,
+            uid: firebaseUser.uid,
+          };
+
+          localStorage.setItem("user", JSON.stringify(userObj));
+          localStorage.setItem("token", freshToken);
+          setUser(userObj);
+          setToken(freshToken);
+          hydratedFromOtp.current = false;
+        } catch (err) {
+          console.error("❌ Failed to get Firebase token:", err);
+        }
+      } else {
+        if (!hydratedFromOtp.current) {
+          setUser(null);
+          setToken(null);
+        }
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const syncFromStorage = () => {
+      const storedUser = localStorage.getItem("user");
+      const storedToken = localStorage.getItem("token");
+
+      if (storedUser && storedToken) {
+        try {
+          setUser(JSON.parse(storedUser));
+          setToken(storedToken);
+          hydratedFromOtp.current = true;
+        } catch (err) {
+          // handle error
+        }
+      } else {
+        setUser(null);
+        setToken(null);
+      }
+    };
+
+    window.addEventListener("storage", syncFromStorage);
+    return () => window.removeEventListener("storage", syncFromStorage);
+  }, []);
+
+  const forceHydrate = () => {
+    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("token");
+
+    if (storedUser && storedToken) {
+      try {
+        setUser(JSON.parse(storedUser));
+        setToken(storedToken);
+        hydratedFromOtp.current = true;
+      } catch (err) {
+        // handle error
+      }
     }
   };
 
@@ -83,13 +190,16 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        loading,
-        sendOTP,
-        verifyOTP,
+        token,
+        isAuthenticated: !!user,
         logout,
+        loading,
+        forceHydrate,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;

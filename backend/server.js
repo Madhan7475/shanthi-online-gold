@@ -15,8 +15,13 @@ connectDB();
 // Initialize Express app
 const app = express();
 
+// === CORS ===
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN || "http://localhost:5173", // Use env var in prod
+  credentials: true // Allows sending cookies or Authorization headers
+}));
+
 // === Middleware ===
-app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -54,13 +59,28 @@ app.post('/api/upload-product', upload.array('images', 10), async (req, res) => 
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const authRoutes = require('./routes/authRoutes');
+const otpRoutes = require('./routes/otpRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes'); // 🧾 Invoices
+
+// === Root route for health check ===
+app.get("/", (req, res) => {
+  res.send("🟢 Backend is running");
+});
 
 // === Use Routes ===
 app.use('/api/users', userRoutes);        // /register, /login
 app.use('/api/products', productRoutes);  // GET, PUT, DELETE
 app.use('/api/orders', orderRoutes);      // Order CRUD
+app.use('/api/auth', authRoutes);         // Google/Firebase auth
+app.use('/api/auth', otpRoutes);          // Phone OTP auth
 app.use('/api/invoices', invoiceRoutes);  // Invoices API
+
+// === Global Error Handler (optional) ===
+app.use((err, req, res, next) => {
+  console.error('❌ Global Error:', err.stack);
+  res.status(500).json({ message: 'Server error', error: err.message });
+});
 
 // === Start Server ===
 const PORT = process.env.PORT || 5000;
