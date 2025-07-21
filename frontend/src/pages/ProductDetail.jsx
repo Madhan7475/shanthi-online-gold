@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { useCart } from "../context/CartContext";
 import { useRequireAuth } from "../utils/useRequireAuth";
-import { toast } from "react-toastify";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -28,15 +27,7 @@ const ProductDetails = () => {
   }, [id]);
 
   const handleAddToCart = () => {
-    runWithAuth(() => {
-      const exists = cartItems.find((item) => item._id === product._id);
-      if (exists) {
-        toast.info("Item already in cart");
-      } else {
-        addToCart(product);
-        toast.success("Item added to cart");
-      }
-    });
+    runWithAuth(() => addToCart(product));
   };
 
   if (!product) {
@@ -80,11 +71,10 @@ const ProductDetails = () => {
                 key={idx}
                 src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${img}`}
                 onClick={() => setSelectedImage(img)}
-                className={`w-20 h-20 object-cover border rounded-md cursor-pointer transition ${
-                  selectedImage === img
-                    ? "border-[#4b1e59] ring-2 ring-[#4b1e59]"
-                    : "border-gray-300"
-                }`}
+                className={`w-20 h-20 object-cover border rounded-md cursor-pointer transition ${selectedImage === img
+                  ? "border-[#4b1e59] ring-2 ring-[#4b1e59]"
+                  : "border-gray-300"
+                  }`}
                 alt={`View ${idx + 1}`}
               />
             ))}
