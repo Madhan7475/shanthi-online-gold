@@ -4,13 +4,11 @@ import { toast } from "react-toastify";
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  // Initialize state from localStorage or an empty array
   const [cartItems, setCartItems] = useState(() => {
     try {
       const storedCart = localStorage.getItem("cart");
       return storedCart ? JSON.parse(storedCart) : [];
     } catch (error) {
-      console.error("Failed to parse cart from localStorage", error);
       return [];
     }
   });
@@ -20,87 +18,94 @@ export const CartProvider = ({ children }) => {
       const storedSavedItems = localStorage.getItem("savedItems");
       return storedSavedItems ? JSON.parse(storedSavedItems) : [];
     } catch (error) {
-      console.error("Failed to parse saved items from localStorage", error);
       return [];
     }
   });
 
-  // ✅ Effect to SAVE cartItems to localStorage whenever they change
+  // Sync cart & savedItems to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem("cart", JSON.stringify(cartItems));
-    } catch (error) {
-      console.error("Failed to save cart to localStorage", error);
-    }
+    localStorage.setItem("cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // ✅ Effect to SAVE savedItems to localStorage whenever they change
   useEffect(() => {
-    try {
-      localStorage.setItem("savedItems", JSON.stringify(savedItems));
-    } catch (error) {
-      console.error("Failed to save saved items to localStorage", error);
-    }
+    localStorage.setItem("savedItems", JSON.stringify(savedItems));
   }, [savedItems]);
 
+  // **Add to Cart**
   const addToCart = (product) => {
     setCartItems((prev) => {
       const exists = prev.find((item) => item._id === product._id);
-      if (exists) return prev;
+      if (exists) {
+        toast.info("Item already in cart");
+        return prev;
+      }
+      toast.success("Item added to cart!");
       return [...prev, { ...product, quantity: 1 }];
     });
   };
 
+  // **Update Quantity**
   const updateQuantity = (id, quantity) => {
     setCartItems((prev) =>
-      prev.map((item) =>
-        item._id === id ? { ...item, quantity } : item
-      )
+      prev.map((item) => (item._id === id ? { ...item, quantity } : item))
     );
+    toast.info("Quantity updated!");
   };
 
+  // **Remove from Cart**
   const removeFromCart = (id) => {
     setCartItems((prev) => prev.filter((item) => item._id !== id));
+    toast.info("Item removed from cart");
   };
 
+  // **Clear Cart**
   const clearCart = () => {
     setCartItems([]);
+    toast.info("Cart cleared");
   };
 
-  const saveForItemLater = (itemId) => {
-    const itemToSave = cartItems.find(item => item._id === itemId);
-    if (itemToSave) {
-      setSavedItems(prev => {
-        const exists = prev.find(item => item._id === itemId);
-        if (exists) return prev;
-        return [...prev, itemToSave];
-      });
-      removeFromCart(itemId);
-      toast.info("Item saved for later!");
+  // **Save Item for Later**
+  const saveForItemLater = (product) => {
+    const isAlreadySaved = savedItems.some((item) => item._id === product._id);
+    if (isAlreadySaved) {
+      toast.info("Item is already in your saved list.");
+      return;
     }
+    setSavedItems((prev) => [...prev, product]);
+    setCartItems((prev) => prev.filter((item) => item._id !== product._id));
+    toast.success("Item saved for later!");
   };
 
+  // **Move Saved to Cart**
   const moveToCart = (item) => {
-    addToCart(item);
+    const existsInCart = cartItems.some((cartItem) => cartItem._id === item._id);
+    if (existsInCart) {
+      toast.info("This item is already in your cart.");
+      return;
+    }
+    setCartItems((prev) => [...prev, { ...item, quantity: 1 }]);
     removeFromSaved(item._id);
+    toast.success("Item moved to cart!");
   };
 
+  // **Remove from Saved**
   const removeFromSaved = (itemId) => {
-    setSavedItems(prev => prev.filter(item => item._id !== itemId));
+    setSavedItems((prev) => prev.filter((item) => item._id !== itemId));
+    toast.info("Item removed from saved list");
   };
 
   return (
     <CartContext.Provider
       value={{
         cartItems,
+        savedItems,
         addToCart,
         updateQuantity,
         removeFromCart,
         clearCart,
-        savedItems,
         saveForItemLater,
         moveToCart,
-        removeFromSaved
+        removeFromSaved,
       }}
     >
       {children}

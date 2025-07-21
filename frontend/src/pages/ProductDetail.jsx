@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import Layout from "../components/Common/Layout";
 import { useCart } from "../context/CartContext";
 import { useRequireAuth } from "../utils/useRequireAuth";
-import { toast } from "react-toastify";
-
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const { addToCart, cartItems } = useCart();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [tab, setTab] = useState("details");
-  const { runWithAuth } = useRequireAuth(); // ✅ Only call once, at top
-
+  const { runWithAuth } = useRequireAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -33,18 +29,8 @@ const ProductDetails = () => {
   }, [id]);
 
   const handleAddToCart = () => {
-    runWithAuth(() => {
-      const exists = cartItems.find((item) => item._id === product._id);
-      if (exists) {
-        toast.info("Item already in cart");
-      } else {
-        addToCart(product);
-        toast.success("Item added to cart");
-      }
-    });
+    runWithAuth(() => addToCart(product));
   };
-
-
 
   if (!product) {
     return (
@@ -96,7 +82,9 @@ const ProductDetails = () => {
                 key={idx}
                 src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${img}`}
                 onClick={() => setSelectedImage(img)}
-                className={`w-20 h-20 object-cover border rounded-md cursor-pointer ${selectedImage === img ? "border-[#c29d5f]" : "border-gray-300"
+                className={`w-20 h-20 object-cover border rounded-md cursor-pointer ${selectedImage === img
+                  ? "border-[#c29d5f]"
+                  : "border-gray-300"
                   }`}
                 alt={`View ${idx + 1}`}
               />
@@ -197,7 +185,6 @@ const ProductDetails = () => {
         </div>
       </div>
     </div>
-
   );
 };
 

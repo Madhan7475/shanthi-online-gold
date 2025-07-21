@@ -2,22 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useRequireAuth } from "../utils/useRequireAuth";
-import Layout from "../components/Common/Layout";
-import { toast } from "react-toastify";
 
 const SavedItemsPage = () => {
     const { savedItems, moveToCart, removeFromSaved } = useCart();
     const { loading, isAuthenticated } = useRequireAuth();
-
-    const handleMoveToCart = (item) => {
-        moveToCart(item);
-        toast.success("Item moved to cart!");
-    };
-
-    const handleRemove = (itemId) => {
-        removeFromSaved(itemId);
-        toast.error("Item removed from your saved list.");
-    };
 
     if (loading || !isAuthenticated) {
         return <div className="text-center py-20">Loading...</div>;
@@ -44,28 +32,24 @@ const SavedItemsPage = () => {
                             className="border border-[#f4e0b9] bg-white p-4 rounded-xl shadow-sm flex flex-col"
                         >
                             <img
-                                src={
-                                    item.images?.[0]
-                                        ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${item.images[0]}`
-                                        : "/placeholder.png"
-                                }
+                                src={item.images?.[0] ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${item.images[0]}` : "/placeholder.png"}
                                 alt={item.title}
                                 className="w-full h-48 object-contain rounded mb-4"
                             />
                             <div className="flex-1 flex flex-col">
-                                <h3 className="font-semibold text-[#3e2f1c] flex-1">{item.title}</h3>
+                                <h3 className="font-semibold text-[#3e2f1c] flex-1">{item.title || "Untitled Product"}</h3>
                                 <p className="text-lg font-semibold text-[#3e2f1c] mt-2">
-                                    ₹{item.price.toLocaleString()}
+                                    ₹{item.price ? item.price.toLocaleString() : "Price not available"}
                                 </p>
                                 <div className="mt-4 space-y-2">
                                     <button
-                                        onClick={() => handleMoveToCart(item)}
+                                        onClick={() => moveToCart(item)}
                                         className="w-full bg-gradient-to-r from-[#f4c57c] to-[#ffdc9a] text-[#3e2f1c] font-semibold py-2 rounded text-center hover:opacity-90 transition"
                                     >
                                         Move to Cart
                                     </button>
                                     <button
-                                        onClick={() => handleRemove(item._id)}
+                                        onClick={() => removeFromSaved(item._id)}
                                         className="w-full bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300 transition"
                                     >
                                         Remove
