@@ -88,7 +88,7 @@ export const CartProvider = ({ children }) => {
     showToast("Item saved for later!", "success");
   };
 
-  // **Move Saved to Cart**
+  // **Move Saved to Cart** (Updated to use success toast)
   const moveToCart = (item) => {
     const existsInCart = cartItems.some((cartItem) => cartItem._id === item._id);
     if (existsInCart) {
@@ -96,14 +96,16 @@ export const CartProvider = ({ children }) => {
       return;
     }
     setCartItems((prev) => [...prev, { ...item, quantity: 1 }]);
-    removeFromSaved(item._id);
-    showToast("Item moved to cart!", "success");
+    removeFromSaved(item._id, true); // Pass `true` to silently remove without toast
+    showToast("Item moved to cart!", "success"); // Now uses success type
   };
 
-  // **Remove from Saved**
-  const removeFromSaved = (itemId) => {
+  // **Remove from Saved** (Supports optional silent mode)
+  const removeFromSaved = (itemId, silent = false) => {
     setSavedItems((prev) => prev.filter((item) => item._id !== itemId));
-    showToast("Item removed from saved list");
+    if (!silent) {
+      showToast("Item removed from saved list");
+    }
   };
 
   return (
