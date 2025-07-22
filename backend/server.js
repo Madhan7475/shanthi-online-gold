@@ -17,43 +17,13 @@ const app = express();
 
 // === CORS ===
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || "http://localhost:5173", // Use env var in prod
-  credentials: true // Allows sending cookies or Authorization headers
+  origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+  credentials: true
 }));
 
 // === Middleware ===
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// === Multer Config (for product images) ===
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
-const upload = multer({ storage });
-
-// === Product Upload Endpoint ===
-const Product = require('./models/Product');
-app.post('/api/upload-product', upload.array('images', 10), async (req, res) => {
-  try {
-    const { title, description, category, price } = req.body;
-    const images = req.files.map(file => file.filename);
-
-    const newProduct = new Product({ title, description, category, price, images });
-    await newProduct.save();
-
-    res.status(201).json({ message: '✅ Product uploaded successfully!', product: newProduct });
-  } catch (err) {
-    console.error("Upload error:", err);
-    res.status(500).json({ message: '❌ Failed to upload product.' });
-  }
-});
 
 // === Import Routes ===
 const userRoutes = require('./routes/userRoutes');
@@ -61,7 +31,8 @@ const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const authRoutes = require('./routes/authRoutes');
 const otpRoutes = require('./routes/otpRoutes');
-const invoiceRoutes = require('./routes/invoiceRoutes'); // 🧾 Invoices
+const invoiceRoutes = require('./routes/invoiceRoutes');
+const paymentRoutes = require('./routes/paymentRoutes'); // ✅ Import payment routes
 
 // === Root route for health check ===
 app.get("/", (req, res) => {
@@ -69,12 +40,13 @@ app.get("/", (req, res) => {
 });
 
 // === Use Routes ===
-app.use('/api/users', userRoutes);        // /register, /login
-app.use('/api/products', productRoutes);  // GET, PUT, DELETE
-app.use('/api/orders', orderRoutes);      // Order CRUD
-app.use('/api/auth', authRoutes);         // Google/Firebase auth
-app.use('/api/auth', otpRoutes);          // Phone OTP auth
-app.use('/api/invoices', invoiceRoutes);  // Invoices API
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/auth', otpRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/payment', paymentRoutes); // ✅ Use payment routes
 
 // === Global Error Handler (optional) ===
 app.use((err, req, res, next) => {

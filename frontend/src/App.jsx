@@ -13,6 +13,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import SigninPage from "./pages/SigninPage";
 import RequireAuthPage from "./utils/RequireAuthPage";
 import SavedItemsPage from "./pages/SavedItemsPage"; // ✅ Import the new page
+import MyOrdersPage from "./pages/MyOrdersPage"; // ✅ Import the new page
 
 // Admin Pages
 import AdminLogin from "./pages/login";
@@ -67,6 +68,8 @@ const App = () => {
           <Route path="checkout" element={<RequireAuthPage><CheckoutPage /></RequireAuthPage>} />
           {/* ✅ Add the new protected route for saved items */}
           <Route path="saved-items" element={<RequireAuthPage><SavedItemsPage /></RequireAuthPage>} />
+          {/* ✅ Add the new protected route for My Orders */}
+          <Route path="my-orders" element={<RequireAuthPage><MyOrdersPage /></RequireAuthPage>} />
         </Route>
 
         {/* 💍 Category Pages */}

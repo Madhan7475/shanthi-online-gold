@@ -1,18 +1,18 @@
 import React, { useState } from "react";
-import { FiSearch, FiHeart } from "react-icons/fi"; // ✅ Import Heart icon
+import { FiSearch, FiHeart } from "react-icons/fi";
 import { BsCart3 } from "react-icons/bs";
-import { MdLogin } from "react-icons/md";
+import { MdLogin, MdLogout } from "react-icons/md";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 
 const Topbar = () => {
-  const { cartItems, savedItems } = useCart(); // ✅ Get savedItems
+  const { cartItems, savedItems } = useCart();
   const { user, isAuthenticated, logout, loading } = useAuth();
 
   const cartCount = isAuthenticated ? cartItems.reduce((sum, i) => sum + i.quantity, 0) : 0;
-  const savedCount = isAuthenticated ? savedItems.length : 0; // ✅ Calculate saved items count
+  const savedCount = isAuthenticated ? savedItems.length : 0;
 
   const [showSearch, setShowSearch] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -48,7 +48,6 @@ const Topbar = () => {
               <FiSearch className="h-5 w-5" />
             </button>
 
-            {/* ✅ Saved Items (Wishlist) Icon */}
             <div className="relative">
               <Link to="/saved-items" title="Saved Items" className="hover:text-white transition">
                 <FiHeart className="h-5 w-5" />
@@ -72,15 +71,22 @@ const Topbar = () => {
             </div>
 
             {isAuthenticated ? (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm">{user?.name || user?.email || "User"}</span>
-                <button
-                  onClick={logout}
-                  title="Logout"
-                  className="hover:text-white transition text-sm"
-                >
-                  Logout
-                </button>
+              <div className="flex items-center space-x-4">
+                {/* ✅ "My Orders" link added here */}
+                <Link to="/my-orders" className="text-sm hover:text-white transition whitespace-nowrap">
+                  My Orders
+                </Link>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm">{user?.name || user?.email || "User"}</span>
+                  <button
+                    onClick={logout}
+                    title="Logout"
+                    className="hover:text-white transition text-sm flex items-center gap-1"
+                  >
+                    <span>Logout</span>
+                    <MdLogout />
+                  </button>
+                </div>
               </div>
             ) : (
               <Link to="/signin" className="hover:text-white transition" title="Sign In">
