@@ -6,7 +6,7 @@ import { useRequireAuth } from "../utils/useRequireAuth";
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const { addToCart, cartItems } = useCart();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const { runWithAuth } = useRequireAuth();

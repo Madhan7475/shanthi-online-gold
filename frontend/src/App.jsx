@@ -2,32 +2,21 @@
 import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 
+// Utils
 import { setupAuthListener } from "./utils/setupAuthListener";
+import RequireAuthPage from "./utils/RequireAuthPage";
+import DebugFirebaseToken from "./utils/DebugFirebaseToken";
 
 // Layouts
 import UserLayout from "./components/Layout/UserLayout";
 
 // User Pages
+import SigninPage from "./pages/SigninPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
-import SigninPage from "./pages/SigninPage";
-import RequireAuthPage from "./utils/RequireAuthPage";
-import SavedItemsPage from "./pages/SavedItemsPage"; // ✅ Import the new page
-
-// Admin Pages
-import AdminLogin from "./pages/login";
-import AdminAuth from "./pages/AdminAuth";
-import AdminProfiles from "./pages/AdminProfiles";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import Invoice from "./pages/Invoice";
-import AdminPanel from "./pages/Panel";
-
-// Admin Features
-import ProductUpload from "./components/Admin/products/ProductUpload";
-import ProductList from "./components/Admin/products/ProductList";
-import ProductEdit from "./components/Admin/products/ProductEdit";
-import OrderManagement from "./components/Admin/products/AdminOrderList";
-import AdminDashboard from "./components/Admin/products/AdminDashboard";
+import SavedItemsPage from "./pages/SavedItemsPage";
+import SearchPage from "./pages/SearchPage"; // ✅ New search page
+import ProductDetail from "./pages/ProductDetail";
 
 // Category Pages
 import AllJewellery from "./pages/category/AllJewellery";
@@ -41,11 +30,20 @@ import BabyItemsPage from "./pages/category/BabyItems";
 import WeddingPage from "./pages/category/Wedding";
 import SpecialCollectionPage from "./pages/category/Specialcollection";
 
-// Product
-import ProductDetail from "./pages/ProductDetail";
+// Admin Pages
+import AdminLogin from "./pages/login";
+import AdminPanel from "./pages/Panel";
+import AdminAuth from "./pages/AdminAuth";
+import AdminProfiles from "./pages/AdminProfiles";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminDashboard from "./components/Admin/products/AdminDashboard";
+import Invoice from "./pages/Invoice";
 
-// Debug Utility
-import DebugFirebaseToken from "./utils/DebugFirebaseToken";
+// Admin Features
+import ProductUpload from "./components/Admin/products/ProductUpload";
+import ProductList from "./components/Admin/products/ProductList";
+import ProductEdit from "./components/Admin/products/ProductEdit";
+import OrderManagement from "./components/Admin/products/AdminOrderList";
 
 const App = () => {
   useEffect(() => {
@@ -56,20 +54,41 @@ const App = () => {
     <>
       <DebugFirebaseToken />
       <Routes>
-        {/* 🛍️ User Routes */}
+        {/* ---------------- User Routes ---------------- */}
         <Route path="/" element={<UserLayout />}>
           {/* Public Routes */}
           <Route path="signin" element={<SigninPage />} />
           <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="search" element={<SearchPage />} /> {/* ✅ Search Route */}
 
           {/* Protected Routes */}
-          <Route path="cart" element={<RequireAuthPage><CartPage /></RequireAuthPage>} />
-          <Route path="checkout" element={<RequireAuthPage><CheckoutPage /></RequireAuthPage>} />
-          {/* ✅ Add the new protected route for saved items */}
-          <Route path="saved-items" element={<RequireAuthPage><SavedItemsPage /></RequireAuthPage>} />
+          <Route
+            path="cart"
+            element={
+              <RequireAuthPage>
+                <CartPage />
+              </RequireAuthPage>
+            }
+          />
+          <Route
+            path="checkout"
+            element={
+              <RequireAuthPage>
+                <CheckoutPage />
+              </RequireAuthPage>
+            }
+          />
+          <Route
+            path="saved-items"
+            element={
+              <RequireAuthPage>
+                <SavedItemsPage />
+              </RequireAuthPage>
+            }
+          />
         </Route>
 
-        {/* 💍 Category Pages */}
+        {/* ---------------- Category Pages ---------------- */}
         <Route path="/category/all-jewellery" element={<AllJewellery />} />
         <Route path="/category/gold" element={<GoldPage />} />
         <Route path="/category/diamond" element={<DiamondPage />} />
@@ -81,7 +100,7 @@ const App = () => {
         <Route path="/category/wedding" element={<WeddingPage />} />
         <Route path="/category/special-collection" element={<SpecialCollectionPage />} />
 
-        {/* 🔐 Admin Routes */}
+        {/* ---------------- Admin Routes ---------------- */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/panel" element={<AdminPanel />} />
         <Route path="/admin/auth" element={<AdminAuth />} />
