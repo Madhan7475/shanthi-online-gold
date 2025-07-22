@@ -3,43 +3,50 @@ import { FiSearch, FiHeart } from "react-icons/fi";
 import { BsCart3 } from "react-icons/bs";
 import { MdLogin, MdLogout } from "react-icons/md";
 import { IoClose } from "react-icons/io5";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 
 const Topbar = () => {
   const { cartItems, savedItems } = useCart();
   const { user, isAuthenticated, logout, loading } = useAuth();
+  const navigate = useNavigate();
 
+  // Counts
   const cartCount = isAuthenticated ? cartItems.reduce((sum, i) => sum + i.quantity, 0) : 0;
   const savedCount = isAuthenticated ? savedItems.length : 0;
 
+  // Search
   const [showSearch, setShowSearch] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    console.log("🔍 Searching for:", searchValue);
+    const trimmedQuery = searchValue.trim();
+    if (trimmedQuery) {
+      navigate(`/search?query=${encodeURIComponent(trimmedQuery)}`);
+    }
     setShowSearch(false);
+    setSearchValue("");
   };
 
   if (loading) return null;
 
   return (
     <>
+      {/* Topbar */}
       <div className="bg-[#400F45] text-white relative z-20">
         <div className="container mx-auto flex justify-between items-center py-4 px-2">
+          {/* Logo */}
           <div className="flex justify-center flex-grow">
             <Link to="/">
-              <img
-                src="/logo.svg"
-                alt="Shanthi Gold"
-                className="h-16 cursor-pointer"
-              />
+              <img src="/logo.svg" alt="Shanthi Gold" className="h-16 cursor-pointer" />
             </Link>
           </div>
 
+          {/* Icons & Links */}
           <div className="hidden md:flex items-center space-x-4 text-[#FEC878]">
+            {/* Search Button */}
             <button
               onClick={() => setShowSearch(true)}
               title="Search"
@@ -48,6 +55,7 @@ const Topbar = () => {
               <FiSearch className="h-5 w-5" />
             </button>
 
+            {/* Wishlist */} {/* Merged from branch */}
             <div className="relative">
               <Link to="/saved-items" title="Saved Items" className="hover:text-white transition">
                 <FiHeart className="h-5 w-5" />
@@ -59,6 +67,7 @@ const Topbar = () => {
               )}
             </div>
 
+            {/* Cart */}
             <div className="relative">
               <Link to="/cart" title="Cart" className="hover:text-white transition">
                 <BsCart3 className="h-5 w-5" />
@@ -70,6 +79,7 @@ const Topbar = () => {
               )}
             </div>
 
+            {/* Auth */}
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 {/* ✅ "My Orders" link added here */}
@@ -94,6 +104,7 @@ const Topbar = () => {
               </Link>
             )}
 
+            {/* Admin Button */}
             <Link
               to="/admin/login"
               className="ml-2 bg-[#FEC878] text-black text-xs px-2 py-1 rounded hover:bg-white hover:text-[#2f0a38] transition"
@@ -105,6 +116,7 @@ const Topbar = () => {
         </div>
       </div>
 
+      {/* Search Overlay */}
       {showSearch && (
         <div className="fixed top-0 left-0 w-full bg-white shadow-md z-50 px-4 py-6">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
