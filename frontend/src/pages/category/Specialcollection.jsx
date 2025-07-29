@@ -4,6 +4,7 @@ import Layout from "../../components/Common/Layout";
 import { FaHeart, FaShoppingCart, FaFilter, FaTimes } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
+import { useRequireAuth } from "../../utils/useRequireAuth";
 
 const FILTER_DATA = {
   Price: ["< 25,000", "25,000 - 50,000", "50,000 - 1,00,000", "1,00,000+"],
@@ -35,8 +36,9 @@ const SpecialCollectionPage = () => {
   const [products, setProducts] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [expandedFilters, setExpandedFilters] = useState({});
-  const { cartItems, addToCart } = useCart();
+  const { addToCart, saveForItemLater } = useCart(); // ✅ Get saveForItemLater
   const navigate = useNavigate();
+  const { runWithAuth } = useRequireAuth(); // ✅ Get the auth wrapper
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -58,31 +60,26 @@ const SpecialCollectionPage = () => {
     setExpandedFilters((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const isAuthenticated = () => !!localStorage.getItem("userToken");
+  const handleProductClick = (id) => navigate(`/product/${id}`);
 
+  // ✅ CORRECTED HANDLER
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
-    if (!isAuthenticated()) {
-      alert("Please sign in to add items to your cart.");
-      return navigate("/signin");
-    }
-
-    const exists = cartItems.find((item) => item._id === product._id);
-    if (exists) {
-      alert("Item already in cart");
-    } else {
+    runWithAuth(() => {
       addToCart(product);
-      alert("Item added to cart");
-    }
+    });
   };
 
-  const handleProductClick = (id) => {
-    navigate(`/product/${id}`);
+  // ✅ CORRECTED HANDLER
+  const handleSaveItem = (product, e) => {
+    e.stopPropagation();
+    runWithAuth(() => {
+      saveForItemLater(product);
+    });
   };
 
   return (
     <Layout>
-      {/* ✅ Full-width Banner just below Navbar with no top space */}
       <div className="w-screen h-40 md:h-72 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
         <img
           src="/gold9.jpg"
@@ -90,7 +87,7 @@ const SpecialCollectionPage = () => {
           className="w-full h-full object-cover"
         />
       </div>
-      
+
       <div className="pt-[30px] px-4 sm:px-6 md:px-8 max-w-7xl mx-auto relative">
         <h1 className="text-2xl font-bold mb-4 text-gray-800 text-center">
           Special Collection
@@ -108,16 +105,14 @@ const SpecialCollectionPage = () => {
         </div>
 
         <div
-          className={`fixed inset-0 bg-black bg-opacity-30 z-30 transition-opacity duration-300 ${
-            showFilters ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
+          className={`fixed inset-0 bg-black bg-opacity-30 z-30 transition-opacity duration-300 ${showFilters ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            }`}
           onClick={() => setShowFilters(false)}
         />
 
         <div
-          className={`fixed top-0 left-0 w-80 h-full bg-white z-40 p-6 shadow-lg overflow-y-auto transform transition-transform duration-300 ease-in-out ${
-            showFilters ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`fixed top-0 left-0 w-80 h-full bg-white z-40 p-6 shadow-lg overflow-y-auto transform transition-transform duration-300 ease-in-out ${showFilters ? "translate-x-0" : "-translate-x-full"
+            }`}
         >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-[#400F45]">Filters</h2>
@@ -135,9 +130,8 @@ const SpecialCollectionPage = () => {
                   {label}
                 </button>
                 <div
-                  className={`mt-2 transition-all duration-300 ease-in-out ${
-                    expandedFilters[label] ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
-                  }`}
+                  className={`mt-2 transition-all duration-300 ease-in-out ${expandedFilters[label] ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+                    }`}
                 >
                   <ul className="pl-2 pr-1 py-1 space-y-1 text-sm text-[#333] max-h-[300px] overflow-y-auto">
                     {options.map((opt, idx) => (
@@ -164,7 +158,7 @@ const SpecialCollectionPage = () => {
             >
               <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => handleSaveItem(product, e)}
               >
                 <FaHeart />
               </button>
@@ -187,15 +181,15 @@ const SpecialCollectionPage = () => {
                   {product.category}
                 </p>
                 <p className="text-base font-semibold text-[#1a1a1a]">
-                  ₹{product.price.toLocaleString()}
+                  ₹{product.price ? product.price.toLocaleString() : 'N/A'}
                 </p>
               </div>
-              <div
-                className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f] cursor-pointer"
+              <button
+                className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f]"
                 onClick={(e) => handleAddToCart(product, e)}
               >
                 <FaShoppingCart />
-              </div>
+              </button>
             </div>
           ))}
         </div>
