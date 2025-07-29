@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-  userId: { // ✅ Link order to a user
+  userId: {
     type: String,
     required: true,
   },
@@ -9,7 +9,7 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  items: { // ✅ Store the products in the order
+  items: {
     type: Array,
     required: true,
   },
@@ -19,9 +19,13 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    default: 'Pending' // e.g., Pending, Shipped, Delivered, Cancelled
+    default: 'Pending'
   },
-  deliveryAddress: { // ✅ Store the delivery address
+  deliveryAddress: {
+    type: String,
+    required: true,
+  },
+  paymentMethod: { // ✅ ADD THIS FIELD
     type: String,
     required: true,
   },

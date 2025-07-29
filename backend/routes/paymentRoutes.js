@@ -73,6 +73,7 @@ router.post("/verify", verifyFirebaseToken, async (req, res) => {
             total: orderData.total,
             status: "Paid", // Or "Processing"
             deliveryAddress: orderData.customer.deliveryAddress,
+            paymentMethod: orderData.customer.paymentMethod,
         });
         await newOrder.save();
 

@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 
@@ -15,9 +14,10 @@ import SigninPage from "./pages/SigninPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import SavedItemsPage from "./pages/SavedItemsPage";
-import MyOrdersPage from "./pages/MyOrdersPage"; // From HEAD
-import SearchPage from "./pages/SearchPage"; // From branch
-import ProductDetail from "./pages/ProductDetail"; // From branch
+import MyOrdersPage from "./pages/MyOrdersPage";
+import OrderDetailPage from "./pages/OrderDetailPage"; // ✅ Import the new page
+import SearchPage from "./pages/SearchPage";
+import ProductDetail from "./pages/ProductDetail";
 
 // Category Pages
 import AllJewellery from "./pages/category/AllJewellery";
@@ -60,7 +60,7 @@ const App = () => {
           {/* Public Routes */}
           <Route path="signin" element={<SigninPage />} />
           <Route path="product/:id" element={<ProductDetail />} />
-          <Route path="search" element={<SearchPage />} /> {/* From branch */}
+          <Route path="search" element={<SearchPage />} />
 
           {/* Protected Routes */}
           <Route
@@ -87,12 +87,20 @@ const App = () => {
               </RequireAuthPage>
             }
           />
-          {/* From HEAD */}
           <Route
             path="my-orders"
             element={
               <RequireAuthPage>
                 <MyOrdersPage />
+              </RequireAuthPage>
+            }
+          />
+          {/* ✅ Add the new route for a single order */}
+          <Route
+            path="/order/:orderId"
+            element={
+              <RequireAuthPage>
+                <OrderDetailPage />
               </RequireAuthPage>
             }
           />
