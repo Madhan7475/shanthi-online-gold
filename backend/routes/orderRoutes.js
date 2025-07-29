@@ -4,7 +4,40 @@ const Order = require('../models/Order');
 const Invoice = require('../models/Invoice');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 
-// ✅ FIX: Specific routes like '/my-orders' must come BEFORE general routes with parameters like '/:id'.
+// --- Admin Routes ---
+
+// @route   GET api/orders/
+// @desc    Get all orders (for admin)
+router.get('/', async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ date: -1 });
+    res.json(orders);
+  } catch (err) {
+    console.error("Error fetching all orders:", err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   PUT api/orders/:id
+// @desc    Update order status (for admin)
+// ✅ FIX: Added the missing route for the admin panel to update order status.
+router.put('/:id', async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ msg: 'Order not found' });
+    }
+    order.status = req.body.status;
+    await order.save();
+    res.json(order);
+  } catch (err) {
+    console.error(`Error updating order status for ${req.params.id}:`, err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+// --- Customer Routes ---
 
 // @route   GET api/orders/my-orders
 // @desc    Get orders for the logged-in user
@@ -37,7 +70,6 @@ router.get('/:id', verifyFirebaseToken, async (req, res) => {
     res.json(order);
   } catch (err) {
     console.error(`Error fetching order ${req.params.id}:`, err.message);
-    // Handle CastError specifically for invalid ObjectId
     if (err.name === 'CastError') {
       return res.status(400).json({ msg: 'Invalid Order ID format' });
     }
@@ -63,7 +95,7 @@ router.post('/cod', verifyFirebaseToken, async (req, res) => {
       total: total,
       status: 'Pending',
       deliveryAddress: customer.deliveryAddress,
-      paymentMethod: customer.paymentMethod, // ✅ Save payment method
+      paymentMethod: customer.paymentMethod,
     });
     await newOrder.save();
 
