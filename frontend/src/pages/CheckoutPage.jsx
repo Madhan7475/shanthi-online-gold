@@ -15,20 +15,56 @@ const CheckoutPage = () => {
     email: user?.email || "",
     billingAddress: "",
     deliveryAddress: "",
-    phone: user?.phone || "",
+    phone: "",
     paymentMethod: "cod",
   });
 
   const [sameAsBilling, setSameAsBilling] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const total = cartItems.reduce(
     (acc, item) => acc + (item.price || 0) * item.quantity,
     0
   );
 
+  // Advanced regex for Indian mobile numbers
+  const validatePhone = (phone) => {
+    const re = /^[6-9]\d{9}$/;
+    return re.test(String(phone));
+  };
+
+  // ✅ Advanced regex for more thorough email validation
+  const validateEmail = (email) => {
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "phone") {
+      const numericValue = value.replace(/\D/g, "");
+      setCustomer((prev) => ({ ...prev, [name]: numericValue }));
+      if (numericValue.length > 0 && !validatePhone(numericValue)) {
+        setPhoneError("Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.");
+      } else {
+        setPhoneError("");
+      }
+      return;
+    }
+
+    if (name === "email") {
+      setCustomer((prev) => ({ ...prev, [name]: value }));
+      if (value && !validateEmail(value)) {
+        setEmailError("Please enter a valid email format (e.g., name@example.com).");
+      } else {
+        setEmailError("");
+      }
+      return;
+    }
+
     if (name === "billingAddress" && sameAsBilling) {
       setCustomer((prev) => ({
         ...prev,
@@ -122,16 +158,39 @@ const CheckoutPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    let isValid = true;
+    if (!validatePhone(customer.phone)) {
+      setPhoneError("Please enter a valid 10-digit mobile number.");
+      isValid = false;
+    }
+    if (!validateEmail(customer.email)) {
+      setEmailError("Please enter a valid email address.");
+      isValid = false;
+    }
+    if (!isValid) return;
+
     setIsProcessing(true);
 
     if (customer.paymentMethod === "cod") {
-      await handleCODOrder();
+      try {
+        const orderData = { customer, items: cartItems, total };
+        const res = await axiosInstance.post('/orders/cod', orderData);
+        toast.success(res.data.msg || "🎉 Order placed successfully!");
+        clearCart();
+        navigate("/");
+      } catch (error) {
+        console.error("COD order submission failed:", error);
+        toast.error(error.response?.data?.msg || "Could not place order. Please try again.");
+      } finally {
+        setIsProcessing(false);
+      }
     } else {
-      await handleOnlinePayment();
+      toast.info("Online payment is not yet implemented.");
+      setIsProcessing(false);
     }
-
-    setIsProcessing(false);
   };
+
+  const isFormValid = validatePhone(customer.phone) && validateEmail(customer.email) && customer.name && customer.billingAddress && customer.deliveryAddress;
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-[#fffdf6] text-[#3e2f1c] min-h-[90vh]">
@@ -184,16 +243,19 @@ const CheckoutPage = () => {
             required
             className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f]"
           />
+          {emailError && <p className="text-red-500 text-xs -mt-2">{emailError}</p>}
 
           <input
-            type="text"
+            type="tel"
             name="phone"
             placeholder="Phone Number"
             value={customer.phone}
             onChange={handleChange}
             required
+            maxLength={10}
             className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f]"
           />
+          {phoneError && <p className="text-red-500 text-xs -mt-2">{phoneError}</p>}
 
           <textarea
             name="billingAddress"
@@ -255,7 +317,7 @@ const CheckoutPage = () => {
 
           <button
             type="submit"
-            disabled={isProcessing}
+            disabled={isProcessing || !isFormValid}
             className="w-full bg-gradient-to-r from-[#f4c57c] to-[#ffdc9a] text-[#3e2f1c] font-semibold py-2 rounded hover:opacity-90 transition disabled:opacity-50"
           >
             {isProcessing ? 'Processing...' : '🛍️ Place Order'}

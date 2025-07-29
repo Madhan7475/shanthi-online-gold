@@ -43,6 +43,7 @@ const OrderDetailPage = () => {
     }
 
     return (
+
         <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-[#fffdf6]">
             <Link to="/my-orders" className="text-sm text-[#9e886e] underline mb-4 inline-block hover:text-[#b19874]">
                 ← Back to My Orders
@@ -54,7 +55,8 @@ const OrderDetailPage = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#f4e0b9] pb-4 mb-4">
                     <div>
                         <p className="text-sm text-gray-500">Order placed on</p>
-                        <p className="font-semibold text-gray-800">{new Date(order.date).toLocaleDateString()}</p>
+                        {/* ✅ FIX: Changed to toLocaleString() to include time */}
+                        <p className="font-semibold text-gray-800">{new Date(order.date).toLocaleString()}</p>
                     </div>
                     <div>
                         <p className="text-sm text-gray-500">Order ID</p>
