@@ -2,8 +2,6 @@ import React, { useState, useRef } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
-
-
 const menuData = {
   "All Jewellery": {
     href: "/category/all-jewellery",
@@ -129,21 +127,21 @@ const Navbar = () => {
                     : "opacity-0 max-h-0 py-0 pointer-events-none"
                 }`}
                 style={{
-                  top: "140px",
+                  top: "124px",
                   transitionDelay: hoveredMenu === index ? "100ms" : "0ms",
                 }}
               >
-                <div className="max-w-screen-xl mx-auto px-6 flex justify-center gap-10 flex-wrap transition-opacity duration-300">
+                <div className="max-w-screen-xl mx-auto px-6 flex justify-center gap-6 flex-wrap transition-opacity duration-300">
                   {items.map((item, i) => (
                     <Link
                       key={i}
                       to={item.href}
-                      className="flex flex-col items-center w-36 hover:bg-[#fff9e8] p-2 rounded-md transition"
+                      className="flex flex-col items-center w-32 hover:bg-[#fff9e8] p-2 rounded-md transition"
                     >
                       <img
                         src={item.img}
                         alt={item.name}
-                        className="w-24 h-24 object-cover rounded-full border mb-2"
+                        className="w-20 h-20 object-cover rounded-full border mb-2"
                       />
                       <h3 className="text-xs text-[#3b3b3b] hover:text-[#c29d5f] text-center">
                         {item.name}

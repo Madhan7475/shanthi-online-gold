@@ -13,7 +13,9 @@ const Topbar = () => {
   const navigate = useNavigate();
 
   // Counts
-  const cartCount = isAuthenticated ? cartItems.reduce((sum, i) => sum + i.quantity, 0) : 0;
+  const cartCount = isAuthenticated
+    ? cartItems.reduce((sum, i) => sum + i.quantity, 0)
+    : 0;
   const savedCount = isAuthenticated ? savedItems.length : 0;
 
   // Search
@@ -35,17 +37,24 @@ const Topbar = () => {
   return (
     <>
       {/* Topbar */}
-      <div className="bg-[#400F45] text-white relative z-20">
-        <div className="container mx-auto flex justify-between items-center py-4 px-2">
-          {/* Logo */}
-          <div className="flex justify-center flex-grow">
+      <div className="bg-[#400F45] text-white relative z-20 h-20 flex items-center">
+        <div className="container mx-auto flex justify-between items-center px-4 relative">
+          {/* Left spacer (to balance logo center) */}
+          <div className="w-1/3 flex items-center"></div>
+
+          {/* Centered Logo */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
             <Link to="/">
-              <img src="/logo.svg" alt="Shanthi Gold" className="h-16 cursor-pointer" />
+              <img
+                src="/logo.svg"
+                alt="Shanthi Gold"
+                className="h-16 cursor-pointer"
+              />
             </Link>
           </div>
 
-          {/* Icons & Links */}
-          <div className="hidden md:flex items-center space-x-4 text-[#FEC878]">
+          {/* Right Icons & Links */}
+          <div className="w-1/3 flex justify-end items-center space-x-4 text-[#FEC878]">
             {/* Search Button */}
             <button
               onClick={() => setShowSearch(true)}
@@ -55,9 +64,13 @@ const Topbar = () => {
               <FiSearch className="h-5 w-5" />
             </button>
 
-            {/* Wishlist */} {/* Merged from branch */}
+            {/* Wishlist */}
             <div className="relative">
-              <Link to="/saved-items" title="Saved Items" className="hover:text-white transition">
+              <Link
+                to="/saved-items"
+                title="Saved Items"
+                className="hover:text-white transition"
+              >
                 <FiHeart className="h-5 w-5" />
               </Link>
               {savedCount > 0 && (
@@ -69,7 +82,11 @@ const Topbar = () => {
 
             {/* Cart */}
             <div className="relative">
-              <Link to="/cart" title="Cart" className="hover:text-white transition">
+              <Link
+                to="/cart"
+                title="Cart"
+                className="hover:text-white transition"
+              >
                 <BsCart3 className="h-5 w-5" />
               </Link>
               {cartCount > 0 && (
@@ -82,12 +99,16 @@ const Topbar = () => {
             {/* Auth */}
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                {/* ✅ "My Orders" link added here */}
-                <Link to="/my-orders" className="text-sm hover:text-white transition whitespace-nowrap">
+                <Link
+                  to="/my-orders"
+                  className="text-sm hover:text-white transition whitespace-nowrap"
+                >
                   My Orders
                 </Link>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm">{user?.name || user?.email || "User"}</span>
+                  <span className="text-sm">
+                    {user?.name || user?.email || "User"}
+                  </span>
                   <button
                     onClick={logout}
                     title="Logout"
@@ -99,7 +120,11 @@ const Topbar = () => {
                 </div>
               </div>
             ) : (
-              <Link to="/signin" className="hover:text-white transition" title="Sign In">
+              <Link
+                to="/signin"
+                className="hover:text-white transition"
+                title="Sign In"
+              >
                 <MdLogin className="h-5 w-5" />
               </Link>
             )}

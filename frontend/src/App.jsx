@@ -19,6 +19,8 @@ import OrderDetailPage from "./pages/OrderDetailPage"; // ✅ Import the new pag
 import SearchPage from "./pages/SearchPage";
 import ProductDetail from "./pages/ProductDetail";
 
+
+
 // Category Pages
 import AllJewellery from "./pages/category/AllJewellery";
 import GoldPage from "./pages/category/Gold";
@@ -30,6 +32,12 @@ import DailyWearPage from "./pages/category/DailyWear";
 import BabyItemsPage from "./pages/category/BabyItems";
 import WeddingPage from "./pages/category/Wedding";
 import SpecialCollectionPage from "./pages/category/Specialcollection";
+import Aboutus from "./pages/category/Aboutus"; // adjust path if needed
+import ContactUs from "./pages/category/ContactUs";
+import Termsandconditions from "./pages/category/Termsandconditions"; // ✅ Import
+import Privacypolicies from "./pages/category/Privacypolicies";  // ✅ Import
+import CollectionPage from "./pages/category/CollectionPage";
+
 
 // Admin Pages
 import AdminLogin from "./pages/login";
@@ -117,6 +125,11 @@ const App = () => {
         <Route path="/category/baby-items" element={<BabyItemsPage />} />
         <Route path="/category/wedding" element={<WeddingPage />} />
         <Route path="/category/special-collection" element={<SpecialCollectionPage />} />
+        <Route path="/category/Aboutus" element={<Aboutus />} />   {/* ✅ New Route */}
+        <Route path="/category/ContactUs" element={<ContactUs />} />
+        <Route path="/category/Termsandconditions" element={<Termsandconditions />} /> {/* ✅ New Route */}
+        <Route path="/category/Privacypolicies" element={<Privacypolicies />} /> {/* ✅ New Route */}
+        <Route path="/collection/:slug" element={<CollectionPage />} />
 
         {/* ---------------- Admin Routes ---------------- */}
         <Route path="/admin/login" element={<AdminLogin />} />

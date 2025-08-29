@@ -6,13 +6,58 @@ import {
   LogOut
 } from "lucide-react";
 
-const CATEGORIES = ["All Jewellery", "Gold", "Diamond", "Silver", "Earrings", "Rings", "Daily Wear", "Baby Items", "Wedding", "Special Collection"];
-const COLLECTIONS = ["22KT Range", "A Chain Story", "A Fine Finish", "Aaheli", "Aalo", "Aarambh", "Aarna", "Akshayam", "Alekhya", "Alphabet Pendants", "Amara", "Arpanam", "Aurum", "Aveer", "Bestsellers", "Birthstone", "Bring the Shine", "Celeste", "Chakra Pendants", "Chozha", "Christmas Collection", "Classic", "Classics", "Cocktail Turkish Mount", "Colour Charms", "Colour Me Joy", "Commitment Bands", "Contemporary", "Core 20", "Couple Rings", "Devyani", "Dharohar", "Diamond Treats", "Dibyani", "Disco", "Divyam", "Diwali 19", "Dor", "Dots and Dashes", "Drops of Radiance", "Ekatvam", "Elan", "Enchanted Trails", "Engagement", "Engagement Ring", "Engagement Rings", "Eternity Bangles", "Evil Eye", "Exclusive Online", "Festive", "Festive Collection", "Ganesh Products", "Gifting Range", "Glamdays", "Glow with Flow", "Go with the flow", "God Pendant", "Homecoming", "Hoops", "Hues for you", "Impressions of Nature", "Into Eternity", "Kakatiya", "Kalai", "Kiss of Spring", "KonkonKotha", "Kundan Polki", "Kundan Stories", "lilac allure", "Little Big Moments", "Live a Dream", "Lotus", "Lucky Charms", "Maithili", "Mamma Mia", "Mangalam", "Men's Rings", "Mia Festive", "Mia Icicles", "Mia Play", "Mia sutra", "Mia Sutra", "Mia Symphony", "Miatini", "Modern Gold", "Modern Polki", "Moods of the Earth", "Multifinish Finger Rings", "Native", "Nature's Finest", "Nav raani", "Nityam", "Nyusha", "Nyusha 2", "Nyusha1", "Once Upon a Moment", "Open Polki", "Padmaavat", "Padmaja", "Platinum Collections", "Platinum Kadas", "Preen", "Pretty in Pink", "Rainbow Rhythm", "Rajadhiraj", "Rare Pair Collection", "Red Dot Awards Collection", "Religious", "Rhythms of Rain", "Rivaah", "RivaahXTarun Tahiliani", "Sarang Hearts", "Shaaj", "Shagun", "Sleek", "Solitaire", "Solitaires", "Soulmate Diamond Pair", "Sparkling Avenues", "Srotika", "Starburst", "String it", "Stunning Every Ear", "Svarupam", "Swarnam", "Swayahm", "Switch and Shine", "Tales of Mystique", "The Cocktail Edit", "The Cupid Edit", "The Initial edit", "The Initial Edit", "The Italian Connection", "The Signature Edit", "The Spotlight Edit", "Trims", "Udayam", "Ugadi", "Unbound", "Utsaah", "Utsava", "Uttama", "Uttara", "Valentines", "Vinayaka Pendants", "Virasat", "Wear Your Prayer", "Wonderlust", "Zodiac Sign Pendants", "Zodiac Sign Ring", "Zuhur"];
+const CATEGORIES = [
+  "All Jewellery",
+  "Gold",
+  "Diamond",
+  "Silver",
+  "Earrings",
+  "Rings",
+  "Daily Wear",
+  "Baby Items",
+  "Wedding",
+  "Special Collection"
+];
+
+// ✅ Added slug-based categories
+const CATEGORY_SLUGS = [
+  { label: "Gold Necklace", value: "gold-necklace" },
+  { label: "Diamond Ring", value: "diamond-ring" },
+  { label: "Bridal Set", value: "bridal-set" },
+  { label: "Gold Bangles", value: "gold-bangles" }
+];
+
+const COLLECTIONS = [
+  "22KT Range", "A Chain Story", "A Fine Finish", "Aaheli", "Aalo", "Aarambh", "Aarna", "Akshayam", "Alekhya",
+  "Alphabet Pendants", "Amara", "Arpanam", "Aurum", "Aveer", "Bestsellers", "Birthstone", "Bring the Shine", "Celeste",
+  "Chakra Pendants", "Chozha", "Christmas Collection", "Classic", "Classics", "Cocktail Turkish Mount", "Colour Charms",
+  "Colour Me Joy", "Commitment Bands", "Contemporary", "Core 20", "Couple Rings", "Devyani", "Dharohar", "Diamond Treats",
+  "Dibyani", "Disco", "Divyam", "Diwali 19", "Dor", "Dots and Dashes", "Drops of Radiance", "Ekatvam", "Elan",
+  "Enchanted Trails", "Engagement", "Engagement Ring", "Engagement Rings", "Eternity Bangles", "Evil Eye",
+  "Exclusive Online", "Festive", "Festive Collection", "Ganesh Products", "Gifting Range", "Glamdays", "Glow with Flow",
+  "Go with the flow", "God Pendant", "Homecoming", "Hoops", "Hues for you", "Impressions of Nature", "Into Eternity",
+  "Kakatiya", "Kalai", "Kiss of Spring", "KonkonKotha", "Kundan Polki", "Kundan Stories", "lilac allure",
+  "Little Big Moments", "Live a Dream", "Lotus", "Lucky Charms", "Maithili", "Mamma Mia", "Mangalam", "Men's Rings",
+  "Mia Festive", "Mia Icicles", "Mia Play", "Mia sutra", "Mia Sutra", "Mia Symphony", "Miatini", "Modern Gold",
+  "Modern Polki", "Moods of the Earth", "Multifinish Finger Rings", "Native", "Nature's Finest", "Nav raani", "Nityam",
+  "Nyusha", "Nyusha 2", "Nyusha1", "Once Upon a Moment", "Open Polki", "Padmaavat", "Padmaja", "Platinum Collections",
+  "Platinum Kadas", "Preen", "Pretty in Pink", "Rainbow Rhythm", "Rajadhiraj", "Rare Pair Collection",
+  "Red Dot Awards Collection", "Religious", "Rhythms of Rain", "Rivaah", "RivaahXTarun Tahiliani", "Sarang Hearts",
+  "Shaaj", "Shagun", "Sleek", "Solitaire", "Solitaires", "Soulmate Diamond Pair", "Sparkling Avenues", "Srotika",
+  "Starburst", "String it", "Stunning Every Ear", "Svarupam", "Swarnam", "Swayahm", "Switch and Shine", "Tales of Mystique",
+  "The Cocktail Edit", "The Cupid Edit", "The Initial edit", "The Initial Edit", "The Italian Connection",
+  "The Signature Edit", "The Spotlight Edit", "Trims", "Udayam", "Ugadi", "Unbound", "Utsaah", "Utsava", "Uttama",
+  "Uttara", "Valentines", "Vinayaka Pendants", "Virasat", "Wear Your Prayer", "Wonderlust", "Zodiac Sign Pendants",
+  "Zodiac Sign Ring", "Zuhur"
+];
+
 const OPTIONS_MAP = {
   karatage: ["14", "18", "22", "95"],
   materialColour: ["Rose", "White", "White and Rose", "Yellow", "Yellow and Rose", "Yellow and White", "Yellow White and Rose"],
   metal: ["Gold", "Platinum", "Silver"],
-  diamondClarity: ["B,I1 I2", "FL", "I1", "I1 / I2", "I1 I2", "I1-I2", "I2", "Mixed", "SI", "SI, SI1", "SI1", "SI1,SI2", "SI1-SI2, VS, VS2", "SI1-SI2, VS1", "SI1-SI2, VS2", "SI2", "VS", "VS,VS1", "VS, VS1", "VS1", "VS2", "VVS", "VVS,VS", "VVS1", "VVS1,VVS2", "VVS2"],
+  diamondClarity: ["B,I1 I2", "FL", "I1", "I1 / I2", "I1 I2", "I1-I2", "I2", "Mixed", "SI", "SI, SI1", "SI1", "SI1,SI2",
+    "SI1-SI2, VS, VS2", "SI1-SI2, VS1", "SI1-SI2, VS2", "SI2", "VS", "VS,VS1", "VS, VS1", "VS1", "VS2", "VVS", "VVS,VS",
+    "VVS1", "VVS1,VVS2", "VVS2"],
   jewelleryType: ["Diamond Jewellery", "Gold Jewellery", "Jewellery with Gemstones", "Plain Jewellery with Stones", "Platinum Jewellery"],
   brand: ["SOG"],
   gender: ["Kids", "Men", "Unisex", "Women"],
@@ -54,7 +99,13 @@ const ProductUpload = () => {
 
       await axios.post(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:9000"}/api/products`, data);
       setMessage("✅ Product uploaded successfully!");
-      setFormData({ title: "", description: "", category: "", price: "", stocks: "", karatage: "", materialColour: "", grossWeight: "", metal: "", size: "", diamondClarity: "", diamondColor: "", numberOfDiamonds: "", diamondSetting: "", diamondShape: "", jewelleryType: "", brand: "", collection: "", gender: "", occasion: "" });
+      setFormData({
+        title: "", description: "", category: "", price: "", stocks: "",
+        karatage: "", materialColour: "", grossWeight: "", metal: "", size: "",
+        diamondClarity: "", diamondColor: "", numberOfDiamonds: "",
+        diamondSetting: "", diamondShape: "", jewelleryType: "", brand: "",
+        collection: "", gender: "", occasion: ""
+      });
       setImages([]);
     } catch (err) {
       console.error("Upload error:", err);
@@ -104,13 +155,27 @@ const ProductUpload = () => {
                 <label className={labelClass}>Description</label>
                 <textarea className={`${inputClass} resize-none`} rows="3" value={formData.description} onChange={(e) => handleChange("description", e.target.value)} required />
               </div>
+
+              {/* ✅ Updated Category Dropdown */}
               <div>
                 <label className={labelClass}>Category</label>
                 <select className={inputClass} value={formData.category} onChange={(e) => handleChange("category", e.target.value)} required>
                   <option value="" disabled>Select category</option>
-                  {CATEGORIES.map((cat, i) => <option key={i} value={cat}>{cat}</option>)}
+
+                  <optgroup label="Main Categories">
+                    {CATEGORIES.map((cat, i) => (
+                      <option key={i} value={cat}>{cat}</option>
+                    ))}
+                  </optgroup>
+
+                  <optgroup label="Category Slugs">
+                    {CATEGORY_SLUGS.map((slug, i) => (
+                      <option key={i} value={slug.value}>{slug.label}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
+
               <div>
                 <label className={labelClass}>Price (₹)</label>
                 <input type="number" className={inputClass} value={formData.price} onChange={(e) => handleChange("price", e.target.value)} required />
@@ -127,8 +192,11 @@ const ProductUpload = () => {
               </div>
             </div>
 
+            {/* Dynamic Options */}
             <div className="grid grid-cols-2 gap-4">
-              {Object.keys(formData).filter(key => key !== 'title' && key !== 'description' && key !== 'category' && key !== 'price').map((key) => (
+              {Object.keys(formData).filter(key =>
+                !["title", "description", "category", "price"].includes(key)
+              ).map((key) => (
                 <div key={key}>
                   <label className={labelClass}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
                   {OPTIONS_MAP[key] ? (
