@@ -3,7 +3,8 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm install
+        - rm -rf node_modules
+        - npm ci --legacy-peer-deps
     build:
       commands:
         - npm run build
@@ -13,4 +14,4 @@ frontend:
       - '**/*'
   cache:
     paths:
-      - node_modules/**/*
+      - node_modules/**/* 
