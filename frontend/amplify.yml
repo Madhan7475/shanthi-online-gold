@@ -6,13 +6,12 @@ frontend:
         - cd frontend
         - nvm install 22.17.1
         - nvm use 22.17.1
-        - corepack enable
+        - npm install --legacy-peer-deps
     build:
       commands:
-        - npm ci
         - npm run build
   artifacts:
-    baseDirectory: dist
+    baseDirectory: frontend/dist   # ✅ Vite outputs here
     files:
       - '**/*'
   cache:
