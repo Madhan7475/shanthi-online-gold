@@ -41,17 +41,22 @@ const TrendingCategories = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-8">
         {categories.map(({ title, image, slug }) => (
           <Link
-            to={`/collection/${slug}`}
+            to={`/collection/${slug}`} // ✅ React Router link
             key={slug}
             className="group block rounded-xl overflow-hidden shadow-md transition-transform duration-300 hover:scale-105 h-[320px] relative"
           >
+            {/* Image */}
             <img
               src={image}
               alt={title}
               className="w-full h-full object-cover"
               loading="lazy"
             />
+
+            {/* Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#a14ca2cc] via-transparent to-transparent opacity-90 pointer-events-none" />
+
+            {/* Title */}
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white text-lg md:text-xl font-bold tracking-wide text-center">
               {title.toUpperCase()}
             </div>

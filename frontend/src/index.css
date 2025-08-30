@@ -7,3 +7,87 @@
   font-optical-sizing: auto;
   font-style: normal;
 }
+
+/* Custom gold toast theme */
+.gold-toast {
+  background: linear-gradient(135deg, #fdf5e6 0%, #fceabb 100%);
+  color: #400F45;
+  border-left: 5px solid #d4af37;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: "Inter", sans-serif;
+  overflow: hidden;
+  /* Crucial for containing the animation */
+  position: relative;
+  /* Required for the pseudo-element */
+}
+
+.gold-toast .Toastify__progress-bar {
+  background: #d4af37;
+}
+
+.gold-toast .Toastify__close-button {
+  color: #400F45;
+  opacity: 0.7;
+}
+
+/* ✅ New Gold Dust Animation using Pseudo-elements */
+@keyframes fall {
+  0% {
+    transform: translateY(-100%) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(150%) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.gold-toast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: transparent;
+  /* Create multiple "dust" particles using box-shadow */
+  box-shadow:
+    10% 20% 0 1px #ffd700,
+    30% 50% 0 0px #ffd700,
+    50% 80% 0 1px #ffd700,
+    70% 10% 0 0px #ffd700,
+    90% 40% 0 1px #ffd700,
+    15% 70% 0 0px #ffd700,
+    45% 30% 0 1px #ffd700,
+    65% 90% 0 0px #ffd700,
+    85% 60% 0 1px #ffd700,
+    5% 5% 0 1px #ffd700,
+    95% 95% 0 0px #ffd700;
+  animation: fall 4s linear infinite;
+  animation-delay: -1s;
+}
+
+.gold-toast::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: transparent;
+  box-shadow:
+    20% 10% 0 0px #ffec80,
+    40% 60% 0 1px #ffec80,
+    60% 20% 0 0px #ffec80,
+    80% 70% 0 1px #ffec80,
+    5% 85% 0 0px #ffec80,
+    25% 40% 0 1px #ffec80,
+    55% 5% 0 0px #ffec80,
+    75% 55% 0 1px #ffec80;
+  animation: fall 5s linear infinite;
+  animation-delay: -3s;
+}

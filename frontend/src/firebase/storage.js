@@ -1,5 +1,5 @@
-// src/firebase/storage.js
-import { storage } from "./config";
+messagingSenderId// src/firebase/storage.js
+import { storage } from "./firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 

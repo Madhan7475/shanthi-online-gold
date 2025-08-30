@@ -1,35 +1,49 @@
 import React, { useState } from "react";
-import { TbBrandMeta } from "react-icons/tb";
-import { IoLogoInstagram } from "react-icons/io";
-import { RiTwitterXLine } from "react-icons/ri";
-import { FiSearch, FiUser } from "react-icons/fi";
+import { FiSearch, FiHeart } from "react-icons/fi";
 import { BsCart3 } from "react-icons/bs";
-import { MdLogin } from "react-icons/md";
+import { MdLogin, MdLogout } from "react-icons/md";
 import { IoClose } from "react-icons/io5";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 
 const Topbar = () => {
-  const { cartItems } = useCart();
-  const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+  const { cartItems, savedItems } = useCart();
+  const { user, isAuthenticated, logout, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Counts
+  const cartCount = isAuthenticated
+    ? cartItems.reduce((sum, i) => sum + i.quantity, 0)
+    : 0;
+  const savedCount = isAuthenticated ? savedItems.length : 0;
+
+  // Search
   const [showSearch, setShowSearch] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    console.log("Searching for:", searchValue);
+    const trimmedQuery = searchValue.trim();
+    if (trimmedQuery) {
+      navigate(`/search?query=${encodeURIComponent(trimmedQuery)}`);
+    }
     setShowSearch(false);
+    setSearchValue("");
   };
+
+  if (loading) return null;
 
   return (
     <>
-      {/* Top Navigation Bar */}
-      <div className="bg-[#400F45] text-white relative z-20">
-        <div className="container mx-auto flex justify-between items-center py-4 px-2">
-       
+      {/* Topbar */}
+      <div className="bg-[#400F45] text-white relative z-20 h-20 flex items-center">
+        <div className="container mx-auto flex justify-between items-center px-4 relative">
+          {/* Left spacer (to balance logo center) */}
+          <div className="w-1/3 flex items-center"></div>
 
-          {/* Center - Logo */}
-          <div className="flex justify-center flex-grow">
+          {/* Centered Logo */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
             <Link to="/">
               <img
                 src="/logo.svg"
@@ -39,9 +53,9 @@ const Topbar = () => {
             </Link>
           </div>
 
-          {/* Right - Actions */}
-          <div className="hidden md:flex items-center space-x-4 text-[#FEC878]">
-            {/* Search */}
+          {/* Right Icons & Links */}
+          <div className="w-1/3 flex justify-end items-center space-x-4 text-[#FEC878]">
+            {/* Search Button */}
             <button
               onClick={() => setShowSearch(true)}
               title="Search"
@@ -50,9 +64,29 @@ const Topbar = () => {
               <FiSearch className="h-5 w-5" />
             </button>
 
+            {/* Wishlist */}
+            <div className="relative">
+              <Link
+                to="/saved-items"
+                title="Saved Items"
+                className="hover:text-white transition"
+              >
+                <FiHeart className="h-5 w-5" />
+              </Link>
+              {savedCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#FEC878] text-black text-[10px] px-1.5 py-0.5 rounded-full">
+                  {savedCount}
+                </span>
+              )}
+            </div>
+
             {/* Cart */}
             <div className="relative">
-              <Link to="/cart" title="Cart" className="hover:text-white transition">
+              <Link
+                to="/cart"
+                title="Cart"
+                className="hover:text-white transition"
+              >
                 <BsCart3 className="h-5 w-5" />
               </Link>
               {cartCount > 0 && (
@@ -62,13 +96,38 @@ const Topbar = () => {
               )}
             </div>
 
-            {/* Auth Links */}
-            <Link to="/signin" className="hover:text-white transition" title="Sign In">
-              <MdLogin className="h-5 w-5" />
-            </Link>
-            <Link to="/signup" className="hover:text-white transition" title="Sign Up">
-              <FiUser className="h-5 w-5" />
-            </Link>
+            {/* Auth */}
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/my-orders"
+                  className="text-sm hover:text-white transition whitespace-nowrap"
+                >
+                  My Orders
+                </Link>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm">
+                    {user?.name || user?.email || "User"}
+                  </span>
+                  <button
+                    onClick={logout}
+                    title="Logout"
+                    className="hover:text-white transition text-sm flex items-center gap-1"
+                  >
+                    <span>Logout</span>
+                    <MdLogout />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <Link
+                to="/signin"
+                className="hover:text-white transition"
+                title="Sign In"
+              >
+                <MdLogin className="h-5 w-5" />
+              </Link>
+            )}
 
             {/* Admin Button */}
             <Link
