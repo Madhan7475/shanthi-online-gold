@@ -4,18 +4,17 @@ frontend:
     preBuild:
       commands:
         - cd frontend
-        - nvm install 22
-        - nvm use 22
+        - nvm install 22.17.1
+        - nvm use 22.17.1
         - corepack enable
-        - npm install --legacy-peer-deps --no-optional
     build:
       commands:
+        - npm ci
         - npm run build
   artifacts:
-    baseDirectory: frontend/dist
+    baseDirectory: dist
     files:
       - '**/*'
   cache:
     paths:
       - frontend/node_modules/**/*
-      - frontend/.npm/**/*
