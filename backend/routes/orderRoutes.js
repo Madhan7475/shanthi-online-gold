@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const Invoice = require('../models/Invoice');
-const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
 
 // --- Admin Routes ---
 
@@ -42,9 +42,17 @@ router.put('/:id', async (req, res) => {
 // @route   GET api/orders/my-orders
 // @desc    Get orders for the logged-in user
 // @access  Private
-router.get('/my-orders', verifyFirebaseToken, async (req, res) => {
+router.get('/my-orders', verifyAuthFlexible, async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user.uid }).sort({ date: -1 });
+    const ids = [];
+    if (req.auth?.type === 'firebase') {
+      ids.push(req.user.uid);
+    } else if (req.auth?.type === 'jwt') {
+      if (req.user.firebaseUid) ids.push(req.user.firebaseUid);
+      ids.push(req.user.userId);
+    }
+
+    const orders = await Order.find({ userId: { $in: ids } }).sort({ date: -1 });
     res.json(orders);
   } catch (err) {
     console.error("Error fetching user's orders:", err.message);
@@ -55,7 +63,7 @@ router.get('/my-orders', verifyFirebaseToken, async (req, res) => {
 // @route   GET api/orders/:id
 // @desc    Get a single order for the logged-in user
 // @access  Private
-router.get('/:id', verifyFirebaseToken, async (req, res) => {
+router.get('/:id', verifyAuthFlexible, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
@@ -63,7 +71,15 @@ router.get('/:id', verifyFirebaseToken, async (req, res) => {
       return res.status(404).json({ msg: 'Order not found' });
     }
 
-    if (order.userId.toString() !== req.user.uid) {
+    const ids = [];
+    if (req.auth?.type === 'firebase') {
+      ids.push(req.user.uid);
+    } else if (req.auth?.type === 'jwt') {
+      if (req.user.firebaseUid) ids.push(req.user.firebaseUid);
+      ids.push(req.user.userId);
+    }
+
+    if (!ids.includes(order.userId.toString())) {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
@@ -80,7 +96,7 @@ router.get('/:id', verifyFirebaseToken, async (req, res) => {
 // @route   POST api/orders/cod
 // @desc    Create a new order for Cash on Delivery
 // @access  Private
-router.post('/cod', verifyFirebaseToken, async (req, res) => {
+router.post('/cod', verifyAuthFlexible, async (req, res) => {
   const { customer, items, total } = req.body;
 
   if (!customer || !items || !total) {
@@ -88,8 +104,16 @@ router.post('/cod', verifyFirebaseToken, async (req, res) => {
   }
 
   try {
+    // Choose a consistent identifier for orders
+    let userIdForOrder = null;
+    if (req.auth?.type === 'firebase') {
+      userIdForOrder = req.user.uid;
+    } else if (req.auth?.type === 'jwt') {
+      userIdForOrder = req.user.firebaseUid || req.user.userId;
+    }
+
     const newOrder = new Order({
-      userId: req.user.uid,
+      userId: userIdForOrder,
       customerName: customer.name,
       items: items,
       total: total,
@@ -121,14 +145,23 @@ router.post('/cod', verifyFirebaseToken, async (req, res) => {
 // @route   PUT api/orders/:id/cancel
 // @desc    Allow a user to cancel their own order
 // @access  Private
-router.put('/:id/cancel', verifyFirebaseToken, async (req, res) => {
+router.put('/:id/cancel', verifyAuthFlexible, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
       return res.status(404).json({ msg: 'Order not found' });
     }
-    if (order.userId.toString() !== req.user.uid) {
+
+    const ids = [];
+    if (req.auth?.type === 'firebase') {
+      ids.push(req.user.uid);
+    } else if (req.auth?.type === 'jwt') {
+      if (req.user.firebaseUid) ids.push(req.user.firebaseUid);
+      ids.push(req.user.userId);
+    }
+
+    if (!ids.includes(order.userId.toString())) {
       return res.status(401).json({ msg: 'User not authorized' });
     }
     if (order.status !== 'Pending') {

@@ -6,10 +6,23 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:9000', // Your backend port
+        target: 'http://localhost:9000',
         changeOrigin: true,
         secure: false
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // All dependencies in node_modules go into a separate chunk
+            return 'vendor';
+          }
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000 // Optional: increase limit to 1MB if needed
   }
 });
