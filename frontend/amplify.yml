@@ -4,14 +4,12 @@ frontend:
     preBuild:
       commands:
         - cd frontend
-        - nvm install 22.17.1
-        - nvm use 22.17.1
         - npm ci
     build:
       commands:
         - npm run build
   artifacts:
-    baseDirectory: frontend/dist
+    baseDirectory: frontend/dist   # Vite output
     files:
       - '**/*'
   cache:
