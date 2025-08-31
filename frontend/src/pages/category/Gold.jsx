@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance";
 import Layout from "../../components/Common/Layout";
 import { FaHeart, FaShoppingCart, FaFilter, FaTimes } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
@@ -44,9 +44,9 @@ const GoldPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
-        const goldItems = res.data.filter(
-          (p) => p.category?.toLowerCase() === "gold"
+        const { data } = await axiosInstance.get("/products");
+        const goldItems = data.filter(
+          (p) => p.category?.toLowerCase()?.includes("gold")
         );
         setProducts(goldItems);
       } catch (err) {
@@ -168,11 +168,7 @@ const GoldPage = () => {
               </button>
               <div className="w-full h-72 bg-white">
                 <img
-                  src={
-                    product.images?.[0]
-                      ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${product.images[0]}`
-                      : "/placeholder.png"
-                  }
+                  src={product.images?.[0] ? `/uploads/${product.images[0]}` : "/placeholder.png"}
                   alt={product.title}
                   className="w-full h-full object-cover"
                 />

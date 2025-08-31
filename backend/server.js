@@ -6,8 +6,10 @@ const multer = require('multer');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
-// Load environment variables
-dotenv.config();
+/**
+ * Load environment variables from backend/.env regardless of cwd
+ */
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Connect to MongoDB
 connectDB();
@@ -17,7 +19,7 @@ const app = express();
 
 // === CORS ===
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+  origin: true, // Allow all origins for temporary public tunnel (dummy hosting)
   credentials: true
 }));
 
