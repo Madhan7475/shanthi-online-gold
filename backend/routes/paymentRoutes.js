@@ -3,7 +3,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Order = require("../models/Order");
 const Invoice = require("../models/Invoice");
-const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ const instance = new Razorpay({
  * @desc    Create a Razorpay order for online payment
  * @access  Private
  */
-router.post("/create-order", verifyFirebaseToken, async (req, res) => {
+router.post("/create-order", verifyAuthFlexible, async (req, res) => {
     const { amount, currency = "INR", receipt } = req.body;
 
     try {
@@ -48,7 +48,7 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
  * @desc    Verify Razorpay payment and create order/invoice in DB
  * @access  Private
  */
-router.post("/verify", verifyFirebaseToken, async (req, res) => {
+router.post("/verify", verifyAuthFlexible, async (req, res) => {
     const {
         razorpay_order_id,
         razorpay_payment_id,
@@ -66,8 +66,16 @@ router.post("/verify", verifyFirebaseToken, async (req, res) => {
 
     // Payment is verified, now create the order and invoice in your database
     try {
+        // Choose a consistent identifier for orders (works for Firebase and OTP-JWT)
+        let userIdForOrder = null;
+        if (req.auth?.type === "firebase") {
+            userIdForOrder = req.user.uid;
+        } else if (req.auth?.type === "jwt") {
+            userIdForOrder = req.user.firebaseUid || req.user.userId;
+        }
+
         const newOrder = new Order({
-            userId: req.user.uid,
+            userId: userIdForOrder,
             customerName: orderData.customer.name,
             items: orderData.items,
             total: orderData.total,
