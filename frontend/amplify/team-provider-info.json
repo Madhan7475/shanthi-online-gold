@@ -14,6 +14,13 @@
     "categories": {
       "api": {
         "shanthi": {}
+      },
+      "auth": {
+        "shanthi": {}
+      },
+      "function": {
+        "Shanthi": {},
+        "shanthi8f2df5e2": {}
       }
     }
   },

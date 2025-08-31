@@ -3,15 +3,18 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd frontend
-        - npm ci
+        - echo "Fetching SSM secrets..."
+        - export MY_API_KEY=$(aws ssm get-parameter --name "/amplify/d1ouglho2k9wz6/main/MY_API_KEY" --with-decryption --query "Parameter.Value" --output text)
+        - export ANOTHER_SECRET=$(aws ssm get-parameter --name "/amplify/d1ouglho2k9wz6/main/ANOTHER_SECRET" --with-decryption --query "Parameter.Value" --output text)
+        - echo "Secrets fetched successfully"
     build:
       commands:
+        - npm install
         - npm run build
   artifacts:
-    baseDirectory: frontend/dist   # Vite output
+    baseDirectory: build
     files:
       - '**/*'
   cache:
     paths:
-      - frontend/node_modules/**/*
+      - node_modules/**/*
