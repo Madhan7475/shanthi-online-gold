@@ -3,13 +3,12 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo "Fetching SSM secrets..."
-        - export MY_API_KEY=$(aws ssm get-parameter --name "/amplify/d1ouglho2k9wz6/main/MY_API_KEY" --with-decryption --query "Parameter.Value" --output text)
-        - export ANOTHER_SECRET=$(aws ssm get-parameter --name "/amplify/d1ouglho2k9wz6/main/ANOTHER_SECRET" --with-decryption --query "Parameter.Value" --output text)
-        - echo "Secrets fetched successfully"
+        - echo "Fetching SSM secret..."
+        - export REACT_APP_SECRET=$(aws ssm get-parameter --name "/shanthi" --with-decryption --query "Parameter.Value" --output text)
+        - npm install
     build:
       commands:
-        - npm install
+        - echo "Building React app..."
         - npm run build
   artifacts:
     baseDirectory: build
