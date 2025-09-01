@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { FaBars, FaTimes } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const menuData = {
@@ -95,16 +95,32 @@ const Navbar = () => {
 
   return (
     <nav className="bg-[#1F0F23] text-[#FEC878] sticky top-0 shadow-md z-50">
-      <div className="flex justify-center items-center px-4 py-3 max-w-screen-xl mx-auto">
+      <div className="flex justify-between items-center px-4 py-5 md:py-3 max-w-screen-xl mx-auto relative">
+        {/* Hamburger (Mobile) */}
         <button
-          className="md:hidden text-[#FEC878] text-2xl"
+          className="md:hidden flex flex-col justify-between w-6 h-5 focus:outline-none"
           onClick={() => setMobileOpen(!mobileOpen)}
         >
-          {mobileOpen ? <FaTimes /> : <FaBars />}
+          {mobileOpen ? (
+            <FaTimes className="text-[#FEC878] text-2xl" />
+          ) : (
+            <>
+              <span className="block h-0.5 w-full bg-[#FEC878]"></span>
+              <span className="block h-0.5 w-full bg-[#FEC878]"></span>
+              <span className="block h-0.5 w-full bg-[#FEC878]"></span>
+            </>
+          )}
         </button>
 
+        {/* Logo (Mobile Only) */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 md:hidden">
+          <Link to="/">
+            <img src="/logo.svg" alt="Logo" className="h-12 w-auto" />
+          </Link>
+        </div>
+
         {/* Desktop Menu */}
-        <ul className="hidden md:flex justify-center gap-10 text-sm font-medium tracking-wide">
+        <ul className="hidden md:flex justify-center gap-10 text-sm font-medium tracking-wide flex-1">
           {Object.entries(menuData).map(([menuItem, { href, items }], index) => (
             <li
               key={index}
@@ -172,7 +188,7 @@ const Navbar = () => {
                   {menuItem}
                 </Link>
                 <button
-                  className="text-sm"
+                  className="text-purple-600 text-[0.5rem]" // ✅ smaller & purple
                   onClick={() =>
                     setHoveredMenu(hoveredMenu === index ? null : index)
                   }

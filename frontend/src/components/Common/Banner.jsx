@@ -4,56 +4,34 @@ const bannerImages = ["/gold5.jpg", "/gold9.jpg", "/gold10.jpg", "/gold15.jpg"];
 
 const HeaderBanner = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(true);
   const slideRef = useRef(null);
   const totalSlides = bannerImages.length;
-  const allImages = [...bannerImages, bannerImages[0]]; // Add first image again for loop
 
+  // Move to next slide
   const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => prev + 1);
-    setIsTransitioning(true);
-  }, []);
+    setCurrentIndex((prev) => (prev + 1) % totalSlides);
+  }, [totalSlides]);
 
+  // Auto slide every 4s
   useEffect(() => {
-    const interval = setInterval(() => {
-      nextSlide();
-    }, 4000);
+    const interval = setInterval(nextSlide, 4000);
     return () => clearInterval(interval);
   }, [nextSlide]);
 
-  const handleTransitionEnd = () => {
-    if (currentIndex === totalSlides) {
-      setIsTransitioning(false);
-      setCurrentIndex(0);
-    }
-  };
-
-  // After removing transition, re-enable it for next loop
-  useEffect(() => {
-    if (!isTransitioning) {
-      const timeout = setTimeout(() => {
-        setIsTransitioning(true);
-      }, 50);
-      return () => clearTimeout(timeout);
-    }
-  }, [isTransitioning]);
-
+  // Go to a specific slide
   const goToSlide = (index) => {
-    setCurrentIndex(index);
-    setIsTransitioning(true);
+    setCurrentIndex(index % totalSlides);
   };
 
   return (
     <div className="relative w-full overflow-hidden">
-      {/* Banner height */}
       <div className="relative h-[260px] sm:h-[400px] md:h-[520px] lg:h-[640px]">
         <div
           ref={slideRef}
-          className={`flex h-full ${isTransitioning ? "transition-transform duration-1000 ease-in-out" : ""}`}
+          className="flex h-full transition-transform duration-1000 ease-in-out"
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-          onTransitionEnd={handleTransitionEnd}
         >
-          {allImages.map((src, i) => (
+          {bannerImages.map((src, i) => (
             <div key={i} className="min-w-full h-full">
               <img src={src} alt={`Slide ${i + 1}`} className="w-full h-full object-cover" />
             </div>
@@ -68,7 +46,7 @@ const HeaderBanner = () => {
             key={i}
             onClick={() => goToSlide(i)}
             className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${
-              currentIndex % totalSlides === i ? "bg-white" : "bg-gray-400"
+              currentIndex === i ? "bg-white" : "bg-gray-400"
             } transition-colors duration-300`}
           />
         ))}
