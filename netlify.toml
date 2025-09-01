@@ -1,0 +1,15 @@
+# Netlify configuration for deploying the frontend only
+
+[build]
+# Change into the frontend directory before building
+base = "frontend"
+# Build the Vite app
+command = "npm run build"
+# Publish the built site (relative to base)
+publish = "dist"
+
+# Single Page App fallback so client routing works on refresh
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
