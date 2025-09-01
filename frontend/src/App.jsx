@@ -33,14 +33,14 @@ import BabyItemsPage from "./pages/category/BabyItems";
 import WeddingPage from "./pages/category/Wedding";
 import SpecialCollectionPage from "./pages/category/Specialcollection";
 import Aboutus from "./pages/category/Aboutus"; // adjust path if needed
-import ContactUs from "./pages/category/ContactUs";
+import ContactUs from "./pages/category/Contactus";
 import Termsandconditions from "./pages/category/Termsandconditions"; // ✅ Import
 import Privacypolicies from "./pages/category/Privacypolicies";  // ✅ Import
 import CollectionPage from "./pages/category/CollectionPage";
 
 
 // Admin Pages
-import AdminLogin from "./pages/login";
+import AdminLogin from "./pages/Login";
 import AdminAuth from "./pages/AdminAuth";
 import AdminProfiles from "./pages/AdminProfiles";
 import AdminAnalytics from "./pages/AdminAnalytics";
