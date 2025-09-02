@@ -135,15 +135,15 @@ const Navbar = () => {
                 {menuItem}
               </Link>
 
-              {/* Dropdown */}
+              {/* Dropdown with glass effect */}
               <div
-                className={`fixed left-0 w-full bg-white shadow-2xl z-40 border-t overflow-hidden transition-all duration-300 ease-in-out ${
+                className={`fixed left-0 w-full bg-white/30 backdrop-blur-md border border-white/20 shadow-2xl z-40 overflow-hidden transition-all duration-300 ease-in-out ${
                   hoveredMenu === index
                     ? "opacity-100 max-h-[500px] py-10 pointer-events-auto"
                     : "opacity-0 max-h-0 py-0 pointer-events-none"
                 }`}
                 style={{
-                  top: "124px",
+                  top: "148px",
                   transitionDelay: hoveredMenu === index ? "100ms" : "0ms",
                 }}
               >
@@ -152,14 +152,14 @@ const Navbar = () => {
                     <Link
                       key={i}
                       to={item.href}
-                      className="flex flex-col items-center w-32 hover:bg-[#fff9e8] p-2 rounded-md transition"
+                      className="flex flex-col items-center w-32 hover:bg-white/20 p-2 rounded-md transition"
                     >
                       <img
                         src={item.img}
                         alt={item.name}
                         className="w-20 h-20 object-cover rounded-full border mb-2"
                       />
-                      <h3 className="text-xs text-[#3b3b3b] hover:text-[#c29d5f] text-center">
+                      <h3 className="text-xs text-white hover:text-[#c29d5f] text-center">
                         {item.name}
                       </h3>
                     </Link>
@@ -171,15 +171,15 @@ const Navbar = () => {
         </ul>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu with glass effect */}
       <div
-        className={`md:hidden transition-all duration-300 ease-in-out bg-white ${
+        className={`md:hidden transition-all duration-300 ease-in-out bg-white/30 backdrop-blur-md border-t border-white/20 ${
           mobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
         } overflow-hidden`}
       >
         <ul className="flex flex-col p-4 space-y-4 text-[#3b3b3b]">
           {Object.entries(menuData).map(([menuItem, { href, items }], index) => (
-            <li key={index} className="border-b pb-2">
+            <li key={index} className="border-b border-white/20 pb-2">
               <div className="flex justify-between items-center">
                 <Link
                   to={href}
@@ -188,7 +188,7 @@ const Navbar = () => {
                   {menuItem}
                 </Link>
                 <button
-                  className="text-purple-600 text-[0.5rem]" // ✅ smaller & purple
+                  className="text-purple-600 text-[0.5rem]"
                   onClick={() =>
                     setHoveredMenu(hoveredMenu === index ? null : index)
                   }
@@ -208,14 +208,14 @@ const Navbar = () => {
                     <Link
                       key={i}
                       to={item.href}
-                      className="flex flex-col items-center hover:bg-[#fff9e8] p-2 rounded-md transition"
+                      className="flex flex-col items-center hover:bg-white/20 p-2 rounded-md transition"
                     >
                       <img
                         src={item.img}
                         alt={item.name}
                         className="w-20 h-20 object-cover rounded-full border mb-2"
                       />
-                      <h3 className="text-xs text-gray-700 text-center">
+                      <h3 className="text-xs text-white text-center">
                         {item.name}
                       </h3>
                     </Link>
