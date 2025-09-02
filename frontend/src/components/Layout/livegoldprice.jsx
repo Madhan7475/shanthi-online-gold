@@ -67,7 +67,7 @@ const Topbar = () => {
                 </span>
               )}
             </div>
-            <Link to="/DigiGold" title="Digi Gold" className="hover:text-white transition flex items-center gap-1">
+            <Link to="/digigold" title="Digi Gold" className="hover:text-white transition flex items-center gap-1">
               <GiTwoCoins className="h-5 w-5 text-[#FFD700]" />
               <span className="text-sm hidden lg:inline">Digi Gold</span>
             </Link>

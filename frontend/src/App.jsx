@@ -18,6 +18,7 @@ import MyOrdersPage from "./pages/MyOrdersPage";
 import OrderDetailPage from "./pages/OrderDetailPage"; // ✅ Import the new page
 import SearchPage from "./pages/SearchPage";
 import ProductDetail from "./pages/ProductDetail";
+import DigiGold from "./pages/DigiGold"; // Correct casing
 
 
 
@@ -69,6 +70,8 @@ const App = () => {
           <Route path="signin" element={<SigninPage />} />
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="/digigold" element={<DigiGold />} />
+
 
           {/* Protected Routes */}
           <Route
