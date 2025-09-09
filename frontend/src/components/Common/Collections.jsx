@@ -7,7 +7,7 @@ const CollectionsSection = () => {
         
         {/* Left Image (Hidden on Mobile) */}
         <img
-          src="/bridal2.jpg"
+          src="/chain.jpg"
           alt="Side model"
           className="hidden md:block md:w-1/4 h-auto rounded-xl object-cover"
         />
@@ -29,7 +29,7 @@ const CollectionsSection = () => {
 
         {/* Right Image (Hidden on Mobile) */}
         <img
-          src="/bridal3.jpg"
+          src="/jimiki.jpg"
           alt="Side model"
           className="hidden md:block md:w-1/4 h-auto rounded-xl object-cover"
         />

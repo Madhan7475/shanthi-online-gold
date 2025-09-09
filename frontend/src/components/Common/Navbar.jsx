@@ -6,9 +6,9 @@ const menuData = {
   "All Jewellery": {
     href: "/category/all-jewellery",
     items: [
-      { name: "Chains", img: "/gold/chain.jpg", href: "/gold/chains" },
-      { name: "Rings", img: "/gold/ring.jpg", href: "/gold/rings" },
-      { name: "Earrings", img: "/gold/earrings.jpg", href: "/gold/earrings" },
+      { name: "Chains", img: "/chain.jpg", href: "/gold/chains" },
+      { name: "Rings", img: "/DiamondRing copy.jpg", href: "/gold/rings" },
+      { name: "Earrings", img: "/Gold Earring copy.png", href: "/gold/earrings" },
     ],
   },
   Gold: {
@@ -147,22 +147,22 @@ const Navbar = () => {
                   transitionDelay: hoveredMenu === index ? "100ms" : "0ms",
                 }}
               >
-                <div className="max-w-screen-xl mx-auto px-6 flex justify-center gap-6 flex-wrap transition-opacity duration-300">
+                <div className="max-w-screen-xl mx-auto px-6 flex justify-center gap-8 flex-wrap transition-opacity duration-300">
                   {items.map((item, i) => (
                     <Link
-                      key={i}
-                      to={item.href}
-                      className="flex flex-col items-center w-32 hover:bg-white/20 p-2 rounded-md transition"
-                    >
-                      <img
-                        src={item.img}
-                        alt={item.name}
-                        className="w-20 h-20 object-cover rounded-full border mb-2"
-                      />
-                      <h3 className="text-xs text-white hover:text-[#c29d5f] text-center">
-                        {item.name}
-                      </h3>
-                    </Link>
+                    key={i}
+                    to={item.href}
+                    className="flex flex-col items-center w-40 p-3 rounded-md transition"
+                  >
+                    <img
+                      src={item.img}
+                      alt={item.name}
+                      className="w-28 h-28 object-cover rounded-full border-2 mb-3"
+                    />
+                    <h3 className="text-base font-medium text-white hover:text-[#c29d5f] text-center">
+                      {item.name}
+                    </h3>
+                  </Link>
                   ))}
                 </div>
               </div>
