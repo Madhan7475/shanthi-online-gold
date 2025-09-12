@@ -33,20 +33,27 @@ export const Bridal = () => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   }, [images.length]);
 
-  // Auto-play every 4s
+  // Auto-play every 5s (slightly longer for smoother experience)
   useEffect(() => {
-    autoplayRef.current = setInterval(nextSlide, 4000);
+    autoplayRef.current = setInterval(nextSlide, 5000);
     return () => clearInterval(autoplayRef.current);
   }, [nextSlide]);
 
-  // Handle drag navigation
+  // Handle drag navigation with smoother thresholds
   const handleDragEnd = (_, info) => {
-    if (info.offset.x < -50) nextSlide(); // swipe left
-    else if (info.offset.x > 50) prevSlide(); // swipe right
+    const threshold = 30; // Lower threshold for easier swiping
+    const velocity = Math.abs(info.velocity.x);
+    
+    // Consider both drag distance and velocity for smoother interaction
+    if (info.offset.x < -threshold || (info.offset.x < -10 && velocity > 500)) {
+      nextSlide(); // swipe left
+    } else if (info.offset.x > threshold || (info.offset.x > 10 && velocity > 500)) {
+      prevSlide(); // swipe right
+    }
   };
 
   return (
-    <section className="py-10 px-3 bg-white text-center">
+    <section className="py-10 px-3 bg-white text-center rounded-t-3xl">
       {/* Title */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -89,7 +96,11 @@ export const Bridal = () => {
           className="flex justify-center items-center gap-2 sm:gap-4 px-1 sm:px-6 cursor-grab active:cursor-grabbing"
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.1}
+          dragTransition={{ bounceStiffness: 600, bounceDamping: 10 }}
           onDragEnd={handleDragEnd}
+          animate={{ x: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
         >
           {[-2, -1, 0, 1, 2].map((offset) => {
             const index = (currentIndex + offset + images.length) % images.length;
@@ -111,13 +122,26 @@ export const Bridal = () => {
               <motion.div
                 key={index}
                 layout
-                transition={{ duration: 0.6, ease: "easeInOut" }}
-                className={`rounded-xl shadow-md ${size}`}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ 
+                  scale: offset === 0 ? 1.05 : Math.abs(offset) === 1 ? 1 : 0.9,
+                  opacity: offset === 0 ? 1 : Math.abs(offset) === 1 ? 0.8 : 0.5,
+                  filter: offset === 0 ? "blur(0px)" : `blur(${Math.abs(offset) * 1}px)`
+                }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 25,
+                  mass: 0.8,
+                  duration: 0.8
+                }}
+                whileHover={{ scale: offset === 0 ? 1.08 : 1.02, transition: { duration: 0.3 } }}
+                className={`rounded-t-3xl rounded-b-xl shadow-lg hover:shadow-xl ${size} transition-shadow duration-300 overflow-hidden`}
               >
                 <img
                   src={images[index]}
                   alt={`Bridal ${index + 1}`}
-                  className="w-full h-full object-cover rounded-xl"
+                  className="w-full h-full object-cover"
                   draggable="false"
                 />
               </motion.div>

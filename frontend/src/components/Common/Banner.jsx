@@ -1,25 +1,37 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const bannerImages = ["/gold5.jpg", "/gold9.jpg", "/gold10.jpg", "/gold15.jpg"];
 
 const HeaderBanner = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
   const slideRef = useRef(null);
   const totalSlides = bannerImages.length;
+  const [isPaused, setIsPaused] = useState(false);
 
   // Move to next slide
   const nextSlide = useCallback(() => {
+    setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % totalSlides);
   }, [totalSlides]);
 
-  // Auto slide every 4s
+  // Move to previous slide
+  const prevSlide = useCallback(() => {
+    setDirection(-1);
+    setCurrentIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
+  }, [totalSlides]);
+
+  // Auto slide every 5s (increased for smoother experience)
   useEffect(() => {
-    const interval = setInterval(nextSlide, 4000);
+    if (isPaused) return;
+    const interval = setInterval(nextSlide, 5000);
     return () => clearInterval(interval);
-  }, [nextSlide]);
+  }, [nextSlide, isPaused]);
 
   // Go to a specific slide
   const goToSlide = (index) => {
+    setDirection(index > currentIndex ? 1 : -1);
     setCurrentIndex(index % totalSlides);
   };
 
