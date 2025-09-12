@@ -9,29 +9,65 @@ import { useRequireAuth } from "../../utils/useRequireAuth";
 const FILTER_DATA = {
   Price: ["< 25,000", "25,000 - 50,000", "50,000 - 1,00,000", "1,00,000+"],
   "Jewellery Type": [
-    "Diamond Jewellery", "Gold Jewellery", "Jewellery with Gemstones", "Plain Jewellery with Stones", "Platinum Jewellery"
+    "Diamond Jewellery",
+    "Gold Jewellery",
+    "Jewellery with Gemstones",
+    "Plain Jewellery with Stones",
+    "Platinum Jewellery",
   ],
   Product: [
-    "Bangle", "Bracelet", "Chain", "Earrings", "Finger Ring", "Haram", "Jewellery Set", "Kada", "Maang Tikka",
-    "Mangalsutra", "Mangalsutra Set", "Necklace", "Necklace Set", "Nose Pin", "Others", "Pendant",
-    "Pendant and Earrings Set", "Pendant with Chain"
+    "Bangle",
+    "Bracelet",
+    "Chain",
+    "Earrings",
+    "Finger Ring",
+    "Haram",
+    "Jewellery Set",
+    "Kada",
+    "Maang Tikka",
+    "Mangalsutra",
+    "Mangalsutra Set",
+    "Necklace",
+    "Necklace Set",
+    "Nose Pin",
+    "Others",
+    "Pendant",
+    "Pendant and Earrings Set",
+    "Pendant with Chain",
   ],
   Gender: ["Kids", "Men", "Unisex", "Women"],
   Purity: ["14", "18", "22", "95"],
   Occasion: [
-    "Bridal Wear", "Casual Wear", "Engagement", "Modern Wear", "Office Wear", "Traditional and Ethnic Wear"
+    "Bridal Wear",
+    "Casual Wear",
+    "Engagement",
+    "Modern Wear",
+    "Office Wear",
+    "Traditional and Ethnic Wear",
   ],
   Metal: ["Gold", "Platinum", "Silver"],
   "Diamond Clarity": [
-    "B,I1 I2", "FL", "I1", "I1 / I2", "I1 I2", "I1-I2", "I2", "Mixed", "SI", "SI, SI1", "SI1", "SI1,SI2",
-    "SI1-SI2, VS, VS2", "SI1-SI2, VS1", "SI1-SI2, VS2", "SI2", "VS", "VS,VS1", "VS, VS1", "VS1", "VS2",
-    "VVS", "VVS,VS", "VVS1", "VVS1,VVS2", "VVS2"
+    "FL",
+    "I1",
+    "I2",
+    "SI1",
+    "SI2",
+    "VS1",
+    "VS2",
+    "VVS1",
+    "VVS2",
   ],
-  Collection: ["Classic", "Contemporary", "Festive", "Modern Gold", "Solitaire", "Sparkling Avenues"],
+  Collection: [
+    "Classic",
+    "Contemporary",
+    "Festive",
+    "Modern Gold",
+    "Solitaire",
+    "Sparkling Avenues",
+  ],
   Community: ["North Indian", "South Indian", "Gujarati", "Tamil", "Punjabi"],
-  Type: ["Studs", "Hoops", "Jhumka", "Drops", "Pendant"]
+  Type: ["Studs", "Hoops", "Jhumka", "Drops", "Pendant"],
 };
-
 
 const GoldPage = () => {
   const [products, setProducts] = useState([]);
@@ -39,14 +75,14 @@ const GoldPage = () => {
   const [expandedFilters, setExpandedFilters] = useState({});
   const { addToCart, saveForItemLater } = useCart();
   const navigate = useNavigate();
-  const { runWithAuth } = useRequireAuth(); // ✅ Correctly get the runWithAuth function
+  const { runWithAuth } = useRequireAuth();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const { data } = await axiosInstance.get("/products");
-        const goldItems = data.filter(
-          (p) => p.category?.toLowerCase()?.includes("gold")
+        const goldItems = data.filter((p) =>
+          p.category?.toLowerCase()?.includes("gold")
         );
         setProducts(goldItems);
       } catch (err) {
@@ -62,28 +98,23 @@ const GoldPage = () => {
 
   const handleProductClick = (id) => navigate(`/product/${id}`);
 
-  // ✅ CORRECTED HANDLER
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
-    runWithAuth(() => {
-      addToCart(product);
-    });
+    runWithAuth(() => addToCart(product));
   };
 
-  // ✅ CORRECTED HANDLER
   const handleSaveItem = (product, e) => {
     e.stopPropagation();
-    runWithAuth(() => {
-      saveForItemLater(product);
-    });
+    runWithAuth(() => saveForItemLater(product));
   };
 
   return (
     <Layout>
+      {/* Banner */}
       <div className="w-screen h-40 md:h-72 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
         <img
           src="/gold15.jpg"
-          alt="Jewellery Banner"
+          alt="Gold Jewellery Banner"
           className="w-full h-full object-cover"
         />
       </div>
@@ -93,7 +124,7 @@ const GoldPage = () => {
           Gold Jewellery
         </h1>
 
-        {/* Filter Toggle Button */}
+        {/* Filter Toggle */}
         <div className="flex justify-start mb-6">
           <button
             className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-full text-sm text-[#400F45] hover:bg-gray-100"
@@ -107,22 +138,30 @@ const GoldPage = () => {
 
         {/* Overlay */}
         <div
-          className={`fixed inset-0 bg-black bg-opacity-30 z-30 transition-opacity duration-300 ${showFilters ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-            }`}
+          className={`fixed inset-0 bg-black bg-opacity-30 z-30 transition-opacity duration-300 ${
+            showFilters
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+          }`}
           onClick={() => setShowFilters(false)}
         />
 
         {/* Sidebar */}
         <div
-          className={`fixed top-0 left-0 w-80 h-full bg-white z-40 p-6 shadow-lg overflow-y-auto transform transition-transform duration-300 ease-in-out ${showFilters ? "translate-x-0" : "-translate-x-full"
-            }`}
+          className={`fixed top-0 left-0 w-80 h-full bg-white z-40 p-6 shadow-lg overflow-y-auto transform transition-transform duration-300 ease-in-out ${
+            showFilters ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-[#400F45]">Filters</h2>
-            <button onClick={() => setShowFilters(false)} className="text-gray-500 hover:text-[#400F45]">
+            <button
+              onClick={() => setShowFilters(false)}
+              className="text-gray-500 hover:text-[#400F45]"
+            >
               <FaTimes size={18} />
             </button>
           </div>
+
           <div className="space-y-4">
             {Object.entries(FILTER_DATA).map(([label, options]) => (
               <div key={label}>
@@ -133,8 +172,11 @@ const GoldPage = () => {
                   {label}
                 </button>
                 <div
-                  className={`mt-2 transition-all duration-300 ease-in-out ${expandedFilters[label] ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
-                    }`}
+                  className={`mt-2 transition-all duration-300 ease-in-out ${
+                    expandedFilters[label]
+                      ? "max-h-[500px] opacity-100"
+                      : "max-h-0 opacity-0 overflow-hidden"
+                  }`}
                 >
                   <ul className="pl-2 pr-1 py-1 space-y-1 text-sm text-[#333] max-h-[300px] overflow-y-auto">
                     {options.map((opt, idx) => (
@@ -153,26 +195,35 @@ const GoldPage = () => {
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 pb-10">
           {products.map((product) => (
             <div
               key={product._id}
               className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
               onClick={() => handleProductClick(product._id)}
             >
+              {/* Save Item */}
               <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
                 onClick={(e) => handleSaveItem(product, e)}
               >
                 <FaHeart />
               </button>
+
+              {/* Product Image */}
               <div className="w-full h-72 bg-white">
                 <img
-                  src={product.images?.[0] ? `/uploads/${product.images[0]}` : "/placeholder.png"}
+                  src={
+                    product.images?.[0]
+                      ? `/uploads/${product.images[0]}`
+                      : "/placeholder.png"
+                  }
                   alt={product.title}
                   className="w-full h-full object-cover"
                 />
               </div>
+
+              {/* Product Info */}
               <div className="p-4">
                 <h2 className="text-sm font-medium text-gray-800 truncate">
                   {product.title}
@@ -184,6 +235,8 @@ const GoldPage = () => {
                   ₹{product.price.toLocaleString()}
                 </p>
               </div>
+
+              {/* Add to Cart */}
               <button
                 className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f]"
                 onClick={(e) => handleAddToCart(product, e)}
