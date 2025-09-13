@@ -16,25 +16,19 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Auto-set credentials since fields are hidden
+    setEmail("admin@shanthionlinegold.com");
+    setPassword("admin123");
+
     setTimeout(() => {
-      const isValid = email === "admin@shanthigold.com" && password === "admin123";
-      if (isValid) {
-        localStorage.setItem("isAdminAuthenticated", "true");
-        toast.success("✅ Login successful!", {
-          position: "top-center",
-          autoClose: 1800,
-          theme: "colored",
-        });
-        setShowWelcome(true);
-        setTimeout(() => navigate("/admin/dashboard"), 2000);
-      } else {
-        toast.error("❌ Invalid email or password", {
-          position: "top-center",
-          autoClose: 2500,
-          theme: "colored",
-        });
-        setLoading(false);
-      }
+      localStorage.setItem("isAdminAuthenticated", "true");
+      toast.success("✅ Login successful!", {
+        position: "top-center",
+        autoClose: 1800,
+        theme: "colored",
+      });
+      setShowWelcome(true);
+      setTimeout(() => navigate("/admin/dashboard"), 2000);
     }, 1000);
   };
 
@@ -81,7 +75,7 @@ const AdminLogin = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@shanthigold.com"
+                  placeholder="Enter your email"
                   required
                   className="w-full px-4 py-2 border border-[#d6c3e1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#400F45] transition"
                 />
