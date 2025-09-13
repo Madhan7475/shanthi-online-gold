@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FiSearch, FiHeart } from "react-icons/fi";
 import { BsCart3 } from "react-icons/bs";
 import { MdLogin, MdLogout } from "react-icons/md";
-import { GiTwoCoins } from "react-icons/gi";
+
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
@@ -67,35 +67,38 @@ const Topbar = () => {
                 </span>
               )}
             </div>
-            <Link to="/DigiGold" title="Digi Gold" className="hover:text-white transition flex items-center gap-1">
-              <GiTwoCoins className="h-5 w-5 text-[#FFD700]" />
-              <span className="text-sm hidden lg:inline">Digi Gold</span>
-            </Link>
+
             {isAuthenticated ? (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
                 <Link to="/my-orders" className="text-sm hover:text-white transition whitespace-nowrap">
                   My Orders
                 </Link>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm">{user?.name || user?.email || "User"}</span>
-                  <button onClick={logout} title="Logout" className="hover:text-white transition text-sm flex items-center gap-1">
+                  <span className="text-xs bg-white/10 px-2 py-1 rounded-full truncate max-w-[80px]" title={user?.name || user?.email || "User"}>
+                    {(user?.name || user?.email || "User").split(' ')[0]}
+                  </span>
+                  <button onClick={logout} title="Logout" className="hover:text-white transition text-xs flex items-center gap-1 bg-red-500/20 px-2 py-1 rounded-full">
                     <span>Logout</span>
-                    <MdLogout />
+                    <MdLogout size={14} />
                   </button>
                 </div>
+                {/* Admin Button - Only visible to admin users */}
+                {(user?.role === 'admin' || user?.isAdmin || user?.email === 'admin@shanthionlinegold.com') && (
+                  <Link
+                    to="/admin/login"
+                    className="bg-[#FEC878] text-black text-xs px-2 py-1 rounded hover:bg-white hover:text-[#2f0a38] transition"
+                    title="Admin Panel"
+                  >
+                    Admin
+                  </Link>
+                )}
               </div>
             ) : (
               <Link to="/signin" className="hover:text-white transition" title="Sign In">
                 <MdLogin className="h-5 w-5" />
               </Link>
             )}
-            <Link
-              to="/admin/login"
-              className="ml-2 bg-[#FEC878] text-black text-xs px-2 py-1 rounded hover:bg-white hover:text-[#2f0a38] transition"
-              title="Admin Panel"
-            >
-              Admin
-            </Link>
+
           </div>
         </div>
       </div>
@@ -124,10 +127,7 @@ const Topbar = () => {
             </span>
           )}
         </Link>
-        <Link to="/digigold" title="Digi Gold" className="hover:text-white transition flex flex-col items-center text-xs">
-          <GiTwoCoins className="h-6 w-6 text-[#FFD700]" />
-          <span>Digi Gold</span>
-        </Link>
+
         {isAuthenticated ? (
           <button onClick={logout} title="Logout" className="hover:text-white transition flex flex-col items-center text-xs">
             <MdLogout className="h-6 w-6" />
