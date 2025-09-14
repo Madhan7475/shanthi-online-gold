@@ -33,27 +33,29 @@ export const Bridal = () => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   }, [images.length]);
 
-  // Auto-play every 5s (slightly longer for smoother experience)
+  // Auto-play every 5s
   useEffect(() => {
     autoplayRef.current = setInterval(nextSlide, 5000);
     return () => clearInterval(autoplayRef.current);
   }, [nextSlide]);
 
-  // Handle drag navigation with smoother thresholds
+  // Handle drag navigation
   const handleDragEnd = (_, info) => {
-    const threshold = 30; // Lower threshold for easier swiping
+    const threshold = 30;
     const velocity = Math.abs(info.velocity.x);
-    
-    // Consider both drag distance and velocity for smoother interaction
+
     if (info.offset.x < -threshold || (info.offset.x < -10 && velocity > 500)) {
-      nextSlide(); // swipe left
-    } else if (info.offset.x > threshold || (info.offset.x > 10 && velocity > 500)) {
-      prevSlide(); // swipe right
+      nextSlide();
+    } else if (
+      info.offset.x > threshold ||
+      (info.offset.x > 10 && velocity > 500)
+    ) {
+      prevSlide();
     }
   };
 
   return (
-    <section className="py-10 px-3 bg-white text-center rounded-t-3xl">
+    <section className="py-20 px-3 text-center rounded-t-3xl bg-transparent">
       {/* Title */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -103,7 +105,8 @@ export const Bridal = () => {
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
         >
           {[-2, -1, 0, 1, 2].map((offset) => {
-            const index = (currentIndex + offset + images.length) % images.length;
+            const index =
+              (currentIndex + offset + images.length) % images.length;
 
             // Adjust size based on offset
             let size = "w-24 h-[160px] opacity-40 sm:w-32 sm:h-[220px]";
@@ -123,19 +126,26 @@ export const Bridal = () => {
                 key={index}
                 layout
                 initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ 
-                  scale: offset === 0 ? 1.05 : Math.abs(offset) === 1 ? 1 : 0.9,
+                animate={{
+                  scale:
+                    offset === 0 ? 1.05 : Math.abs(offset) === 1 ? 1 : 0.9,
                   opacity: offset === 0 ? 1 : Math.abs(offset) === 1 ? 0.8 : 0.5,
-                  filter: offset === 0 ? "blur(0px)" : `blur(${Math.abs(offset) * 1}px)`
+                  filter:
+                    offset === 0
+                      ? "blur(0px)"
+                      : `blur(${Math.abs(offset) * 1}px)`,
                 }}
-                transition={{ 
+                transition={{
                   type: "spring",
                   stiffness: 300,
                   damping: 25,
                   mass: 0.8,
-                  duration: 0.8
+                  duration: 0.8,
                 }}
-                whileHover={{ scale: offset === 0 ? 1.08 : 1.02, transition: { duration: 0.3 } }}
+                whileHover={{
+                  scale: offset === 0 ? 1.08 : 1.02,
+                  transition: { duration: 0.3 },
+                }}
                 className={`rounded-t-3xl rounded-b-xl shadow-lg hover:shadow-xl ${size} transition-shadow duration-300 overflow-hidden`}
               >
                 <img
