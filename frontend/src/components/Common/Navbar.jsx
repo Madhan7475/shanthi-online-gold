@@ -150,19 +150,19 @@ const Navbar = () => {
                 <div className="max-w-screen-xl mx-auto px-6 flex justify-center gap-8 flex-wrap transition-opacity duration-300">
                   {items.map((item, i) => (
                     <Link
-                    key={i}
-                    to={item.href}
-                    className="flex flex-col items-center w-40 p-3 rounded-md transition"
-                  >
-                    <img
-                      src={item.img}
-                      alt={item.name}
-                      className="w-28 h-28 object-cover rounded-full border-2 mb-3"
-                    />
-                    <h3 className="text-base font-medium text-white hover:text-[#c29d5f] text-center">
-                      {item.name}
-                    </h3>
-                  </Link>
+                      key={i}
+                      to={item.href}
+                      className="flex flex-col items-center w-40 p-3 rounded-md transition"
+                    >
+                      <img
+                        src={item.img}
+                        alt={item.name}
+                        className="w-28 h-28 object-cover rounded-full border-2 mb-3"
+                      />
+                      <h3 className="text-base font-medium text-white hover:text-[#FEC878] text-center">
+                        {item.name}
+                      </h3>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -171,24 +171,21 @@ const Navbar = () => {
         </ul>
       </div>
 
-      {/* Mobile Menu with glass effect */}
+      {/* Mobile Menu with darker glass effect */}
       <div
-        className={`md:hidden transition-all duration-300 ease-in-out bg-white/30 backdrop-blur-md border-t border-white/20 ${
+        className={`md:hidden transition-all duration-300 ease-in-out bg-black/70 backdrop-blur-md border-t border-white/20 ${
           mobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
         } overflow-hidden`}
       >
-        <ul className="flex flex-col p-4 space-y-4 text-[#3b3b3b]">
+        <ul className="flex flex-col p-4 space-y-4 text-white">
           {Object.entries(menuData).map(([menuItem, { href, items }], index) => (
             <li key={index} className="border-b border-white/20 pb-2">
               <div className="flex justify-between items-center">
-                <Link
-                  to={href}
-                  className="font-semibold text-lg text-[#A4874F]"
-                >
+                <Link to={href} className="font-semibold text-lg text-white">
                   {menuItem}
                 </Link>
                 <button
-                  className="text-purple-600 text-[0.5rem]"
+                  className="text-white text-xs"
                   onClick={() =>
                     setHoveredMenu(hoveredMenu === index ? null : index)
                   }
@@ -208,7 +205,7 @@ const Navbar = () => {
                     <Link
                       key={i}
                       to={item.href}
-                      className="flex flex-col items-center hover:bg-white/20 p-2 rounded-md transition"
+                      className="flex flex-col items-center hover:bg-[#FEC878]/20 p-2 rounded-md transition"
                     >
                       <img
                         src={item.img}
