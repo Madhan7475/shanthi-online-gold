@@ -38,6 +38,8 @@ import ContactUs from "./pages/category/Contactus";
 import Termsandconditions from "./pages/category/Termsandconditions"; // ✅ Import
 import Privacypolicies from "./pages/category/Privacypolicies";  // ✅ Import
 import CollectionPage from "./pages/category/CollectionPage";
+import RefundReturn from "./pages/category/RefundReturn";
+import Shipping from "./pages/category/Shipping";
 
 
 // Admin Pages
@@ -133,6 +135,8 @@ const App = () => {
         <Route path="/category/Termsandconditions" element={<Termsandconditions />} /> {/* ✅ New Route */}
         <Route path="/category/Privacypolicies" element={<Privacypolicies />} /> {/* ✅ New Route */}
         <Route path="/collection/:slug" element={<CollectionPage />} />
+        <Route path="/category/RefundReturn" element={<RefundReturn />} />
+        <Route path="/category/Shipping" element={<Shipping />} />  
 
         {/* ---------------- Admin Routes ---------------- */}
         <Route path="/admin/login" element={<AdminLogin />} />
