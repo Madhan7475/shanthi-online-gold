@@ -34,12 +34,14 @@ const Footer = () => {
 
         {/* Column 3 - Customer Support */}
         <div>
-          <h3 className="font-semibold mb-3">CUSTOMER SUPPORT</h3>
-          <ul className="space-y-2">
-            <li><a href="/category/Termsandconditions">Terms & Conditions</a></li>
-            <li><a href="/category/Privacypolicies">Privacy Policies</a></li>
-          </ul>
-        </div>
+        <h3 className="font-semibold mb-3">CUSTOMER SUPPORT</h3>
+        <ul className="space-y-2">
+          <li><a href="/category/Termsandconditions">Terms & Conditions</a></li>
+          <li><a href="/category/Privacypolicies">Privacy Policies</a></li>
+          <li><a href="/category/RefundReturn">Refund & Return</a></li>
+          <li><a href="/category/Shipping">Shipping</a></li>
+        </ul>
+      </div>
 
         {/* Column 4 - Our Company */}
         <div>
@@ -55,9 +57,9 @@ const Footer = () => {
           <h3 className="font-semibold mb-3">CONTACT US</h3>
           <div className="space-y-1 text-sm">
             <p className="font-semibold">Phone</p>
-            <p>+91 999 999 9999</p>
-            <p className="font-semibold mt-2">Chat With Us</p>
-            <p>+91 999 999 9999</p>
+            <p>+91 9663 843 936</p>
+            <p className="font-semibold mt-2">Email us</p>
+            <p>info@shanthionlinegold.com</p>
           </div>
           <div className="mt-4 space-x-4 flex text-white text-lg">
             <a href="#"><i className="fab fa-facebook" /></a>

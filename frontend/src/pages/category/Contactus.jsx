@@ -65,7 +65,7 @@ const ContactUs = () => {
             <h3 className="text-xl font-semibold text-[#400F45] mb-2">Call Us</h3>
             <p className="text-gray-600 mb-4">Speak directly with our jewelry experts</p>
             <div className="space-y-1">
-              <p className="font-semibold text-lg">+91 98765 43210</p>
+              <p className="font-semibold text-lg">+91 9663 843 936</p>
               <p className="text-gray-500">Mon - Sat: 9:00 AM - 8:00 PM</p>
             </div>
           </div>
@@ -91,8 +91,8 @@ const ContactUs = () => {
             <h3 className="text-xl font-semibold text-[#400F45] mb-2">Visit Us</h3>
             <p className="text-gray-600 mb-4">Experience our gold collection in person</p>
             <div className="space-y-1">
-              <p className="font-semibold text-sm">123 Gold Street, T. Nagar</p>
-              <p className="font-semibold text-sm">Chennai - 600017, Tamil Nadu</p>
+              <p className="font-semibold text-sm">K NO-1178, Golden hights, 1206, 1206P, 9th Cross B Cross Road, near Ganesha Temple</p>
+              <p className="font-semibold text-sm">Yelahanka New Town, Bengaluru, Karnataka 560064</p>
             </div>
           </div>
         </div>
@@ -268,10 +268,10 @@ const ContactUs = () => {
           </div>
           <div className="text-center mt-6">
             <p className="text-gray-600">
-              <strong>Address:</strong> 123 Gold Street, T. Nagar, Chennai - 600017, Tamil Nadu, India
+              <strong>Address:</strong> 1NO-1178, Golden hights, 1206, 1206P, 9th Cross B Cross Road, near Ganesha Temple, Yelahanka New Town, Bengaluru, Karnataka 560064
             </p>
             <p className="text-gray-600 mt-2">
-              <strong>Landmark:</strong> Near Pondy Bazaar Metro Station
+              <strong>Landmark:</strong> Near Ganesha Temple
             </p>
           </div>
         </div>

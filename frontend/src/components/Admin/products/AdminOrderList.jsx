@@ -605,7 +605,6 @@ const AdminOrderList = () => {
           />
         </div>
         <nav className="space-y-4 text-gray-200">
-          <NavItem to="/admin/dashboard" icon={<BarChart3 size={18} />} label="Dashboard" />
           <NavItem to="/admin/products" icon={<Package size={18} />} label="Products" />
           <NavItem to="/admin/orders" icon={<ShoppingCart size={18} />} label="Orders" />
           <NavItem to="/admin/profiles" icon={<Users size={18} />} label="Profiles" />
