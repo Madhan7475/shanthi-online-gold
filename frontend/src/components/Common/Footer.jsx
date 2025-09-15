@@ -20,7 +20,7 @@ const Footer = () => {
 
 
         {/* Column 2 - Shopping */}
-        <div>
+        {/* <div>
           <h3 className="font-semibold mb-3">SHOPPING</h3>
           <ul className="space-y-2">
             <li><a href="/category/all-jewellery">Gold Jewellery</a></li>
@@ -30,7 +30,7 @@ const Footer = () => {
             <li><a href="/category/baby-items">Baby Items</a></li>
             <li><a href="/category/wedding">Wedding</a></li>
           </ul>
-        </div>
+        </div> */}
 
         {/* Column 3 - Customer Support */}
         <div>
