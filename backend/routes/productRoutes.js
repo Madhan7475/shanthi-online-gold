@@ -148,4 +148,22 @@ router.put("/:id", upload.array("images", 5), async (req, res) => {
   }
 });
 
+/**
+ * @route   DELETE /api/products/:id
+ * @desc    Delete a product by ID
+ * @access  Public
+ */
+router.delete("/:id", async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    res.json({ message: "🗑️ Product deleted successfully", product });
+  } catch (err) {
+    console.error("❌ Error deleting product:", err);
+    res.status(500).json({ error: "Failed to delete product", details: err.message });
+  }
+});
+
 module.exports = router;
