@@ -33,7 +33,7 @@ const RefundReturn = () => {
             1. Eligibility for Returns
           </h2>
           <p className="text-gray-700 leading-relaxed text-justify">
-            Returns are accepted within 7 days of delivery provided the
+            Returns are accepted within 3 days of delivery provided the
             jewellery is unused, unworn, and in its original condition with
             all tags and packaging intact. Customized or engraved items are
             not eligible for return unless defective.
@@ -67,12 +67,10 @@ const RefundReturn = () => {
         {/* Section 4 */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2 text-[#400F45]">
-            4. Exchanges
+            4. Replacment / exchnage 
           </h2>
           <p className="text-gray-700 leading-relaxed text-justify">
-            Exchanges are available for products of equal or higher value,
-            subject to stock availability. Additional charges may apply in
-            case of price differences.
+            You can place the replacement order within 3 days of delivey, and all the exchanged products will be delivered within 2-3 businessd days.
           </p>
         </div>
 
