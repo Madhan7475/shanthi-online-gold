@@ -12,7 +12,7 @@ const Header = () => {
   useEffect(() => {
     const fetchGoldPricesWithFallback = async () => {
       try {
-        // Simulated live data
+        // Simulated live gold prices (mocked API)
         const basePrice = 6850;
         const variation = (Math.random() - 0.5) * 100; // ±50 variation
 
@@ -72,7 +72,7 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Topbar */}
+      {/* Topbar only */}
       <div className="z-20 relative">
         <Topbar />
       </div>

@@ -20,8 +20,8 @@ const AboutUs = () => {
         </h1>
 
         <p className="text-gray-700 leading-relaxed mb-6 text-justify">
-          Welcome to <span className="font-semibold text-[#400F45]">Shanthi
-          Online Gold</span>, your trusted destination for fine jewellery.
+          Welcome to <span className="font-semibold text-[#400F45]">SHANTHI ONLINE GOLD SHOP
+          </span>, your trusted destination for fine jewellery.
           With decades of craftsmanship and tradition, we take pride in
           bringing you elegant collections that blend timeless artistry with
           modern design.

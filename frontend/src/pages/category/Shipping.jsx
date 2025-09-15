@@ -32,7 +32,7 @@ const Shipping = () => {
             1. Shipping Timelines
           </h2>
           <p className="text-gray-700 leading-relaxed text-justify">
-            Orders are processed within 1–2 business days. Delivery timelines
+            Orders are processed and delivered within 7 business days. Delivery timelines
             may vary depending on the destination, availability, and courier
             services. Customers will receive tracking details once shipped.
           </p>
