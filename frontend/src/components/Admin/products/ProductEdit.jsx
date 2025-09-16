@@ -1,13 +1,54 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import {
+  Package, ShoppingCart, Users, FileText, LogOut
+} from "lucide-react";
 
-const categories = [
+// ✅ Same constants as ProductUpload
+const CATEGORIES = [
   "All Jewellery", "Gold", "Diamond", "Silver", "Earrings", "Rings",
   "Daily Wear", "Baby Items", "Wedding", "Special Collection"
 ];
 
-const optionsMap = {
+const CATEGORY_SLUGS = [
+  { label: "Gold Necklace", value: "gold-necklace" },
+  { label: "Diamond Ring", value: "diamond-ring" },
+  { label: "Bridal Set", value: "bridal-set" },
+  { label: "Gold Bangles", value: "gold-bangles" }
+];
+
+const COLLECTIONS = [
+  "22KT Range", "A Chain Story", "A Fine Finish", "Aaheli", "Aalo", "Aarambh", "Aarna",
+  "Akshayam", "Alekhya", "Alphabet Pendants", "Amara", "Arpanam", "Aurum", "Aveer",
+  "Bestsellers", "Birthstone", "Bring the Shine", "Celeste", "Chakra Pendants", "Chozha",
+  "Christmas Collection", "Classic", "Classics", "Cocktail Turkish Mount", "Colour Charms",
+  "Colour Me Joy", "Commitment Bands", "Contemporary", "Core 20", "Couple Rings", "Devyani",
+  "Dharohar", "Diamond Treats", "Dibyani", "Disco", "Divyam", "Diwali 19", "Dor",
+  "Dots and Dashes", "Drops of Radiance", "Ekatvam", "Elan", "Enchanted Trails", "Engagement",
+  "Engagement Ring", "Engagement Rings", "Eternity Bangles", "Evil Eye", "Exclusive Online",
+  "Festive", "Festive Collection", "Ganesh Products", "Gifting Range", "Glamdays",
+  "Glow with Flow", "Go with the flow", "God Pendant", "Homecoming", "Hoops", "Hues for you",
+  "Impressions of Nature", "Into Eternity", "Kakatiya", "Kalai", "Kiss of Spring",
+  "KonkonKotha", "Kundan Polki", "Kundan Stories", "lilac allure", "Little Big Moments",
+  "Live a Dream", "Lotus", "Lucky Charms", "Maithili", "Mamma Mia", "Mangalam", "Men's Rings",
+  "Mia Festive", "Mia Icicles", "Mia Play", "Mia sutra", "Mia Sutra", "Mia Symphony",
+  "Miatini", "Modern Gold", "Modern Polki", "Moods of the Earth", "Multifinish Finger Rings",
+  "Native", "Nature's Finest", "Nav raani", "Nityam", "Nyusha", "Nyusha 2", "Nyusha1",
+  "Once Upon a Moment", "Open Polki", "Padmaavat", "Padmaja", "Platinum Collections",
+  "Platinum Kadas", "Preen", "Pretty in Pink", "Rainbow Rhythm", "Rajadhiraj",
+  "Rare Pair Collection", "Red Dot Awards Collection", "Religious", "Rhythms of Rain", "Rivaah",
+  "RivaahXTarun Tahiliani", "Sarang Hearts", "Shaaj", "Shagun", "Sleek", "Solitaire",
+  "Solitaires", "Soulmate Diamond Pair", "Sparkling Avenues", "Srotika", "Starburst",
+  "String it", "Stunning Every Ear", "Svarupam", "Swarnam", "Swayahm", "Switch and Shine",
+  "Tales of Mystique", "The Cocktail Edit", "The Cupid Edit", "The Initial edit",
+  "The Initial Edit", "The Italian Connection", "The Signature Edit", "The Spotlight Edit",
+  "Trims", "Udayam", "Ugadi", "Unbound", "Utsaah", "Utsava", "Uttama", "Uttara", "Valentines",
+  "Vinayaka Pendants", "Virasat", "Wear Your Prayer", "Wonderlust", "Zodiac Sign Pendants",
+  "Zodiac Sign Ring", "Zuhur"
+];
+
+const OPTIONS_MAP = {
   karatage: ["14", "18", "22", "95"],
   materialColour: [
     "Rose", "White", "White and Rose", "Yellow",
@@ -29,32 +70,31 @@ const optionsMap = {
   occasion: [
     "Bridal Wear", "Casual Wear", "Engagement",
     "Modern Wear", "Office Wear", "Traditional and Ethnic Wear"
-  ]
+  ],
+  collection: COLLECTIONS
 };
 
-const initialFormData = {
-  title: "", description: "", category: "", price: "",
-  karatage: "", materialColour: "", grossWeight: "", metal: "", size: "",
-  diamondClarity: "", diamondColor: "", numberOfDiamonds: "",
-  diamondSetting: "", diamondShape: "", jewelleryType: "", brand: "",
-  collection: "", gender: "", occasion: "",
-  stock: ""
-};
+const NavItem = ({ to, icon, label }) => (
+  <Link to={to} className="flex items-center space-x-3 text-[#ffffff] hover:text-[#f599ff] transition-all">
+    {icon}<span>{label}</span>
+  </Link>
+);
 
 const ProductEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState({});
   const [images, setImages] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ Fetch existing product
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const { data } = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`);
-        setFormData({ ...initialFormData, ...data });
+        setFormData(data);
       } catch (err) {
         console.error("Error fetching product:", err);
       }
@@ -62,10 +102,8 @@ const ProductEdit = () => {
     fetchProduct();
   }, [id]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleChange = (name, value) => setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleImageChange = (e) => setImages([...e.target.files]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,103 +112,201 @@ const ProductEdit = () => {
     try {
       const data = new FormData();
       Object.entries(formData).forEach(([key, val]) => data.append(key, val ?? ""));
-      images.forEach((file) => data.append("images", file));
+      images.forEach((img) => data.append("images", img));
 
-      const res = await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`, data);
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`, data);
 
-      if (res.status === 200 || res.status === 201) {
-        setMessage("✅ Product updated successfully!");
-        setTimeout(() => navigate("/admin/products/list"), 1000);
-      } else {
-        throw new Error("Unexpected response status: " + res.status);
-      }
+      setMessage("✅ Product updated successfully!");
+      setTimeout(() => navigate("/admin/products/list"), 1200);
     } catch (err) {
       console.error("Update error:", err);
-      setMessage("❌ Failed to update product. Check ID or server logs.");
+      setMessage("❌ Failed to update product.");
     } finally {
       setLoading(false);
     }
   };
 
-  const inputClass = "w-full px-4 py-2 rounded-xl bg-[#f8f8f8] border border-[#d1bfd9] text-sm focus:outline-none focus:ring-2 focus:ring-[#400F45]";
+  const inputClass =
+    "w-full px-4 py-2 rounded-xl bg-[#f8f8f8] border border-[#d1bfd9] text-sm focus:outline-none focus:ring-2 focus:ring-[#400F45]";
   const labelClass = "block text-sm font-semibold text-[#400F45] mb-1";
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-8 bg-white rounded-2xl border border-[#d1bfd9] shadow-md">
-      <div className="flex justify-between items-center mb-8">
-        <button
-          onClick={() => navigate("/admin/products")}
-          className="bg-[#f3e8f7] text-[#400F45] px-4 py-2 rounded-full hover:bg-[#e2cbee] text-sm"
-        >
-          ← Back
-        </button>
-        <h2 className="text-2xl font-bold text-[#400F45]">Edit Product</h2>
-        <div></div>
-      </div>
+    <div className="flex min-h-screen bg-[#ffffff]">
+      {/* Sidebar */}
+      <aside className="w-64 bg-[#400F45] border-r-4 border-[#fff2a6] p-6 hidden md:block shadow-xl rounded-tr-2xl rounded-br-2xl">
+        <h1 className="text-2xl font-bold mb-8 flex items-center justify-center">
+          <img src="/logo.svg" alt="Logo" className="h-12 w-auto object-contain inline-block" />
+        </h1>
+        <nav className="space-y-10 text-gray-200">
+          <NavItem to="/admin/products" icon={<Package size={18} />} label="Products" />
+          <NavItem to="/admin/orders" icon={<ShoppingCart size={18} />} label="Orders" />
+          <NavItem to="/admin/profiles" icon={<Users size={18} />} label="Profiles" />
+          <NavItem to="/admin/invoices" icon={<FileText size={18} />} label="Invoices" />
+        </nav>
+      </aside>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div className="space-y-4">
-          <div>
-            <label className={labelClass}>Product Name</label>
-            <input name="title" value={formData.title} onChange={handleChange} className={inputClass} required />
-          </div>
-          <div>
-            <label className={labelClass}>Description</label>
-            <textarea name="description" rows="4" value={formData.description} onChange={handleChange} className={`${inputClass} resize-none`} required />
-          </div>
-          <div>
-            <label className={labelClass}>Category</label>
-            <select name="category" value={formData.category} onChange={handleChange} className={inputClass} required>
-              <option value="">Select Category</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={labelClass}>Price (₹)</label>
-            <input name="price" type="number" value={formData.price} onChange={handleChange} className={inputClass} required />
-          </div>
-          <div>
-            <label className={labelClass}>Upload New Images</label>
-            <input type="file" multiple accept="image/*" onChange={(e) => setImages(Array.from(e.target.files))} className="text-sm mt-1" />
-            <div className="mt-2 grid grid-cols-4 gap-2">
-              {images.map((img, i) => (
-                <img key={i} src={URL.createObjectURL(img)} alt="preview" className="w-20 h-20 object-cover rounded border border-[#d1bfd9]" />
-              ))}
-            </div>
+      {/* Main Content */}
+      <main className="flex-1 p-6">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-[#400F45]">Edit Product</h2>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/admin/products/list")}
+              className="bg-[#e2d2e9] text-[#400F45] px-4 py-2 rounded-md hover:bg-[#d2b7de] transition text-sm"
+            >
+              Product List
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem("adminToken");
+                navigate("/admin/login");
+              }}
+              className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+            >
+              <LogOut size={16} /> Logout
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {Object.keys(initialFormData).filter((key) => !["title", "description", "category", "price"].includes(key)).map((key) => (
-            <div key={key}>
-              <label className={labelClass}>{key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())}</label>
-              {optionsMap[key] ? (
-                <select name={key} value={formData[key]} onChange={handleChange} className={inputClass}>
-                  <option value="">Select {key}</option>
-                  {optionsMap[key].map((opt, i) => (
-                    <option key={i} value={opt}>{opt}</option>
-                  ))}
+        <div className="bg-white border border-[#d1bfd9] rounded-2xl p-8 shadow-lg">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <div>
+                <label className={labelClass}>Product Name</label>
+                <input
+                  type="text"
+                  value={formData.title || ""}
+                  onChange={(e) => handleChange("title", e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Description</label>
+                <textarea
+                  rows="3"
+                  value={formData.description || ""}
+                  onChange={(e) => handleChange("description", e.target.value)}
+                  className={`${inputClass} resize-none`}
+                  required
+                />
+              </div>
+
+              {/* ✅ Updated Category Dropdown */}
+              <div>
+                <label className={labelClass}>Category</label>
+                <select
+                  value={formData.category || ""}
+                  onChange={(e) => handleChange("category", e.target.value)}
+                  className={inputClass}
+                  required
+                >
+                  <option value="" disabled>Select category</option>
+                  <optgroup label="Main Categories">
+                    {CATEGORIES.map((cat, i) => (
+                      <option key={i} value={cat}>{cat}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Category Slugs">
+                    {CATEGORY_SLUGS.map((slug, i) => (
+                      <option key={i} value={slug.value}>{slug.label}</option>
+                    ))}
+                  </optgroup>
                 </select>
-              ) : (
-                <input name={key} value={formData[key]} onChange={handleChange} className={inputClass} />
-              )}
-            </div>
-          ))}
-        </div>
+              </div>
 
-        <div className="col-span-full flex justify-end mt-6">
-          <button type="submit" disabled={loading} className="bg-[#400F45] text-white px-6 py-2 rounded-full hover:bg-[#330d37] transition">
-            {loading ? "Updating..." : "Save Changes"}
-          </button>
+              <div>
+                <label className={labelClass}>Price (₹)</label>
+                <input
+                  type="number"
+                  value={formData.price || ""}
+                  onChange={(e) => handleChange("price", e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className={labelClass}>Upload New Images</label>
+                <label
+                  htmlFor="imageUpload"
+                  className="inline-block cursor-pointer bg-[#400F45] text-white px-6 py-2 rounded-full hover:bg-[#330d37] transition text-sm"
+                >
+                  Choose Images
+                </label>
+                <input
+                  id="imageUpload"
+                  type="file"
+                  onChange={handleImageChange}
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {images.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={URL.createObjectURL(img)}
+                      alt="preview"
+                      className="w-20 h-20 rounded-lg object-cover border border-[#d1bfd9]"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Dynamic Options */}
+            <div className="grid grid-cols-2 gap-4">
+              {Object.keys(formData).filter(key =>
+                !["title", "description", "category", "price", "_id", "__v", "images"].includes(key)
+              ).map((key) => (
+                <div key={key}>
+                  <label className={labelClass}>
+                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  </label>
+                  {OPTIONS_MAP[key] ? (
+                    <select
+                      value={formData[key] || ""}
+                      onChange={(e) => handleChange(key, e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="">Select {key}</option>
+                      {OPTIONS_MAP[key].map((option, i) => (
+                        <option key={i} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      value={formData[key] || ""}
+                      onChange={(e) => handleChange(key, e.target.value)}
+                      className={inputClass}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Submit */}
+            <div className="md:col-span-2 flex justify-end mt-6">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-[#400F45] text-white px-6 py-2 rounded-full hover:bg-[#330d37] transition"
+              >
+                {loading ? "Updating..." : "Save Changes"}
+              </button>
+            </div>
+            {message && (
+              <div className="md:col-span-2 text-center text-sm font-medium mt-4">
+                <span className={message.includes("✅") ? "text-green-600" : "text-red-600"}>
+                  {message}
+                </span>
+              </div>
+            )}
+          </form>
         </div>
-        {message && (
-          <div className="col-span-full text-center text-sm font-medium mt-4">
-            <span className={message.includes("✅") ? "text-green-600" : "text-red-600"}>{message}</span>
-          </div>
-        )}
-      </form>
+      </main>
     </div>
   );
 };
