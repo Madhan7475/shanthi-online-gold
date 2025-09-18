@@ -1,4 +1,5 @@
 import Topbar from "../Layout/Topbar";
+import Navbar from "./Navbar";
 import { useEffect, useState } from "react";
 
 const Header = () => {
@@ -87,6 +88,11 @@ const Header = () => {
       {/* Topbar */}
       <div className="z-20 relative">
         <Topbar />
+      </div>
+
+      {/* Navbar */}
+      <div className="z-10 relative">
+        <Navbar />
       </div>
     </header>
   );

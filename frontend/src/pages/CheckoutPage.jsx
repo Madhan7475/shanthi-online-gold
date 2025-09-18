@@ -16,7 +16,7 @@ const CheckoutPage = () => {
     billingAddress: "",
     deliveryAddress: "",
     phone: "",
-    paymentMethod: "cod",
+    paymentMethod: "upi", // ✅ default to online
   });
 
   const [sameAsBilling, setSameAsBilling] = useState(false);
@@ -29,17 +29,12 @@ const CheckoutPage = () => {
     0
   );
 
-  // Advanced regex for Indian mobile numbers
-  const validatePhone = (phone) => {
-    const re = /^[6-9]\d{9}$/;
-    return re.test(String(phone));
-  };
-
-  // ✅ Advanced regex for more thorough email validation
-  const validateEmail = (email) => {
-    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(String(email).toLowerCase());
-  };
+  // ✅ Phone & Email validators
+  const validatePhone = (phone) => /^[6-9]\d{9}$/.test(String(phone));
+  const validateEmail = (email) =>
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+      String(email).toLowerCase()
+    );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,21 +42,21 @@ const CheckoutPage = () => {
     if (name === "phone") {
       const numericValue = value.replace(/\D/g, "");
       setCustomer((prev) => ({ ...prev, [name]: numericValue }));
-      if (numericValue.length > 0 && !validatePhone(numericValue)) {
-        setPhoneError("Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.");
-      } else {
-        setPhoneError("");
-      }
+      setPhoneError(
+        numericValue && !validatePhone(numericValue)
+          ? "Enter a valid 10-digit mobile number."
+          : ""
+      );
       return;
     }
 
     if (name === "email") {
       setCustomer((prev) => ({ ...prev, [name]: value }));
-      if (value && !validateEmail(value)) {
-        setEmailError("Please enter a valid email format (e.g., name@example.com).");
-      } else {
-        setEmailError("");
-      }
+      setEmailError(
+        value && !validateEmail(value)
+          ? "Enter a valid email address."
+          : ""
+      );
       return;
     }
 
@@ -85,112 +80,53 @@ const CheckoutPage = () => {
     }));
   };
 
-  const handleCODOrder = async () => {
+  // ✅ PhonePe payment handler
+  const handlePhonePePayment = async () => {
     try {
+      setIsProcessing(true);
+
       const orderData = { customer, items: cartItems, total };
-      const res = await axiosInstance.post('/orders/cod', orderData);
-      toast.success(res.data.msg || "🎉 Order placed successfully!");
-      clearCart();
-      navigate("/my-orders");
-    } catch (error) {
-      console.error("COD order submission failed:", error);
-      toast.error(error.response?.data?.msg || "Could not place order.");
-    }
-  };
 
-  const handleOnlinePayment = async () => {
-    try {
-      // 1. Create a Razorpay Order on the backend
-      const { data: order } = await axiosInstance.post("/payment/create-order", {
+      const { data } = await axiosInstance.post("/payment/create-order", {
         amount: total,
-        receipt: `receipt_order_${new Date().getTime()}`,
+        orderData,
       });
 
-      // 2. Configure Razorpay options
-      const options = {
-        key: "YOUR_TEST_KEY_ID", // IMPORTANT: Replace with your actual Razorpay Test Key ID
-        amount: order.amount,
-        currency: order.currency,
-        name: "Shanthi Online Gold",
-        description: "Order Payment",
-        image: "/logo.svg",
-        order_id: order.id,
-        handler: async function (response) {
-          // 3. Verify the payment on the backend
-          const verificationData = {
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_signature: response.razorpay_signature,
-            orderData: { customer, items: cartItems, total },
-          };
-
-          const { data: verificationResult } = await axiosInstance.post(
-            "/payment/verify",
-            verificationData
-          );
-
-          toast.success(verificationResult.msg || "Payment successful!");
-          clearCart();
-          navigate("/my-orders");
-        },
-        prefill: {
-          name: customer.name,
-          email: customer.email,
-          contact: customer.phone,
-        },
-        theme: { color: "#400F45" },
-      };
-
-      // 4. Open the Razorpay payment modal
-      const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", function (response) {
-        toast.error("Payment failed. Please try again.");
-        console.error(response.error);
-      });
-      rzp.open();
-
-    } catch (error) {
-      toast.error("An error occurred while initiating payment.");
-      console.error("Payment process error:", error);
-    }
-  };
-
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    let isValid = true;
-    if (!validatePhone(customer.phone)) {
-      setPhoneError("Please enter a valid 10-digit mobile number.");
-      isValid = false;
-    }
-    if (!validateEmail(customer.email)) {
-      setEmailError("Please enter a valid email address.");
-      isValid = false;
-    }
-    if (!isValid) return;
-
-    setIsProcessing(true);
-
-    if (customer.paymentMethod === "cod") {
-      try {
-        const orderData = { customer, items: cartItems, total };
-        const res = await axiosInstance.post('/orders/cod', orderData);
-        toast.success(res.data.msg || "🎉 Order placed successfully!");
-        clearCart();
-        navigate("/");
-      } catch (error) {
-        console.error("COD order submission failed:", error);
-        toast.error(error.response?.data?.msg || "Could not place order. Please try again.");
-      } finally {
+      if (data?.data?.instrumentResponse?.redirectInfo?.url) {
+        // Redirect user to PhonePe Pay Page
+        window.location.href = data.data.instrumentResponse.redirectInfo.url;
+      } else {
+        toast.error("Could not initiate PhonePe payment.");
         setIsProcessing(false);
       }
-    } else {
-      toast.info("Online payment is not yet implemented.");
+    } catch (error) {
+      console.error("PhonePe order error:", error);
+      toast.error("Error initiating payment. Please try again.");
       setIsProcessing(false);
     }
   };
 
-  const isFormValid = validatePhone(customer.phone) && validateEmail(customer.email) && customer.name && customer.billingAddress && customer.deliveryAddress;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validatePhone(customer.phone)) {
+      setPhoneError("Enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!validateEmail(customer.email)) {
+      setEmailError("Enter a valid email address.");
+      return;
+    }
+
+    // Always go to PhonePe flow
+    await handlePhonePePayment();
+  };
+
+  const isFormValid =
+    validatePhone(customer.phone) &&
+    validateEmail(customer.email) &&
+    customer.name &&
+    customer.billingAddress &&
+    customer.deliveryAddress;
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-[#fffdf6] text-[#3e2f1c] min-h-[90vh]">
@@ -222,7 +158,7 @@ const CheckoutPage = () => {
           onSubmit={handleSubmit}
           className="bg-white p-6 rounded-xl border border-[#f4e0b9] shadow-md space-y-4"
         >
-          <h3 className="text-xl font-semibold text-[#3e2f1c]"> Customer Details</h3>
+          <h3 className="text-xl font-semibold text-[#3e2f1c]">Customer Details</h3>
 
           <input
             type="text"
@@ -231,7 +167,7 @@ const CheckoutPage = () => {
             value={customer.name}
             onChange={handleChange}
             required
-            className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f]"
+            className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none"
           />
 
           <input
@@ -241,7 +177,7 @@ const CheckoutPage = () => {
             value={customer.email}
             onChange={handleChange}
             required
-            className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f]"
+            className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none"
           />
           {emailError && <p className="text-red-500 text-xs -mt-2">{emailError}</p>}
 
@@ -253,7 +189,7 @@ const CheckoutPage = () => {
             onChange={handleChange}
             required
             maxLength={10}
-            className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f]"
+            className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none"
           />
           {phoneError && <p className="text-red-500 text-xs -mt-2">{phoneError}</p>}
 
@@ -263,7 +199,7 @@ const CheckoutPage = () => {
             value={customer.billingAddress}
             onChange={handleChange}
             required
-            className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f]"
+            className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none"
           />
 
           <label className="flex items-center gap-2 text-sm">
@@ -282,35 +218,13 @@ const CheckoutPage = () => {
             onChange={handleChange}
             required
             readOnly={sameAsBilling}
-            className={`w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none focus:border-[#c29d5f] ${sameAsBilling ? "bg-gray-100 cursor-not-allowed" : ""}`}
+            className={`w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none ${
+              sameAsBilling ? "bg-gray-100 cursor-not-allowed" : ""
+            }`}
           />
 
-          <div>
-            <h4 className="text-md font-semibold mb-2">💳 Payment Options</h4>
-            <label className="block mb-1">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="cod"
-                checked={customer.paymentMethod === "cod"}
-                onChange={handleChange}
-              />{" "}
-              Cash on Delivery
-            </label>
-            <label className="block">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="upi"
-                checked={customer.paymentMethod === "upi"}
-                onChange={handleChange}
-              />{" "}
-              UPI / Online Payment
-            </label>
-          </div>
-
           <div className="text-sm text-[#5f4d2d] bg-[#fff7e3] p-3 rounded border border-[#f3e4b5]">
-            <p>✔ Safe and secure payments</p>
+            <p>✔ Safe and secure PhonePe payments</p>
             <p>✔ Easy returns</p>
             <p>✔ 100% Authentic products</p>
           </div>
@@ -320,7 +234,7 @@ const CheckoutPage = () => {
             disabled={isProcessing || !isFormValid}
             className="w-full bg-gradient-to-r from-[#f4c57c] to-[#ffdc9a] text-[#3e2f1c] font-semibold py-2 rounded hover:opacity-90 transition disabled:opacity-50"
           >
-            {isProcessing ? 'Processing...' : '🛍️ Place Order'}
+            {isProcessing ? "Processing..." : "🛍️ Pay with PhonePe"}
           </button>
         </form>
       )}

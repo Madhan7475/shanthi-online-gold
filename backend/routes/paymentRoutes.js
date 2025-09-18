@@ -1,106 +1,95 @@
 const express = require("express");
-const Razorpay = require("razorpay");
+const axios = require("axios");
 const crypto = require("crypto");
-const Order = require("../models/Order");
-const Invoice = require("../models/Invoice");
-const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 
 const router = express.Router();
 
-// IMPORTANT: Store these in your .env file in production
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "YOUR_TEST_KEY_ID";
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "YOUR_TEST_KEY_SECRET";
+// === Read credentials from .env ===
+const PHONEPE_ENV = process.env.PHONEPE_ENV || "sandbox"; // "sandbox" or "production"
+const PHONEPE_BASE_URL =
+  process.env.PHONEPE_BASE_URL ||
+  (PHONEPE_ENV === "sandbox"
+    ? "https://api-preprod.phonepe.com/apis/pg-sandbox"
+    : "https://api.phonepe.com/apis/pg");
 
-const instance = new Razorpay({
-    key_id: RAZORPAY_KEY_ID,
-    key_secret: RAZORPAY_KEY_SECRET,
+const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID || "MERCHANT123";
+const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY || "SALT1234567890";
+const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
+
+console.log(`🟢 PhonePe ${PHONEPE_ENV.toUpperCase()} Mode Enabled`);
+console.log("Merchant ID:", PHONEPE_MERCHANT_ID);
+
+// === Fake auth for testing ===
+const fakeAuth = (req, res, next) => {
+  req.user = { uid: "test_user_1" };
+  next();
+};
+
+/**
+ * POST /api/payment/create-order
+ * Create a PhonePe order
+ */
+router.post("/create-order", fakeAuth, async (req, res) => {
+  const { amount = 100, orderData = {} } = req.body; // amount in INR
+  const merchantTransactionId = "txn_" + Date.now();
+
+  try {
+    const payload = {
+      merchantId: PHONEPE_MERCHANT_ID,
+      merchantTransactionId,
+      merchantUserId: req.user.uid,
+      amount: amount * 100, // paise
+      redirectUrl: `${process.env.FRONTEND_URL}/payment-success`,
+      redirectMode: "POST",
+      callbackUrl: `${process.env.BACKEND_URL}/api/payment/phonepe/callback`,
+      mobileNumber: orderData.customer?.phone || "9999999999",
+      paymentInstrument: { type: "PAY_PAGE" },
+    };
+
+    console.log("📦 Payload before base64:", payload);
+
+    const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+
+    const checksum = crypto
+      .createHash("sha256")
+      .update(payloadBase64 + "/pg/v1/pay" + PHONEPE_SALT_KEY)
+      .digest("hex");
+
+    const headers = {
+      "Content-Type": "application/json",
+      "X-VERIFY": checksum + "###" + PHONEPE_SALT_INDEX,
+      "X-MERCHANT-ID": PHONEPE_MERCHANT_ID,
+    };
+
+    console.log("🔐 Headers:", headers);
+
+    const response = await axios.post(
+      `${PHONEPE_BASE_URL}/pg/v1/pay`,
+      { request: payloadBase64 },
+      { headers }
+    );
+
+    console.log("✅ PhonePe Response:", response.data);
+
+    res.json(response.data);
+  } catch (error) {
+    console.error(
+      "❌ Error creating PhonePe order:",
+      error.response?.data || error.message
+    );
+    res.status(500).json({
+      error: error.response?.data || error.message,
+    });
+  }
 });
 
 /**
- * @route   POST /api/payment/create-orderåå
- * @desc    Create a Razorpay order for online payment
- * @access  Private
+ * POST /api/payment/phonepe/callback
+ * Handle callback from PhonePe
  */
-router.post("/create-order", verifyAuthFlexible, async (req, res) => {
-    const { amount, currency = "INR", receipt } = req.body;
-
-    try {
-        const options = {
-            amount: amount * 100, // Amount in the smallest currency unit (paise)
-            currency,
-            receipt,
-        };
-        const order = await instance.orders.create(options);
-
-        if (!order) {
-            return res.status(500).send("Error creating order");
-        }
-
-        res.json(order);
-    } catch (error) {
-        console.error("Error creating Razorpay order:", error);
-        res.status(500).send("Internal Server Error");
-    }
-});
-
-/**
- * @route   POST /api/payment/verify
- * @desc    Verify Razorpay payment and create order/invoice in DB
- * @access  Private
- */
-router.post("/verify", verifyAuthFlexible, async (req, res) => {
-    const {
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-        orderData, // Contains customer details, items, total
-    } = req.body;
-
-    const shasum = crypto.createHmac("sha256", RAZORPAY_KEY_SECRET);
-    shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
-    const digest = shasum.digest("hex");
-
-    if (digest !== razorpay_signature) {
-        return res.status(400).json({ msg: "Transaction not legit!" });
-    }
-
-    // Payment is verified, now create the order and invoice in your database
-    try {
-        // Choose a consistent identifier for orders (works for Firebase and OTP-JWT)
-        let userIdForOrder = null;
-        if (req.auth?.type === "firebase") {
-            userIdForOrder = req.user.uid;
-        } else if (req.auth?.type === "jwt") {
-            userIdForOrder = req.user.firebaseUid || req.user.userId;
-        }
-
-        const newOrder = new Order({
-            userId: userIdForOrder,
-            customerName: orderData.customer.name,
-            items: orderData.items,
-            total: orderData.total,
-            status: "Paid", // Or "Processing"
-            deliveryAddress: orderData.customer.deliveryAddress,
-            paymentMethod: orderData.customer.paymentMethod,
-        });
-        await newOrder.save();
-
-        const newInvoice = new Invoice({
-            customerName: orderData.customer.name,
-            amount: orderData.total,
-            status: "Paid",
-            orderId: newOrder._id,
-        });
-        await newInvoice.save();
-
-        res.json({
-            msg: "Payment successful and order placed!",
-            orderId: newOrder._id,
-        });
-    } catch (error) {
-        console.error("Error saving order to DB after payment:", error);
-        res.status(500).send("Internal Server Error");
-    }
+router.post("/phonepe/callback", (req, res) => {
+  console.log("📥 PhonePe Callback Received:", req.body);
+  res.status(200).json({ msg: "Callback received" });
 });
 
 module.exports = router;

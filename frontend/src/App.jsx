@@ -50,6 +50,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import Invoice from "./pages/Invoice";
 import AdminPanel from "./pages/Panel";
 import AdminDashboard from "./components/Admin/products/AdminDashboard";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 // Admin Features
 import ProductUpload from "./components/Admin/products/ProductUpload";
@@ -150,6 +151,7 @@ const App = () => {
         <Route path="/admin/orders" element={<OrderManagement />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/invoices" element={<Invoice />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
       </Routes>
     </>
   );
