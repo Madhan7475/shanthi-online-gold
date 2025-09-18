@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +16,7 @@ const CheckoutPage = () => {
     billingAddress: "",
     deliveryAddress: "",
     phone: "",
-    paymentMethod: "upi", // ✅ default to online
+    paymentMethod: "upi",
   });
 
   const [sameAsBilling, setSameAsBilling] = useState(false);
@@ -29,7 +29,7 @@ const CheckoutPage = () => {
     0
   );
 
-  // ✅ Phone & Email validators
+  // ✅ Validators
   const validatePhone = (phone) => /^[6-9]\d{9}$/.test(String(phone));
   const validateEmail = (email) =>
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
@@ -53,9 +53,7 @@ const CheckoutPage = () => {
     if (name === "email") {
       setCustomer((prev) => ({ ...prev, [name]: value }));
       setEmailError(
-        value && !validateEmail(value)
-          ? "Enter a valid email address."
-          : ""
+        value && !validateEmail(value) ? "Enter a valid email address." : ""
       );
       return;
     }
@@ -80,7 +78,7 @@ const CheckoutPage = () => {
     }));
   };
 
-  // ✅ PhonePe payment handler
+  // ✅ PhonePe payment
   const handlePhonePePayment = async () => {
     try {
       setIsProcessing(true);
@@ -92,16 +90,19 @@ const CheckoutPage = () => {
         orderData,
       });
 
-      if (data?.data?.instrumentResponse?.redirectInfo?.url) {
-        // Redirect user to PhonePe Pay Page
+      console.log("📥 PhonePe create-order response:", data);
+
+      if (data?.success && data?.data?.instrumentResponse?.redirectInfo?.url) {
         window.location.href = data.data.instrumentResponse.redirectInfo.url;
       } else {
-        toast.error("Could not initiate PhonePe payment.");
+        toast.error(
+          data?.message || "Could not initiate PhonePe payment. Try again."
+        );
         setIsProcessing(false);
       }
     } catch (error) {
-      console.error("PhonePe order error:", error);
-      toast.error("Error initiating payment. Please try again.");
+      console.error("❌ PhonePe order error:", error.response?.data || error.message);
+      toast.error("Payment request failed. Please try again.");
       setIsProcessing(false);
     }
   };
@@ -117,7 +118,6 @@ const CheckoutPage = () => {
       return;
     }
 
-    // Always go to PhonePe flow
     await handlePhonePePayment();
   };
 
@@ -130,8 +130,11 @@ const CheckoutPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-[#fffdf6] text-[#3e2f1c] min-h-[90vh]">
-      <h2 className="text-3xl font-bold mb-6 text-center text-[#d4af37]">🧾 Checkout</h2>
+      <h2 className="text-3xl font-bold mb-6 text-center text-[#d4af37]">
+        🧾 Checkout
+      </h2>
 
+      {/* 🛒 Order Summary */}
       <div className="bg-white p-6 rounded-xl border border-[#f4e0b9] shadow-md mb-8">
         <h3 className="text-xl font-semibold mb-4">Order Summary</h3>
         {cartItems.length === 0 ? (
@@ -153,12 +156,15 @@ const CheckoutPage = () => {
         </p>
       </div>
 
+      {/* 🧾 Customer Form */}
       {cartItems.length > 0 && (
         <form
           onSubmit={handleSubmit}
           className="bg-white p-6 rounded-xl border border-[#f4e0b9] shadow-md space-y-4"
         >
-          <h3 className="text-xl font-semibold text-[#3e2f1c]">Customer Details</h3>
+          <h3 className="text-xl font-semibold text-[#3e2f1c]">
+            Customer Details
+          </h3>
 
           <input
             type="text"
@@ -179,7 +185,9 @@ const CheckoutPage = () => {
             required
             className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none"
           />
-          {emailError && <p className="text-red-500 text-xs -mt-2">{emailError}</p>}
+          {emailError && (
+            <p className="text-red-500 text-xs -mt-2">{emailError}</p>
+          )}
 
           <input
             type="tel"
@@ -191,7 +199,9 @@ const CheckoutPage = () => {
             maxLength={10}
             className="w-full p-2 border-b-2 border-[#e2c17b] focus:outline-none"
           />
-          {phoneError && <p className="text-red-500 text-xs -mt-2">{phoneError}</p>}
+          {phoneError && (
+            <p className="text-red-500 text-xs -mt-2">{phoneError}</p>
+          )}
 
           <textarea
             name="billingAddress"
@@ -223,12 +233,14 @@ const CheckoutPage = () => {
             }`}
           />
 
+          {/* ✅ Info Box */}
           <div className="text-sm text-[#5f4d2d] bg-[#fff7e3] p-3 rounded border border-[#f3e4b5]">
             <p>✔ Safe and secure PhonePe payments</p>
             <p>✔ Easy returns</p>
             <p>✔ 100% Authentic products</p>
           </div>
 
+          {/* ✅ Pay Button */}
           <button
             type="submit"
             disabled={isProcessing || !isFormValid}
