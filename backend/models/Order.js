@@ -25,7 +25,12 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  paymentMethod: { // ✅ ADD THIS FIELD
+  paymentMethod: {
+    type: String,
+    enum: ["phonepe"],
+    required: true,
+  },
+  transactionId: {
     type: String,
     required: true,
   },
