@@ -5,7 +5,7 @@ const crypto = require("crypto");
 const router = express.Router();
 
 // ENV setup (use sandbox)
-const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL || "https://api.phonepe.com/apis/pg-sandbox/pg/v1";
+const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL || "https://api.phonepe.com/apis/pg-sandbox/pg";
 const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
 const SALT_KEY = process.env.PHONEPE_SALT_KEY;
 const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || 1;

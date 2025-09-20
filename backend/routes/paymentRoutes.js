@@ -9,7 +9,7 @@ const PHONEPE_ENV = process.env.PHONEPE_ENV || "sandbox"; // "sandbox" or "produ
 const PHONEPE_BASE_URL =
   process.env.PHONEPE_BASE_URL ||
   (PHONEPE_ENV === "sandbox"
-    ? "https://api-preprod.phonepe.com/apis/pg-sandbox"
+    ? "https://api-preprod.phonepe.com/apis/pg-sandbox/v1/pay"
     : "https://api.phonepe.com/apis/pg");
 
 const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID || "MERCHANT123";
