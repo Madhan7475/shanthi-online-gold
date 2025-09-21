@@ -5,6 +5,13 @@ const adminAuth = require("../middleware/adminAuth");
 
 const router = express.Router();
 
+const fileToUrl = (req, filename) => `${req.protocol}://${req.get("host")}/uploads/${filename}`;
+const withImageUrls = (req, doc) => {
+  const obj = doc?.toObject ? doc.toObject() : doc;
+  const imageUrls = (obj.images || []).map((f) => fileToUrl(req, f));
+  return { ...obj, imageUrls, primaryImageUrl: imageUrls[0] || null };
+};
+
 /**
  * @route   POST /api/products
  * @desc    Upload a new product with multiple images
@@ -89,16 +96,16 @@ router.get("/", async (req, res) => {
 
     const hasQuery = Boolean(
       (q && q.length) ||
-        (category && category.length) ||
-        (sort && sort.length) ||
-        (page && String(page).length) ||
-        (limit && String(limit).length)
+      (category && category.length) ||
+      (sort && sort.length) ||
+      (page && String(page).length) ||
+      (limit && String(limit).length)
     );
 
     // Backward-compatible: when no query params, return plain array
     if (!hasQuery) {
       const products = await Product.find().sort({ createdAt: -1 });
-      return res.json(products);
+      return res.json(products.map((p) => withImageUrls(req, p)));
     }
 
     const filter = {};
@@ -138,7 +145,7 @@ router.get("/", async (req, res) => {
     ]);
 
     res.json({
-      items,
+      items: items.map((p) => withImageUrls(req, p)),
       total,
       page: pageNum,
       pages: Math.ceil(total / limitNum),
@@ -154,13 +161,17 @@ router.get("/", async (req, res) => {
  * @desc    Fetch single product by ID
  * @access  Public
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", async (req, res, next) => {
   try {
+    // Avoid intercepting explicit routes like /search, /categories, /feed
+    const reserved = new Set(["search", "categories", "feed"]);
+    if (reserved.has(req.params.id)) return next();
+
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
-    res.json(product);
+    res.json(withImageUrls(req, product));
   } catch (err) {
     console.error("❌ Error fetching product by ID:", err);
     res.status(500).json({ error: "Failed to fetch product" });
@@ -256,6 +267,149 @@ router.delete("/:id", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("❌ Error deleting product:", err);
     res.status(500).json({ error: "Failed to delete product", details: err.message });
+  }
+});
+
+/**
+ * @route   GET /api/products/search
+ * @desc    Always returns paginated/filterable product list for public consumption
+ * @access  Public
+ */
+router.get("/search", async (req, res) => {
+  try {
+    const { q, category, sort, page, limit } = req.query;
+
+    const filter = {};
+    if (q) {
+      const regex = new RegExp(q, "i");
+      filter.$or = [
+        { title: regex },
+        { description: regex },
+        { category: regex },
+        { brand: regex },
+        { collection: regex },
+      ];
+    }
+    if (category) {
+      filter.category = new RegExp(`^${category}$`, "i");
+    }
+
+    const sortMap = {
+      newest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      price_asc: { price: 1 },
+      price_desc: { price: -1 },
+      title_asc: { title: 1 },
+      title_desc: { title: -1 },
+    };
+    const sortOption = sortMap[sort] || sortMap.newest;
+
+    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit) || 12, 1), 100);
+
+    const [items, total] = await Promise.all([
+      Product.find(filter)
+        .sort(sortOption)
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum),
+      Product.countDocuments(filter),
+    ]);
+
+    res.json({
+      items: items.map((p) => withImageUrls(req, p)),
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum),
+    });
+  } catch (err) {
+    console.error("❌ Error fetching products (search):", err);
+    res.status(500).json({ error: "Failed to fetch products" });
+  }
+});
+
+/**
+ * @route   GET /api/products/categories
+ * @desc    List distinct categories with counts
+ * @access  Public
+ */
+router.get("/categories", async (req, res) => {
+  try {
+    const results = await Product.aggregate([
+      { $match: { category: { $ne: null } } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]);
+    res.json(results.map((r) => ({ category: r._id, count: r.count })));
+  } catch (err) {
+    console.error("❌ Error fetching categories:", err);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
+/**
+ * @route   GET /api/products/feed
+ * @desc    Lightweight product feed for mobile/app consumption
+ * @access  Public
+ */
+router.get("/feed", async (req, res) => {
+  try {
+    const { q, category, sort, page, limit } = req.query;
+
+    const filter = {};
+    if (q) {
+      const regex = new RegExp(q, "i");
+      filter.$or = [
+        { title: regex },
+        { description: regex },
+        { category: regex },
+        { brand: regex },
+        { collection: regex },
+      ];
+    }
+    if (category) {
+      filter.category = new RegExp(`^${category}$`, "i");
+    }
+
+    const sortMap = {
+      newest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      price_asc: { price: 1 },
+      price_desc: { price: -1 },
+      title_asc: { title: 1 },
+      title_desc: { title: -1 },
+    };
+    const sortOption = sortMap[sort] || sortMap.newest;
+
+    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit) || 12, 1), 100);
+
+    const [items, total] = await Promise.all([
+      Product.find(filter, { title: 1, price: 1, images: 1, createdAt: 1 })
+        .sort(sortOption)
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum),
+      Product.countDocuments(filter),
+    ]);
+
+    const list = items.map((p) => {
+      const withUrls = withImageUrls(req, p);
+      return {
+        id: String(withUrls._id),
+        title: withUrls.title,
+        price: withUrls.price,
+        image: withUrls.primaryImageUrl,
+      };
+    });
+
+    res.json({
+      items: list,
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum),
+    });
+  } catch (err) {
+    console.error("❌ Error fetching product feed:", err);
+    res.status(500).json({ error: "Failed to fetch product feed" });
   }
 });
 
