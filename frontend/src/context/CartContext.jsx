@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useAuth } from "./AuthContext";
 import { cartService } from "../services/cartService";
+import { useNavigate } from "react-router-dom";
 import {
   getWishlistItems,
   addToWishlist,
@@ -14,11 +15,17 @@ const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
+  const isOtpAuth = !!localStorage.getItem("otpUserToken");
+  const isAuthed = isAuthenticated || isOtpAuth;
   const [cartItems, setCartItems] = useState([]);
   const [savedItems, setSavedItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [migrated, setMigrated] = useState(false);
   const [wishlistMigrated, setWishlistMigrated] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
+  const navigate = useNavigate();
+  const didWelcome = useRef(false);
 
   // Toast debouncing
   const lastToastTime = useRef(0);
@@ -33,11 +40,11 @@ export const CartProvider = ({ children }) => {
   };
 
   // Fetch wishlist items from API
-  const fetchWishlist = async () => {
-    if (!isAuthenticated) return;
-    
+  const fetchWishlist = useCallback(async () => {
+    if (!isAuthed) return;
+
     try {
-      setLoading(true);
+      setWishlistLoading(true);
       const wishlistItems = await getWishlistItems();
       setSavedItems(Array.isArray(wishlistItems) ? wishlistItems : []);
     } catch (error) {
@@ -49,16 +56,16 @@ export const CartProvider = ({ children }) => {
       }
       showToast('Failed to load saved items', 'error');
     } finally {
-      setLoading(false);
+      setWishlistLoading(false);
     }
-  };
+  }, [isAuthed]);
 
   // Load cart data from API when user is authenticated
-  const fetchCart = async () => {
-    if (!isAuthenticated) return;
-    
+  const fetchCart = useCallback(async () => {
+    if (!isAuthed) return;
+
     try {
-      setLoading(true);
+      setCartLoading(true);
       const response = await cartService.getCart();
       if (response.success) {
         setCartItems(response.cart?.items || []);
@@ -68,13 +75,13 @@ export const CartProvider = ({ children }) => {
       // Fallback to empty cart on error
       setCartItems([]);
     } finally {
-      setLoading(false);
+      setCartLoading(false);
     }
-  };
+  }, [isAuthed]);
 
   // Migrate localStorage cart to API when user logs in
   const migrateLocalStorageCart = async () => {
-    if (!isAuthenticated || migrated) return;
+    if (!isAuthed || migrated) return;
 
     try {
       const storedCart = localStorage.getItem("cart");
@@ -104,7 +111,7 @@ export const CartProvider = ({ children }) => {
 
   // Migrate localStorage savedItems to API wishlist
   const migrateLocalStorageWishlist = async () => {
-    if (!isAuthenticated || wishlistMigrated) return;
+    if (!isAuthed || wishlistMigrated) return;
 
     try {
       const storedSavedItems = localStorage.getItem("savedItems");
@@ -134,7 +141,12 @@ export const CartProvider = ({ children }) => {
 
   // Load cart and wishlist when user authenticates
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthed) {
+      // Always fetch server state on login
+      fetchCart();
+      fetchWishlist();
+
+      // Then migrate any local-storage leftovers (if present)
       migrateLocalStorageCart();
       migrateLocalStorageWishlist();
     } else {
@@ -144,12 +156,32 @@ export const CartProvider = ({ children }) => {
       setMigrated(false);
       setWishlistMigrated(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthed, user, fetchCart, fetchWishlist]);
+
+  // After login, if user has items in cart, redirect to cart once and welcome
+  useEffect(() => {
+    if (!isAuthed) {
+      didWelcome.current = false; // reset when logged out
+      return;
+    }
+    if (!cartLoading && cartItems.length > 0 && !didWelcome.current) {
+      didWelcome.current = true;
+      showToast("Welcome back! You have items in your cart.", "success");
+      navigate("/cart");
+    }
+  }, [isAuthed, cartLoading, cartItems, navigate]);
 
   // **Add to Cart**
   const addToCart = async (product) => {
-    if (!isAuthenticated) {
+    if (!isAuthed) {
       showToast("Please login to add items to cart", "error");
+      return;
+    }
+
+    // Prevent duplicate adds: if this product is already in cart, do not call API
+    const productId = product?._id || product?.productId || product?.id;
+    if (productId && cartItems.some((ci) => String(ci.productId) === String(productId))) {
+      showToast("Item already in cart");
       return;
     }
 
@@ -161,10 +193,15 @@ export const CartProvider = ({ children }) => {
         showToast("Item added to cart!", "success");
       }
     } catch (error) {
-      if (error.message.includes("already in cart")) {
+      const msg = error?.response?.data?.message || error.message || "Failed to add to cart";
+      if (error?.response?.status === 409 || (typeof msg === "string" && msg.toLowerCase().includes("already in cart"))) {
+        // sync cart from server if provided
+        if (error?.response?.data?.cart?.items) {
+          setCartItems(error.response.data.cart.items);
+        }
         showToast("Item already in cart");
       } else {
-        showToast(error.message, "error");
+        showToast(msg, "error");
       }
     } finally {
       setLoading(false);
@@ -173,7 +210,7 @@ export const CartProvider = ({ children }) => {
 
   // **Update Quantity**
   const updateQuantity = async (itemId, quantity) => {
-    if (!isAuthenticated) return;
+    if (!isAuthed) return;
 
     try {
       setLoading(true);
@@ -191,7 +228,7 @@ export const CartProvider = ({ children }) => {
 
   // **Remove from Cart**
   const removeFromCart = async (itemId) => {
-    if (!isAuthenticated) return;
+    if (!isAuthed) return;
 
     try {
       setLoading(true);
@@ -209,7 +246,7 @@ export const CartProvider = ({ children }) => {
 
   // **Clear Cart**
   const clearCart = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthed) return;
 
     try {
       setLoading(true);
@@ -226,31 +263,40 @@ export const CartProvider = ({ children }) => {
   };
 
   // **Save Item for Later**
-  const saveForItemLater = async (product) => {
-    if (!isAuthenticated) {
+  // Accepts either a full Product object or a Cart item
+  const saveForItemLater = async (entity) => {
+    if (!isAuthed) {
       showToast("Please login to save items", "error");
       return;
     }
 
     try {
       setLoading(true);
-      await addToWishlist(product._id);
-      
-      // Remove from cart if it was in cart
-      const cartItem = cartItems.find((item) => item.productId === product._id);
+
+      // Derive the correct productId whether entity is a Product or a CartItem
+      const productId = entity?.productId || entity?._id || entity?.id;
+      if (!productId) {
+        throw new Error("Invalid item; missing productId");
+      }
+
+      // Add to wishlist by productId
+      await addToWishlist(productId);
+
+      // Remove from cart if it exists there (use the cart subdocument _id)
+      const cartItem = cartItems.find((ci) => ci.productId === productId);
       if (cartItem) {
         await removeFromCart(cartItem._id);
       }
-      
+
       // Refresh wishlist
       await fetchWishlist();
       showToast("Item saved for later!", "success");
     } catch (error) {
-      if (error.response?.status === 409) {
+      if (error?.response?.status === 409) {
         showToast("Item is already in your saved list.");
       } else {
         showToast("Failed to save item", "error");
-        console.error('Error saving item for later:', error);
+        console.error("Error saving item for later:", error);
       }
     } finally {
       setLoading(false);
@@ -259,24 +305,24 @@ export const CartProvider = ({ children }) => {
 
   // **Move Saved to Cart** (Updated to use API)
   const moveToCart = async (item) => {
-    if (!isAuthenticated) {
+    if (!isAuthed) {
       showToast("Please login to move items to cart", "error");
       return;
     }
 
     try {
       setLoading(true);
-      
+
       // Add item to cart using wishlist item data
       await addWishlistItemToCart(item);
-      
+
       // Remove from wishlist
       await removeFromWishlist(item._id);
-      
+
       // Refresh both cart and wishlist
       await fetchCart();
       await fetchWishlist();
-      
+
       showToast("Item moved to cart!", "success");
     } catch (error) {
       if (error.response?.data?.message?.includes("already in your cart")) {
@@ -292,7 +338,7 @@ export const CartProvider = ({ children }) => {
 
   // **Remove from Saved** (Updated to use API)
   const removeFromSaved = async (itemId, silent = false) => {
-    if (!isAuthenticated) {
+    if (!isAuthed) {
       if (!silent) showToast("Please login to remove items", "error");
       return;
     }
@@ -300,10 +346,10 @@ export const CartProvider = ({ children }) => {
     try {
       setLoading(true);
       await removeFromWishlist(itemId);
-      
+
       // Refresh wishlist
       await fetchWishlist();
-      
+
       if (!silent) {
         showToast("Item removed from saved list");
       }
@@ -323,6 +369,8 @@ export const CartProvider = ({ children }) => {
         cartItems,
         savedItems,
         loading,
+        wishlistLoading,
+        cartLoading,
         addToCart,
         updateQuantity,
         removeFromCart,

@@ -16,6 +16,31 @@ const getUserId = (req) => {
   return null;
 };
 
+// Build absolute URL for image filename or relative path
+const fileToUrl = (req, value) => {
+  if (!value) return null;
+  if (typeof value === 'string' && /^https?:\/\//i.test(value)) return value;
+  const rel = String(value).startsWith('/uploads') ? value : `/uploads/${value}`;
+  return `${req.protocol}://${req.get('host')}${rel}`;
+};
+
+const mapItem = (req, item) => {
+  const obj = item.toObject ? item.toObject() : item;
+  return {
+    ...obj,
+    imageUrl: fileToUrl(req, obj.image),
+  };
+};
+
+const mapCart = (req, cart) => {
+  const c = cart.toObject ? cart.toObject() : cart;
+  return {
+    items: (c.items || []).map((it) => mapItem(req, it)),
+    totalAmount: c.totalAmount || 0,
+    totalItems: c.totalItems || 0,
+  };
+};
+
 // @route   GET /api/cart
 // @desc    Get user's cart items
 // @access  Private
@@ -27,26 +52,23 @@ router.get('/', verifyAuthFlexible, async (req, res) => {
     }
 
     let cart = await Cart.findOne({ userId });
-    
+
     if (!cart) {
       cart = new Cart({ userId, items: [] });
       await cart.save();
     }
 
+    const mappedCart = mapCart(req, cart);
     res.json({
       success: true,
-      cart: {
-        items: cart.items,
-        totalAmount: cart.totalAmount,
-        totalItems: cart.totalItems,
-      }
+      cart: mappedCart
     });
   } catch (error) {
     console.error('Error fetching cart:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Server error while fetching cart',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -65,23 +87,23 @@ router.post('/', verifyAuthFlexible, async (req, res) => {
 
     // Validate required fields
     if (!productId || !name || !price || !image || !category) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Missing required product information' 
+        message: 'Missing required product information'
       });
     }
 
     // Verify product exists
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Product not found' 
+        message: 'Product not found'
       });
     }
 
     let cart = await Cart.findOne({ userId });
-    
+
     if (!cart) {
       cart = new Cart({ userId, items: [] });
     }
@@ -92,8 +114,13 @@ router.post('/', verifyAuthFlexible, async (req, res) => {
     );
 
     if (existingItemIndex > -1) {
-      // Update existing item quantity
-      cart.items[existingItemIndex].quantity += quantity;
+      // Do not increment quantity; return conflict indicating already in cart
+      const mappedCart = mapCart(req, cart);
+      return res.status(409).json({
+        success: false,
+        message: 'Item already in cart',
+        cart: mappedCart
+      });
     } else {
       // Add new item to cart
       cart.items.push({
@@ -111,21 +138,18 @@ router.post('/', verifyAuthFlexible, async (req, res) => {
 
     await cart.save();
 
+    const mappedCart = mapCart(req, cart);
     res.json({
       success: true,
       message: 'Item added to cart successfully',
-      cart: {
-        items: cart.items,
-        totalAmount: cart.totalAmount,
-        totalItems: cart.totalItems,
-      }
+      cart: mappedCart
     });
   } catch (error) {
     console.error('Error adding item to cart:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Server error while adding item to cart',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -144,17 +168,17 @@ router.put('/:itemId', verifyAuthFlexible, async (req, res) => {
     const { quantity } = req.body;
 
     if (!quantity || quantity < 1) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Quantity must be at least 1' 
+        message: 'Quantity must be at least 1'
       });
     }
 
     const cart = await Cart.findOne({ userId });
     if (!cart) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Cart not found' 
+        message: 'Cart not found'
       });
     }
 
@@ -163,30 +187,27 @@ router.put('/:itemId', verifyAuthFlexible, async (req, res) => {
     );
 
     if (itemIndex === -1) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Item not found in cart' 
+        message: 'Item not found in cart'
       });
     }
 
     cart.items[itemIndex].quantity = quantity;
     await cart.save();
 
+    const mappedCart = mapCart(req, cart);
     res.json({
       success: true,
       message: 'Cart item updated successfully',
-      cart: {
-        items: cart.items,
-        totalAmount: cart.totalAmount,
-        totalItems: cart.totalItems,
-      }
+      cart: mappedCart
     });
   } catch (error) {
     console.error('Error updating cart item:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Server error while updating cart item',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -205,9 +226,9 @@ router.delete('/:itemId', verifyAuthFlexible, async (req, res) => {
 
     const cart = await Cart.findOne({ userId });
     if (!cart) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Cart not found' 
+        message: 'Cart not found'
       });
     }
 
@@ -216,30 +237,27 @@ router.delete('/:itemId', verifyAuthFlexible, async (req, res) => {
     );
 
     if (itemIndex === -1) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Item not found in cart' 
+        message: 'Item not found in cart'
       });
     }
 
     cart.items.splice(itemIndex, 1);
     await cart.save();
 
+    const mappedCart = mapCart(req, cart);
     res.json({
       success: true,
       message: 'Item removed from cart successfully',
-      cart: {
-        items: cart.items,
-        totalAmount: cart.totalAmount,
-        totalItems: cart.totalItems,
-      }
+      cart: mappedCart
     });
   } catch (error) {
     console.error('Error removing cart item:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Server error while removing cart item',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -256,30 +274,27 @@ router.delete('/', verifyAuthFlexible, async (req, res) => {
 
     const cart = await Cart.findOne({ userId });
     if (!cart) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Cart not found' 
+        message: 'Cart not found'
       });
     }
 
     cart.items = [];
     await cart.save();
 
+    const mappedCart = mapCart(req, cart);
     res.json({
       success: true,
       message: 'Cart cleared successfully',
-      cart: {
-        items: cart.items,
-        totalAmount: cart.totalAmount,
-        totalItems: cart.totalItems,
-      }
+      cart: mappedCart
     });
   } catch (error) {
     console.error('Error clearing cart:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Server error while clearing cart',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -298,24 +313,24 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
 
     // Validate required fields
     if (!customer || !customer.name || !customer.deliveryAddress) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Customer information is required' 
+        message: 'Customer information is required'
       });
     }
 
     if (!transactionId) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Transaction ID is required' 
+        message: 'Transaction ID is required'
       });
     }
 
     const cart = await Cart.findOne({ userId });
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Cart is empty' 
+        message: 'Cart is empty'
       });
     }
 
@@ -352,7 +367,7 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
       status: 'Pending',
       orderId: newOrder._id,
     });
-    
+
     await newInvoice.save();
 
     // Clear cart after successful order creation
@@ -368,10 +383,10 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
 
   } catch (error) {
     console.error('Error during checkout:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Server error during checkout',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -395,10 +410,10 @@ router.get('/count', verifyAuthFlexible, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching cart count:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Server error while fetching cart count',
-      error: error.message 
+      error: error.message
     });
   }
 });
