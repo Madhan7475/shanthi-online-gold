@@ -1,12 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { useRequireAuth } from "../utils/useRequireAuth";
+import CartAuthGuard from "../components/CartAuthGuard";
 
 const CartPage = () => {
-  const { loading, isAuthenticated } = useRequireAuth();
   const {
     cartItems,
+    loading,
     updateQuantity,
     removeFromCart,
     clearCart,
@@ -18,21 +18,25 @@ const CartPage = () => {
     0
   );
 
-  if (loading || !isAuthenticated)
-    return <div className="text-center py-20">Loading...</div>;
-
   return (
-    <div className="bg-[#fffdf6] px-4 lg:px-20 py-10 text-[#3e2f1c] min-h-screen">
-      <Link
-        to="/"
-        className="text-sm text-[#9e886e] underline mb-4 inline-block hover:text-[#b19874]"
-      >
-        ← Continue Shopping
-      </Link>
+    <CartAuthGuard>
+      <div className="bg-[#fffdf6] px-4 lg:px-20 py-10 text-[#3e2f1c] min-h-screen">
+        <Link
+          to="/"
+          className="text-sm text-[#9e886e] underline mb-4 inline-block hover:text-[#b19874]"
+        >
+          ← Continue Shopping
+        </Link>
 
-      <h2 className="text-2xl font-semibold mb-6 text-[#d4af37]">
-        Shopping Bag ({cartItems.length})
-      </h2>
+        <h2 className="text-2xl font-semibold mb-6 text-[#d4af37]">
+          Shopping Bag ({cartItems.length})
+        </h2>
+
+        {loading && (
+          <div className="text-center py-8">
+            <div className="text-[#c29d5f]">Loading cart...</div>
+          </div>
+        )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Section */}
@@ -164,7 +168,8 @@ const CartPage = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </CartAuthGuard>
   );
 };
 

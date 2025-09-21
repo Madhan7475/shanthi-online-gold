@@ -7,14 +7,19 @@ const fs = require("fs");
 // Load .env
 dotenv.config();
 
+// Connect to MongoDB
+const connectDB = require("./config/db");
+connectDB();
+
 const app = express();
 
 // Middleware
 app.use(express.json());
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend
-    credentials: true,               // required if frontend sends cookies/auth headers
+    origin: allowedOrigin, // frontend
+    credentials: true, // required if frontend sends cookies/auth headers
   })
 );
 
@@ -26,9 +31,30 @@ app.use("/uploads", express.static(uploadsDir));
 // Health check
 app.get("/", (req, res) => res.send("🟢 Backend is running"));
 
-// Import routes
-const paymentRoutes = require("./routes/paymentRoutes"); // your file above
+// Import and mount routes
+const paymentRoutes = require("./routes/paymentRoutes");
+const productRoutes = require("./routes/productRoutes");
+const userRoutes = require("./routes/userRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const invoiceRoutes = require("./routes/invoiceRoutes");
+const authRoutes = require("./routes/authRoutes");
+const otpRoutes = require("./routes/otpRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+const wishlistRoutes = require("./routes/wishlistRoutes");
+const cartRoutes = require("./routes/cartRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+
 app.use("/api/payment", paymentRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/invoices", invoiceRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/otp", otpRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   BarChart3, Package, ShoppingCart, Users, FileText,
   Search, LogOut, Filter, Download, Eye, Edit, Trash2,
@@ -7,15 +7,6 @@ import {
   X, MapPin, Phone, Mail, CreditCard, Truck, Clock
 } from "lucide-react";
 
-const NavItem = ({ to, icon, label }) => (
-  <Link
-    to={to}
-    className="flex items-center space-x-3 text-white hover:text-[#f599ff] transition-all"
-  >
-    {icon}
-    <span>{label}</span>
-  </Link>
-);
 
 const AdminOrderList = () => {
   const navigate = useNavigate();
@@ -57,12 +48,13 @@ const AdminOrderList = () => {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
       
-      const response = await fetch('/api/admin/orders', {
+      const response = await fetch("/api/orders", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
+
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -74,18 +66,45 @@ const AdminOrderList = () => {
       }
 
       const data = await response.json();
-      const ordersData = data.orders || data || [];
+      const rawOrders = Array.isArray(data) ? data : (data.orders || []);
+      // Normalize backend orders to the shape expected by this UI
+      const ordersData = rawOrders.map((o) => ({
+        _id: o._id,
+        orderId: o._id ? String(o._id).slice(-8).toUpperCase() : undefined,
+        customerName: o.customerName || 'Customer',
+        customerEmail: o.customerEmail || 'N/A',
+        customerPhone: o.customerPhone || 'N/A',
+        products: Array.isArray(o.items)
+          ? o.items.map((it) => ({
+              name: it.title || it.name || 'Item',
+              quantity: it.quantity || 1,
+              price: it.price || 0,
+              description: it.description,
+            }))
+          : [],
+        totalAmount: o.total ?? o.totalAmount ?? 0,
+        status: o.status || 'Pending',
+        paymentMethod: o.paymentMethod
+          ? o.paymentMethod === 'phonepe'
+            ? 'PhonePe'
+            : o.paymentMethod
+          : 'N/A',
+        paymentStatus: o.transactionId ? 'Paid' : 'Pending',
+        shippingAddress: o.deliveryAddress
+          ? { street: o.deliveryAddress }
+          : o.shippingAddress,
+        createdAt: o.date || o.createdAt || new Date().toISOString(),
+        updatedAt: o.updatedAt || o.date || new Date().toISOString(),
+      }));
       
       setOrders(ordersData);
       calculateOrderStats(ordersData);
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Error fetching orders:', error);
-      
-      // Fallback demo data for development
-      const demoOrders = generateDemoOrders();
-      setOrders(demoOrders);
-      calculateOrderStats(demoOrders);
+      // Use only real data; on error, show zeroed stats and no orders
+      setOrders([]);
+      calculateOrderStats([]);
     } finally {
       setLoading(false);
     }
@@ -224,7 +243,7 @@ const AdminOrderList = () => {
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/admin/orders/${orderId}`, {
+      const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -594,26 +613,7 @@ const AdminOrderList = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#400F45] border-r-4 border-[#fff2a6] p-6 hidden md:block shadow-xl">
-        <div className="mb-8 flex justify-center">
-          <img
-            src="/logo.svg"
-            alt="Admin Logo"
-            className="h-12 w-auto object-contain"
-          />
-        </div>
-        <nav className="space-y-4 text-gray-200">
-          <NavItem to="/admin/products" icon={<Package size={18} />} label="Products" />
-          <NavItem to="/admin/orders" icon={<ShoppingCart size={18} />} label="Orders" />
-          <NavItem to="/admin/profiles" icon={<Users size={18} />} label="Profiles" />
-          <NavItem to="/admin/invoices" icon={<FileText size={18} />} label="Invoices" />
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-6">
+    <div className="p-6 bg-gray-50">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
           <div>
@@ -632,13 +632,7 @@ const AdminOrderList = () => {
               </button>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
+          {/* Logout is provided by AdminLayout */}
         </div>
 
         {/* Statistics Cards */}
@@ -1203,8 +1197,7 @@ const AdminOrderList = () => {
             </div>
           </div>
         )}
-      </main>
-    </div>
+      </div>
   );
 };
 

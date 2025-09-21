@@ -6,8 +6,14 @@ import { setupAuthListener } from "./utils/setupAuthListener";
 import RequireAuthPage from "./utils/RequireAuthPage";
 import DebugFirebaseToken from "./utils/DebugFirebaseToken";
 
+// Development tools
+if (process.env.NODE_ENV === 'development') {
+  import('./utils/testCartAPI');
+}
+
 // Layouts
 import UserLayout from "./components/Layout/UserLayout";
+import AdminLayout from "./components/AdminLayout";
 
 // User Pages
 import SigninPage from "./pages/SigninPage";
@@ -45,7 +51,7 @@ import Shipping from "./pages/category/Shipping";
 // Admin Pages
 import AdminLogin from "./pages/Login";
 import AdminAuth from "./pages/AdminAuth";
-import AdminProfiles from "./pages/AdminProfiles";
+import AdminProfileManagement from "./components/Admin/AdminProfileManagement";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import Invoice from "./pages/Invoice";
 import AdminPanel from "./pages/Panel";
@@ -144,11 +150,11 @@ const App = () => {
         <Route path="/admin/panel" element={<AdminPanel />} />
         <Route path="/admin/auth" element={<AdminAuth />} />
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
-        <Route path="/admin/profiles" element={<AdminProfiles />} />
+        <Route path="/admin/profiles" element={<AdminProfileManagement />} />
         <Route path="/admin/products" element={<ProductUpload />} />
         <Route path="/admin/products/list" element={<ProductList />} />
         <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
-        <Route path="/admin/orders" element={<OrderManagement />} />
+        <Route path="/admin/orders" element={<AdminLayout><OrderManagement /></AdminLayout>} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/invoices" element={<Invoice />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />

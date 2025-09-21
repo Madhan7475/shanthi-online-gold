@@ -1,0 +1,63 @@
+Service,HTTP Method,Endpoint,Description,Auth/Middleware,Notes
+Products,POST,/api/products,Upload a new product with multiple images,adminAuth + upload.array("images",5),multipart/form-data
+Products,GET,/api/products,List products (optional q,category,sort,page,limit),Public,Plain array if no query; paginated JSON if any query present
+Products,GET,/api/products/:id,Get product by ID,Public,
+Products,PUT,/api/products/:id,Update product by ID,adminAuth + upload.array("images",5),
+Products,DELETE,/api/products/:id,Delete product by ID,adminAuth,
+
+Categories,GET,/api/categories,List categories (optional featured=true),Public,
+Categories,GET,/api/categories/:slug,Get category by slug,Public,
+Categories,POST,/api/categories,Create category with optional image,upload.single("image"),No admin middleware present in code
+Categories,PUT,/api/categories/:id,Update category (optional new image),upload.single("image"),No admin middleware present in code
+Categories,DELETE,/api/categories/:id,Delete category,Public,No admin middleware present in code
+
+Auth,POST,/api/auth/sync-user,Sync a Firebase-authenticated user to local DB,verifyFirebaseToken,Body: { name }
+Auth,POST,/api/auth/otp-login,OTP login via 2Factor provider (manual flow),Public,Body: { phone, name }
+
+OTP,POST,/api/otp/send-otp,Send OTP to a phone via 2Factor,Public,Body: { phone }
+OTP,POST,/api/otp/verify-otp,Verify OTP and issue JWT,Public,Body: { phone, otp, sessionId?, name?, email? }
+
+Users,GET,/api/users/me,Get current user profile,verifyFirebaseToken,Identified by Firebase UID
+Users,GET,/api/users/me/wishlist,Get wishlist (userRoutes version),verifyAuthFlexible,Returns populated wishlist
+Users,POST,/api/users/me/wishlist,Add product to wishlist (userRoutes),verifyAuthFlexible,Body: { productId }
+Users,DELETE,/api/users/me/wishlist/:productId,Remove product from wishlist (userRoutes),verifyAuthFlexible,
+Users,GET,/api/users/me/cart,Get cart (userRoutes version),verifyAuthFlexible,
+Users,POST,/api/users/me/cart,Add to cart (userRoutes),verifyAuthFlexible,Body: { productId, quantity? }
+Users,PATCH,/api/users/me/cart,Update cart item quantity (userRoutes),verifyAuthFlexible,Body: { productId, quantity }
+Users,DELETE,/api/users/me/cart/:productId,Remove item from cart (userRoutes),verifyAuthFlexible,
+Users,DELETE,/api/users/me/cart,Clear cart (userRoutes),verifyAuthFlexible,
+
+Wishlist,GET,/api/wishlist,Get wishlist items,verifyFirebaseToken,Uses Wishlist collection
+Wishlist,POST,/api/wishlist,Add item to wishlist,verifyFirebaseToken,Body: { productId }
+Wishlist,DELETE,/api/wishlist/:itemId,Remove wishlist item by ID,verifyFirebaseToken,
+Wishlist,DELETE,/api/wishlist/product/:productId,Remove wishlist item by productId,verifyFirebaseToken,
+Wishlist,POST,/api/wishlist/move-to-cart,Move wishlist item to cart (creates order),verifyFirebaseToken,Body: { itemId, quantity?, size? }
+Wishlist,GET,/api/wishlist/count,Get wishlist items count,verifyFirebaseToken,
+Wishlist,POST,/api/wishlist/check,Check if product is in wishlist,verifyFirebaseToken,Body: { productId }
+
+Cart,GET,/api/cart,Get user's cart items,verifyAuthFlexible,Returns { success, cart: { items,totalAmount,totalItems } }
+Cart,POST,/api/cart,Add item to cart,verifyAuthFlexible,Body includes: productId,name,price,image,category,quantity?,description?,weight?,purity?
+Cart,PUT,/api/cart/:itemId,Update cart item quantity,verifyAuthFlexible,Body: { quantity }
+Cart,DELETE,/api/cart/:itemId,Remove item from cart,verifyAuthFlexible,
+Cart,DELETE,/api/cart,Clear entire cart,verifyAuthFlexible,
+Cart,POST,/api/cart/checkout,Checkout (create order + clear cart),verifyAuthFlexible,Body: { customer{name,deliveryAddress,..}, paymentMethod?, transactionId }
+Cart,GET,/api/cart/count,Get cart items count,verifyAuthFlexible,Returns { success, count }
+
+Orders (Admin),GET,/api/orders,Get all orders (admin),Public in code (should be admin-protected),Sorted by date desc
+Orders (Admin),PUT,/api/orders/:id,Update order status (admin),Public in code (should be admin-protected),Body: { status }
+Orders (User),GET,/api/orders/my-orders,Get current user's orders,verifyAuthFlexible,
+Orders (User),GET,/api/orders/:id,Get a single order (must belong to user),verifyAuthFlexible,
+Orders (User),POST,/api/orders/cod,Create Cash-on-Delivery order,verifyAuthFlexible,Body: { customer, items, total }
+Orders (User),PUT,/api/orders/:id/cancel,Cancel own order (if Pending),verifyAuthFlexible,
+
+Invoices,GET,/api/invoices,Get all invoices,Public in code (should be admin-protected),
+
+Admin,GET,/api/admin/users,List users (pagination/search/role filter),adminAuth,Query: page,limit,search,role
+Admin,GET,/api/admin/users/:id,Get single user by ID,adminAuth,
+Admin,PUT,/api/admin/users/:id/role,Update user role,adminAuth,Body: { role: 'customer'|'admin' }
+Admin,PUT,/api/admin/profile,Update admin's own profile,adminAuth,Body: { name?, email?, phone? }
+Admin,GET,/api/admin/profile,Get admin profile,adminAuth,
+Admin,GET,/api/admin/stats,Get user statistics,adminAuth,Totals + last 7 days new users
+
+Payment,POST,/api/payment/create-order,Create a PhonePe order,fakeAuth (dev helper),Returns PhonePe response + merchantTransactionId
+Payment,POST,/api/payment/phonepe/callback,PhonePe callback endpoint,Public,For gateway callback

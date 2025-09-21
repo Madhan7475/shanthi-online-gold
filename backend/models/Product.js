@@ -6,6 +6,7 @@ const productSchema = new mongoose.Schema({
   description: String,
   category: String,
   price: Number,
+  stocks: { type: Number, default: 0 },
   karatage: String,
   materialColour: String,
   grossWeight: String,
