@@ -4,11 +4,22 @@ const crypto = require("crypto");
 
 const router = express.Router();
 
-// ENV setup (use sandbox)
-const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL || "https://api.phonepe.com/apis/pg-sandbox/pg";
-const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
-const SALT_KEY = process.env.PHONEPE_SALT_KEY;
-const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || 1;
+const path = require("path");
+const dotenv = require("dotenv");
+dotenv.config({ path: path.resolve(__dirname, "..", ".env"), override: true });
+
+/* ENV setup */
+function getPhonepeBaseUrl() {
+  const env = (process.env.PHONEPE_ENV || "sandbox").toLowerCase();
+  return env === "production"
+    ? "https://api.phonepe.com/apis/pg"
+    : "https://api-preprod.phonepe.com/apis/pg-sandbox";
+}
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:9000";
+const PHONEPE_CLIENT_ID = process.env.PHONEPE_CLIENT_ID;
+const PHONEPE_CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET;
+const PHONEPE_KEY_INDEX = process.env.PHONEPE_KEY_INDEX || 1;
 
 // Debug logger
 const log = (...args) => console.log("[PhonePe DEBUG]", ...args);
@@ -26,13 +37,13 @@ router.post("/create-order", async (req, res) => {
 
     // Construct payload
     const payload = {
-      merchantId: MERCHANT_ID,
+      merchantId: PHONEPE_CLIENT_ID,
       merchantTransactionId: orderId,
       merchantUserId: userId || "U" + Date.now(),
       amount: amount * 100, // paise
-      redirectUrl: `http://localhost:5173/payment-success?orderId=${orderId}`,
-      redirectMode: "POST",
-      callbackUrl: "http://localhost:9000/api/payment/phonepe-callback",
+      redirectUrl: `${FRONTEND_URL}/payment-success?orderId=${orderId}`,
+      redirectMode: "REDIRECT",
+      callbackUrl: `${BACKEND_URL}/api/payment/phonepe/callback`,
       paymentInstrument: {
         type: "PAY_PAGE",
       },
@@ -47,22 +58,22 @@ router.post("/create-order", async (req, res) => {
     // Generate checksum
     const checksum = crypto
       .createHash("sha256")
-      .update(payloadBase64 + "/pg/v1/pay" + SALT_KEY)
+      .update(payloadBase64 + "/pg/v1/pay" + PHONEPE_CLIENT_SECRET)
       .digest("hex");
 
-    const finalXVerify = `${checksum}###${SALT_INDEX}`;
+    const finalXVerify = `${checksum}###${PHONEPE_KEY_INDEX}`;
     log("Checksum:", checksum);
     log("X-VERIFY Header:", finalXVerify);
 
     const headers = {
       "Content-Type": "application/json",
       "X-VERIFY": finalXVerify,
-      "X-MERCHANT-ID": MERCHANT_ID,
+      "X-MERCHANT-ID": PHONEPE_CLIENT_ID,
     };
 
     // Send request to PhonePe sandbox
     const response = await axios.post(
-      `${PHONEPE_BASE_URL}/pay`,
+      `${getPhonepeBaseUrl()}/pg/v1/pay`,
       { request: payloadBase64 },
       { headers }
     );
