@@ -1,18 +1,22 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useRequireAuth } from "../utils/useRequireAuth";
 
 const SavedItemsPage = () => {
-    const { savedItems, moveToCart, removeFromSaved, fetchWishlist, loading } = useCart();
+    const { savedItems, moveToCart, removeFromSaved, fetchWishlist, wishlistLoading, cartLoading } = useCart();
     const { loading: authLoading, isAuthenticated } = useRequireAuth();
+    const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-    // Fetch wishlist items when component mounts
+    // Fetch wishlist items once on first authenticated mount
     useEffect(() => {
-        if (isAuthenticated) {
-            fetchWishlist();
+        if (isAuthenticated && !initialLoadDone) {
+            (async () => {
+                await fetchWishlist();
+                setInitialLoadDone(true);
+            })();
         }
-    }, [isAuthenticated, fetchWishlist]);
+    }, [isAuthenticated, fetchWishlist, initialLoadDone]);
 
     if (authLoading || !isAuthenticated) {
         return <div className="text-center py-20">Loading...</div>;
@@ -31,13 +35,13 @@ const SavedItemsPage = () => {
                 Saved For Later ({savedItems.length})
             </h2>
 
-            {loading && (
+            {!initialLoadDone && (wishlistLoading || cartLoading) && (
                 <div className="text-center py-10">
                     <p className="text-lg text-gray-500">Loading saved items...</p>
                 </div>
             )}
 
-            {!loading && savedItems.length > 0 ? (
+            {initialLoadDone && savedItems.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {savedItems.map((item) => (
                         <div
@@ -46,9 +50,13 @@ const SavedItemsPage = () => {
                         >
                             <img
                                 src={
-                                    (item.product?.images?.[0] || item.images?.[0]) 
-                                        ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${item.product?.images?.[0] || item.images?.[0]}` 
-                                        : "/placeholder.png"
+                                    item.product?.primaryImageUrl
+                                        ? item.product.primaryImageUrl
+                                        : item.product?.imageUrls?.[0]
+                                            ? item.product.imageUrls[0]
+                                            : (item.product?.images?.[0] || item.images?.[0])
+                                                ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${item.product?.images?.[0] || item.images?.[0]}`
+                                                : "/placeholder.png"
                                 }
                                 alt={item.product?.title || item.title}
                                 className="w-full h-48 object-contain rounded mb-4"
@@ -63,17 +71,17 @@ const SavedItemsPage = () => {
                                 <div className="mt-4 space-y-2">
                                     <button
                                         onClick={() => moveToCart(item)}
-                                        disabled={loading}
+                                        disabled={wishlistLoading || cartLoading}
                                         className="w-full bg-gradient-to-r from-[#f4c57c] to-[#ffdc9a] text-[#3e2f1c] font-semibold py-2 rounded text-center hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {loading ? "Moving..." : "Move to Cart"}
+                                        {(wishlistLoading || cartLoading) ? "Moving..." : "Move to Cart"}
                                     </button>
                                     <button
                                         onClick={() => removeFromSaved(item._id)}
-                                        disabled={loading}
+                                        disabled={wishlistLoading || cartLoading}
                                         className="w-full bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {loading ? "Removing..." : "Remove"}
+                                        {(wishlistLoading || cartLoading) ? "Removing..." : "Remove"}
                                     </button>
                                 </div>
                             </div>
@@ -81,7 +89,7 @@ const SavedItemsPage = () => {
                     ))}
                 </div>
             ) : (
-                !loading && (
+                initialLoadDone && (
                     <div className="text-center py-20">
                         <p className="text-lg text-gray-500">You have no saved items yet.</p>
                         <Link to="/" className="text-[#c29d5f] underline mt-2 inline-block">

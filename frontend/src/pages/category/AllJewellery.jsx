@@ -25,7 +25,8 @@ const AllJewellery = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [expandedFilters, setExpandedFilters] = useState({});
   const [selectedFilters, setSelectedFilters] = useState({}); // ✅ State for selected filters
-  const { addToCart, saveForItemLater } = useCart();
+  const [addingMap, setAddingMap] = useState({});
+  const { addToCart, saveForItemLater, cartItems } = useCart();
   const navigate = useNavigate();
   const { runWithAuth } = useRequireAuth();
 
@@ -90,10 +91,23 @@ const AllJewellery = () => {
   };
 
   const handleProductClick = (id) => navigate(`/product/${id}`);
+  const isInCart = (p) => cartItems?.some((ci) => String(ci.productId) === String(p._id));
 
-  const handleAddToCart = (product, e) => {
+  const handleAddToCart = async (product, e) => {
     e.stopPropagation();
-    runWithAuth(() => addToCart(product));
+    if (isInCart(product)) return;
+
+    setAddingMap((m) => ({ ...m, [product._id]: true }));
+    await runWithAuth(async () => {
+      try {
+        await addToCart(product);
+      } finally {
+        setAddingMap((m) => {
+          const { [product._id]: _, ...rest } = m;
+          return rest;
+        });
+      }
+    });
   };
 
   const handleSaveItem = (product, e) => {
@@ -191,8 +205,10 @@ const AllJewellery = () => {
                 </p>
               </div>
               <button
-                className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f]"
+                className={`absolute bottom-2 right-2 ${isInCart(product) ? "text-green-600" : "text-gray-500 hover:text-[#c29d5f]"} ${addingMap[product._id] ? "opacity-50 cursor-not-allowed" : ""}`}
                 onClick={(e) => handleAddToCart(product, e)}
+                disabled={addingMap[product._id] || isInCart(product)}
+                title={isInCart(product) ? "In Cart" : (addingMap[product._id] ? "Adding..." : "Add to Cart")}
               >
                 <FaShoppingCart />
               </button>

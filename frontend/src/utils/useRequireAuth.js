@@ -6,13 +6,16 @@ import { toast } from "react-toastify";
 
 export const useRequireAuth = () => {
     const { isAuthenticated, loading } = useContext(AuthContext);
+    // Treat OTP token as authenticated as well
+    const isOtpAuth = !!localStorage.getItem("otpUserToken");
+    const isAuthed = isAuthenticated || isOtpAuth;
     const navigate = useNavigate();
 
     // For wrapping auth checks around actions (like "Add to Cart")
     const runWithAuth = (callback) => {
         if (loading) return;
 
-        if (isAuthenticated) {
+        if (isAuthed) {
             callback(); // 🔒 Proceed if logged in
         } else {
             toast.dismiss();
@@ -33,13 +36,13 @@ export const useRequireAuth = () => {
     // For protecting whole pages (like CartPage)
     const checkPageAccess = () => {
         useEffect(() => {
-            if (!loading && !isAuthenticated) {
+            if (!loading && !isAuthed) {
                 toast.dismiss(); // 🧼 Clear any previous toasts
                 toast.info("Please sign in to continue.");
                 navigate("/signin");
             }
-        }, [loading, isAuthenticated]);
+        }, [loading, isAuthed]);
     };
 
-    return { runWithAuth, checkPageAccess, isAuthenticated, loading };
+    return { runWithAuth, checkPageAccess, isAuthenticated: isAuthed, loading };
 };

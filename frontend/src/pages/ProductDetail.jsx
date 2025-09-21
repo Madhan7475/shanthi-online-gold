@@ -6,10 +6,12 @@ import { useRequireAuth } from "../utils/useRequireAuth";
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
   const { runWithAuth } = useRequireAuth();
+  const inCart = product && cartItems?.some((ci) => String(ci.productId) === String(product._id));
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -27,7 +29,15 @@ const ProductDetails = () => {
   }, [id]);
 
   const handleAddToCart = () => {
-    runWithAuth(() => addToCart(product));
+    if (inCart || isAdding) return;
+    setIsAdding(true);
+    runWithAuth(async () => {
+      try {
+        await addToCart(product);
+      } finally {
+        setIsAdding(false);
+      }
+    });
   };
 
   if (!product) {
@@ -142,9 +152,10 @@ const ProductDetails = () => {
           {/* Add to Cart */}
           <button
             onClick={handleAddToCart}
-            className="mt-6 w-full bg-[#4b1e59] hover:bg-[#3a1547] text-white font-bold py-3 rounded-lg transition duration-300"
+            disabled={isAdding || inCart}
+            className="mt-6 w-full bg-[#4b1e59] hover:bg-[#3a1547] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition duration-300"
           >
-            Add to Cart
+            {inCart ? "In Cart" : isAdding ? "Adding..." : "Add to Cart"}
           </button>
         </div>
       </div>
