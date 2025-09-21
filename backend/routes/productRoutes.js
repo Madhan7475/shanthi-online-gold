@@ -1,21 +1,38 @@
 const express = require("express");
 const Product = require("../models/Product");
 const { upload } = require("../middleware/upload");
+const adminAuth = require("../middleware/adminAuth");
 
 const router = express.Router();
 
 /**
  * @route   POST /api/products
  * @desc    Upload a new product with multiple images
- * @access  Public
+ * @access  Admin only
  */
-router.post("/", upload.array("images", 5), async (req, res) => {
+router.post("/", adminAuth, upload.array("images", 5), async (req, res) => {
   try {
     const {
-      title, description, category, price, karatage, materialColour,
-      grossWeight, metal, size, diamondClarity, diamondColor, numberOfDiamonds,
-      diamondSetting, diamondShape, jewelleryType, brand, collection,
-      gender, occasion
+      title,
+      description,
+      category,
+      price,
+      stocks,
+      karatage,
+      materialColour,
+      grossWeight,
+      metal,
+      size,
+      diamondClarity,
+      diamondColor,
+      numberOfDiamonds,
+      diamondSetting,
+      diamondShape,
+      jewelleryType,
+      brand,
+      collection,
+      gender,
+      occasion,
     } = req.body;
 
     const imageFilenames = req.files?.map((file) => file.filename) || [];
@@ -25,6 +42,7 @@ router.post("/", upload.array("images", 5), async (req, res) => {
       description,
       category,
       price,
+      stocks,
       karatage,
       materialColour,
       grossWeight,
@@ -47,7 +65,7 @@ router.post("/", upload.array("images", 5), async (req, res) => {
 
     res.status(201).json({
       message: "✅ Product uploaded successfully",
-      product: newProduct
+      product: newProduct,
     });
   } catch (err) {
     console.error("❌ Error uploading product:", err);
@@ -60,13 +78,71 @@ router.post("/", upload.array("images", 5), async (req, res) => {
 
 /**
  * @route   GET /api/products
- * @desc    Fetch all products
+ * @desc    Fetch products with optional search/filter/sort/pagination
+ *          - If no query params are provided, returns a plain array (backward compatible)
+ *          - If any of q/category/sort/page/limit present, returns { items, total, page, pages }
  * @access  Public
  */
 router.get("/", async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
-    res.json(products);
+    const { q, category, sort, page, limit } = req.query;
+
+    const hasQuery = Boolean(
+      (q && q.length) ||
+        (category && category.length) ||
+        (sort && sort.length) ||
+        (page && String(page).length) ||
+        (limit && String(limit).length)
+    );
+
+    // Backward-compatible: when no query params, return plain array
+    if (!hasQuery) {
+      const products = await Product.find().sort({ createdAt: -1 });
+      return res.json(products);
+    }
+
+    const filter = {};
+    if (q) {
+      const regex = new RegExp(q, "i");
+      filter.$or = [
+        { title: regex },
+        { description: regex },
+        { category: regex },
+        { brand: regex },
+        { collection: regex },
+      ];
+    }
+    if (category) {
+      filter.category = new RegExp(`^${category}$`, "i");
+    }
+
+    const sortMap = {
+      newest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      price_asc: { price: 1 },
+      price_desc: { price: -1 },
+      title_asc: { title: 1 },
+      title_desc: { title: -1 },
+    };
+    const sortOption = sortMap[sort] || sortMap.newest;
+
+    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit) || 12, 1), 100);
+
+    const [items, total] = await Promise.all([
+      Product.find(filter)
+        .sort(sortOption)
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum),
+      Product.countDocuments(filter),
+    ]);
+
+    res.json({
+      items,
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum),
+    });
   } catch (err) {
     console.error("❌ Error fetching products:", err);
     res.status(500).json({ error: "Failed to fetch products" });
@@ -94,15 +170,31 @@ router.get("/:id", async (req, res) => {
 /**
  * @route   PUT /api/products/:id
  * @desc    Update a product by ID
- * @access  Public
+ * @access  Admin only
  */
-router.put("/:id", upload.array("images", 5), async (req, res) => {
+router.put("/:id", adminAuth, upload.array("images", 5), async (req, res) => {
   try {
     const {
-      title, description, category, price, karatage, materialColour,
-      grossWeight, metal, size, diamondClarity, diamondColor, numberOfDiamonds,
-      diamondSetting, diamondShape, jewelleryType, brand, collection,
-      gender, occasion
+      title,
+      description,
+      category,
+      price,
+      stocks,
+      karatage,
+      materialColour,
+      grossWeight,
+      metal,
+      size,
+      diamondClarity,
+      diamondColor,
+      numberOfDiamonds,
+      diamondSetting,
+      diamondShape,
+      jewelleryType,
+      brand,
+      collection,
+      gender,
+      occasion,
     } = req.body;
 
     const product = await Product.findById(req.params.id);
@@ -114,6 +206,7 @@ router.put("/:id", upload.array("images", 5), async (req, res) => {
       description,
       category,
       price,
+      stocks,
       karatage,
       materialColour,
       grossWeight,
@@ -151,9 +244,9 @@ router.put("/:id", upload.array("images", 5), async (req, res) => {
 /**
  * @route   DELETE /api/products/:id
  * @desc    Delete a product by ID
- * @access  Public
+ * @access  Admin only
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {

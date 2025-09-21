@@ -16,6 +16,10 @@ const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID || "MERCHANT123";
 const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY || "SALT1234567890";
 const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
 
+// Fallback URLs if .env is not configured
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:9000";
+
 console.log(`🟢 PhonePe ${PHONEPE_ENV.toUpperCase()} Mode Enabled`);
 console.log("Merchant ID:", PHONEPE_MERCHANT_ID);
 
@@ -39,9 +43,9 @@ router.post("/create-order", fakeAuth, async (req, res) => {
       merchantTransactionId,
       merchantUserId: req.user.uid,
       amount: amount * 100, // paise
-      redirectUrl: `${process.env.FRONTEND_URL}/payment-success`,
+      redirectUrl: `${FRONTEND_URL}/payment-success`,
       redirectMode: "POST",
-      callbackUrl: `${process.env.BACKEND_URL}/api/payment/phonepe/callback`,
+      callbackUrl: `${BACKEND_URL}/api/payment/phonepe/callback`,
       mobileNumber: orderData.customer?.phone || "9999999999",
       paymentInstrument: { type: "PAY_PAGE" },
     };
@@ -71,7 +75,9 @@ router.post("/create-order", fakeAuth, async (req, res) => {
 
     console.log("✅ PhonePe Response:", response.data);
 
-    res.json(response.data);
+    // Include our merchantTransactionId in the response so frontend can persist it
+    const respData = { ...response.data, merchantTransactionId };
+    res.json(respData);
   } catch (error) {
     console.error(
       "❌ Error creating PhonePe order:",

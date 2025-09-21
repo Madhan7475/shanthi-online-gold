@@ -13,16 +13,22 @@ const Header = () => {
     const fetchGoldPrices = async () => {
       try {
         // Fetch live gold price from MetalPriceAPI
+        const apiKey = import.meta.env.VITE_METALPRICE_API_KEY;
+        if (!apiKey) throw new Error('No metal price API key configured');
         const response = await fetch(
-          `https://api.metalpriceapi.com/v1/latest?api_key=addyourkey=USD&currencies=XAU`
+          `https://api.metalpriceapi.com/v1/latest?api_key=${apiKey}&base=USD&currencies=XAU`
         );
 
         if (!response.ok) throw new Error("API request failed");
 
         const data = await response.json();
+        const rate = data?.rates?.XAU;
+        if (!rate || typeof rate !== 'number' || !isFinite(rate)) {
+          throw new Error('Invalid XAU rate in response');
+        }
 
         // XAU (gold) price in USD → USD per ounce
-        const usdPerOunce = 1 / data.rates.XAU;
+        const usdPerOunce = 1 / rate;
         const usdToInrRate = 83; // Better: fetch live forex INR rate
         const ozToGram = 31.1035;
 
@@ -35,8 +41,10 @@ const Header = () => {
           "18K": Math.round(inrPerGram * 0.75),
         });
       } catch (err) {
-        console.error("Failed to fetch gold prices:", err);
-        // fallback (optional)
+        // Quietly fall back to defaults in dev if API key is missing/invalid
+        if (import.meta.env.DEV) {
+          console.warn("Gold price API unavailable, using fallback:", err?.message || err);
+        }
         setGoldPrices({
           "24K": 11194,
           "22K": 10261,

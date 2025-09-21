@@ -28,7 +28,7 @@ const AdminLogin = () => {
         theme: "colored",
       });
       setShowWelcome(true);
-      setTimeout(() => navigate("/admin/dashboard"), 2000);
+      setTimeout(() => navigate("/admin/products"), 2000);
     }, 1000);
   };
 

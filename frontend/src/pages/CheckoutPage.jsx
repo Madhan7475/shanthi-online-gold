@@ -3,10 +3,12 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
+import { cartService } from "../services/cartService";
 import { toast } from "react-toastify";
+import CartAuthGuard from "../components/CartAuthGuard";
 
 const CheckoutPage = () => {
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, clearCart, fetchCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -78,31 +80,59 @@ const CheckoutPage = () => {
     }));
   };
 
-  // ✅ PhonePe payment
+  // ✅ PhonePe payment with new cart API (create payment first to obtain transactionId)
   const handlePhonePePayment = async () => {
     try {
       setIsProcessing(true);
 
       const orderData = { customer, items: cartItems, total };
 
-      const { data } = await axiosInstance.post("/payment/create-order", {
+      // Step 1: Create PhonePe order to obtain merchantTransactionId
+      const { data: paymentInit } = await axiosInstance.post("/payment/create-order", {
         amount: total,
         orderData,
       });
 
-      console.log("📥 PhonePe create-order response:", data);
+      if (!paymentInit) {
+        toast.error("Could not initiate payment. Try again.");
+        setIsProcessing(false);
+        return;
+      }
 
-      if (data?.success && data?.data?.instrumentResponse?.redirectInfo?.url) {
-        window.location.href = data.data.instrumentResponse.redirectInfo.url;
+      const transactionId = paymentInit.merchantTransactionId || paymentInit.data?.merchantTransactionId;
+      if (!transactionId) {
+        toast.error("Payment transaction ID missing.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Step 2: Create order in our system with transactionId (required by backend)
+      const checkoutResponse = await cartService.checkout({
+        customer,
+        items: cartItems,
+        total,
+        paymentMethod: 'phonepe',
+        transactionId,
+      });
+
+      if (!checkoutResponse?.success) {
+        toast.error("Failed to create order. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Step 3: Redirect to PhonePe hosted page
+      const redirectUrl = paymentInit?.data?.instrumentResponse?.redirectInfo?.url;
+      if (redirectUrl) {
+        await fetchCart(); // cart cleared by checkout; refresh state
+        window.location.href = redirectUrl;
       } else {
-        toast.error(
-          data?.message || "Could not initiate PhonePe payment. Try again."
-        );
+        toast.error("Could not open PhonePe payment page.");
         setIsProcessing(false);
       }
     } catch (error) {
       console.error("❌ PhonePe order error:", error.response?.data || error.message);
-      toast.error("Payment request failed. Please try again.");
+      toast.error(error.response?.data?.message || "Payment request failed. Please try again.");
       setIsProcessing(false);
     }
   };
@@ -129,10 +159,11 @@ const CheckoutPage = () => {
     customer.deliveryAddress;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-[#fffdf6] text-[#3e2f1c] min-h-[90vh]">
-      <h2 className="text-3xl font-bold mb-6 text-center text-[#d4af37]">
-        🧾 Checkout
-      </h2>
+    <CartAuthGuard>
+      <div className="max-w-4xl mx-auto p-6 bg-[#fffdf6] text-[#3e2f1c] min-h-[90vh]">
+        <h2 className="text-3xl font-bold mb-6 text-center text-[#d4af37]">
+          🧾 Checkout
+        </h2>
 
       {/* 🛒 Order Summary */}
       <div className="bg-white p-6 rounded-xl border border-[#f4e0b9] shadow-md mb-8">
@@ -250,7 +281,8 @@ const CheckoutPage = () => {
           </button>
         </form>
       )}
-    </div>
+      </div>
+    </CartAuthGuard>
   );
 };
 

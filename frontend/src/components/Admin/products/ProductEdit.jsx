@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import axios from "axios";
-import {
-  Package, ShoppingCart, Users, FileText, LogOut
-} from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { adminAPI } from "../../../utils/api";
+import AdminLayout from "../../AdminLayout";
 
 // ✅ Same constants as ProductUpload
 const CATEGORIES = [
@@ -74,11 +72,7 @@ const OPTIONS_MAP = {
   collection: COLLECTIONS
 };
 
-const NavItem = ({ to, icon, label }) => (
-  <Link to={to} className="flex items-center space-x-3 text-[#ffffff] hover:text-[#f599ff] transition-all">
-    {icon}<span>{label}</span>
-  </Link>
-);
+
 
 const ProductEdit = () => {
   const { id } = useParams();
@@ -93,7 +87,7 @@ const ProductEdit = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`);
+        const { data } = await adminAPI.getProduct(id);
         setFormData(data);
       } catch (err) {
         console.error("Error fetching product:", err);
@@ -114,7 +108,7 @@ const ProductEdit = () => {
       Object.entries(formData).forEach(([key, val]) => data.append(key, val ?? ""));
       images.forEach((img) => data.append("images", img));
 
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`, data);
+      await adminAPI.updateProduct(id, data);
 
       setMessage("✅ Product updated successfully!");
       setTimeout(() => navigate("/admin/products/list"), 1200);
@@ -131,42 +125,18 @@ const ProductEdit = () => {
   const labelClass = "block text-sm font-semibold text-[#400F45] mb-1";
 
   return (
-    <div className="flex min-h-screen bg-[#ffffff]">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#400F45] border-r-4 border-[#fff2a6] p-6 hidden md:block shadow-xl rounded-tr-2xl rounded-br-2xl">
-        <h1 className="text-2xl font-bold mb-8 flex items-center justify-center">
-          <img src="/logo.svg" alt="Logo" className="h-12 w-auto object-contain inline-block" />
-        </h1>
-        <nav className="space-y-10 text-gray-200">
-          <NavItem to="/admin/products" icon={<Package size={18} />} label="Products" />
-          <NavItem to="/admin/orders" icon={<ShoppingCart size={18} />} label="Orders" />
-          <NavItem to="/admin/profiles" icon={<Users size={18} />} label="Profiles" />
-          <NavItem to="/admin/invoices" icon={<FileText size={18} />} label="Invoices" />
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-6">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-[#400F45]">Edit Product</h2>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/admin/products/list")}
-              className="bg-[#e2d2e9] text-[#400F45] px-4 py-2 rounded-md hover:bg-[#d2b7de] transition text-sm"
-            >
-              Product List
-            </button>
-            <button
-              onClick={() => {
-                localStorage.removeItem("adminToken");
-                navigate("/admin/login");
-              }}
-              className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
-            >
-              <LogOut size={16} /> Logout
-            </button>
-          </div>
+    <AdminLayout>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-bold text-[#400F45]">Edit Product</h2>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate("/admin/products/list")}
+            className="bg-[#e2d2e9] text-[#400F45] px-4 py-2 rounded-md hover:bg-[#d2b7de] transition text-sm"
+          >
+            Product List
+          </button>
         </div>
+      </div>
 
         <div className="bg-white border border-[#d1bfd9] rounded-2xl p-8 shadow-lg">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -225,6 +195,16 @@ const ProductEdit = () => {
                   required
                 />
               </div>
+              <div>
+                <label className={labelClass}>Stock Quantity</label>
+                <input
+                  type="number"
+                  value={formData.stocks || ""}
+                  onChange={(e) => handleChange("stocks", e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
 
               {/* Image Upload */}
               <div>
@@ -259,7 +239,7 @@ const ProductEdit = () => {
             {/* Dynamic Options */}
             <div className="grid grid-cols-2 gap-4">
               {Object.keys(formData).filter(key =>
-                !["title", "description", "category", "price", "_id", "__v", "images"].includes(key)
+                !["title", "description", "category", "price", "stocks", "_id", "__v", "images"].includes(key)
               ).map((key) => (
                 <div key={key}>
                   <label className={labelClass}>
@@ -306,8 +286,7 @@ const ProductEdit = () => {
             )}
           </form>
         </div>
-      </main>
-    </div>
+    </AdminLayout>
   );
 };
 
