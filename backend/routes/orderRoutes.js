@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
+const Payment = require('../models/Payment');
 const Invoice = require('../models/Invoice');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
 
@@ -70,8 +71,33 @@ router.get('/my-orders', verifyAuthFlexible, async (req, res) => {
       Order.countDocuments(filter),
     ]);
 
+    // Get payment details for each order
+    const orderIds = items.map(order => order._id);
+    const payments = await Payment.find({ orderId: { $in: orderIds } });
+    const paymentMap = new Map();
+    payments.forEach(payment => {
+      paymentMap.set(payment.orderId.toString(), {
+        id: payment._id,
+        phonepeOrderId: payment.phonepeOrderId,
+        status: payment.status,
+        method: payment.method,
+        amount: payment.amount,
+        completedAt: payment.completedAt,
+        failedAt: payment.failedAt,
+        totalRefundedAmount: payment.totalRefundedAmount,
+        remainingAmount: payment.remainingAmount,
+        hasRefunds: payment.refunds && payment.refunds.length > 0
+      });
+    });
+
+    // Add payment details to orders
+    const itemsWithPayments = items.map(order => ({
+      ...order.toObject(),
+      payment: paymentMap.get(order._id.toString()) || null
+    }));
+
     const pages = Math.max(1, Math.ceil(total / limit));
-    return res.json({ items, total, page, pages });
+    return res.json({ items: itemsWithPayments, total, page, pages });
   } catch (err) {
     console.error("Error fetching user's orders:", err.message);
     res.status(500).send('Server Error');
@@ -101,7 +127,34 @@ router.get('/:id', verifyAuthFlexible, async (req, res) => {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
-    res.json(order);
+    // Get payment details for this order
+    const payment = await Payment.findOne({ orderId: order._id });
+
+    const orderResponse = {
+      ...order.toObject(),
+      payment: payment ? {
+        id: payment._id,
+        phonepeOrderId: payment.phonepeOrderId,
+        phonepeTransactionId: payment.phonepeTransactionId,
+        status: payment.status,
+        method: payment.method,
+        gateway: payment.gateway,
+        amount: payment.amount,
+        currency: payment.currency,
+        initiatedAt: payment.initiatedAt,
+        completedAt: payment.completedAt,
+        failedAt: payment.failedAt,
+        errorCode: payment.errorCode,
+        detailedErrorCode: payment.detailedErrorCode,
+        errorMessage: payment.errorMessage,
+        paymentDetails: payment.paymentDetails,
+        refunds: payment.refunds,
+        totalRefundedAmount: payment.totalRefundedAmount,
+        remainingAmount: payment.remainingAmount
+      } : null
+    };
+
+    res.json(orderResponse);
   } catch (err) {
     console.error(`Error fetching order ${req.params.id}:`, err.message);
     if (err.name === 'CastError') {

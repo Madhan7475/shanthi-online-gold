@@ -95,11 +95,7 @@ const requestLogger = (req, res, next) => {
 
   req.phonepeRequestId = requestId;
 
-  console.log(`[${requestId}] PhonePe ${req.method} ${req.path}`, {
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    body: req.method === 'POST' ? { ...req.body, amount: req.body?.amount } : undefined
-  });
+  console.log(`[${requestId}] PhonePe ${req.method} ${req.path}`);
 
   res.on('finish', () => {
     const duration = Date.now() - startTime;
@@ -128,10 +124,6 @@ router.post('/initiate-checkout',
   async (req, res) => {
     try {
       const { amount, redirectUrl, merchantOrderId } = req.body;
-      const userId = req.user?.uid || req.user?.id;
-
-      // Log checkout initiation attempt
-      console.log(`Processing checkout initiation for user: ${userId}`);
 
       // Validate redirectUrl if provided
       if (redirectUrl) {
@@ -209,9 +201,6 @@ router.post('/create-order',
       const { amount, merchantOrderId, redirectUrl } = req.body;
       const userId = req.user?.uid || req.user?.id;
 
-      // Log order creation attempt
-      console.log(`Processing order creation for user: ${userId}`);
-
       // Create order using PhonePe service
       const result = await phonePeService.createSdkOrder({
         amount,
@@ -280,9 +269,6 @@ router.get('/order-status/:orderId',
         });
       }
 
-      // Log order status check attempt
-      console.log(`Processing order status check for orderId: ${orderId}`);
-
       // Check order status using PhonePe service with enhanced mapping
       const result = await phonePeService.getEnhancedOrderStatus(orderId.trim());
 
@@ -299,11 +285,7 @@ router.get('/order-status/:orderId',
             }
             await order.save();
 
-            console.log(`Updated order ${order._id} status to Processing (payment completed)`);
-          } else if (!order) {
-            console.log(`No order found with transactionId: ${orderId}`);
-          } else {
-            console.log(`Order ${order._id} already has Processing status`);
+            console.log(`Order ${order._id} status updated to Processing`);
           }
         } catch (dbError) {
           console.error('Database order status update failed:', dbError);
