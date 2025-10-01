@@ -19,6 +19,10 @@ console.log("[config] ENV_FILE =", envFile, "DEV_ALLOW_PRODUCT_WRITE =", process
 const rawBodyParser = require('./middleware/rawBodyParser');
 app.use(rawBodyParser);
 
+// Raw body parser middleware for PhonePe webhooks (must be before express.json())
+const rawBodyParser = require('./middleware/rawBodyParser');
+app.use(rawBodyParser);
+
 // Middleware
 app.use(express.json());
 
