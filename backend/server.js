@@ -44,6 +44,9 @@ const wishlistRoutes = require("./routes/wishlistRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
+const phonepeRoutes = require("./routes/phonepeRoutes");
+app.use("/api/phonepe", phonepeRoutes);
+
 app.use("/api/payment", paymentRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
