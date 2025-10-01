@@ -309,95 +309,6 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
       return res.status(400).json({ message: 'Unable to identify user' });
     }
 
-    const { customer, paymentMethod = 'phonepe', transactionId } = req.body;
-
-    // Validate required fields
-    if (!customer || !customer.name || !customer.deliveryAddress) {
-      return res.status(400).json({
-        success: false,
-        message: 'Customer information is required'
-      });
-    }
-
-    if (!transactionId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Transaction ID is required'
-      });
-    }
-
-    const cart = await Cart.findOne({ userId });
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cart is empty'
-      });
-    }
-
-    // Create order from cart items
-    const orderItems = cart.items.map(item => ({
-      productId: item.productId,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-      quantity: item.quantity,
-      category: item.category,
-      description: item.description,
-      weight: item.weight,
-      purity: item.purity,
-    }));
-
-    const newOrder = new Order({
-      userId: userId,
-      customerName: customer.name,
-      items: orderItems,
-      total: cart.totalAmount,
-      status: 'Pending',
-      deliveryAddress: customer.deliveryAddress,
-      paymentMethod: paymentMethod,
-      transactionId: transactionId,
-    });
-
-    await newOrder.save();
-
-    // Create invoice
-    const newInvoice = new Invoice({
-      customerName: customer.name,
-      amount: cart.totalAmount,
-      status: 'Pending',
-      orderId: newOrder._id,
-    });
-
-    await newInvoice.save();
-
-    // Clear cart after successful order creation
-    cart.items = [];
-    await cart.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Order placed successfully!',
-      order: newOrder,
-      invoice: newInvoice
-    });
-
-  } catch (error) {
-    console.error('Error during checkout:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error during checkout',
-      error: error.message
-    });
-  }
-});
-
-router.post('/checkout-mobile', verifyAuthFlexible, async (req, res) => {
-  try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(400).json({ message: 'Unable to identify user' });
-    }
-
     const { customer, paymentMethod = 'phonepe' } = req.body;
 
     // Validate required fields
@@ -437,7 +348,7 @@ router.post('/checkout-mobile', verifyAuthFlexible, async (req, res) => {
       status: 'Pending',
       deliveryAddress: customer.deliveryAddress,
       paymentMethod: paymentMethod,
-      transactionId: 'MOBILE_' + Date.now(), // Placeholder, to be updated after payment confirmation
+      transactionId: 'TEMP_' + Date.now(), // Placeholder, to be updated after payment confirmation
     });
 
     await newOrder.save();

@@ -4,8 +4,9 @@ const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 
-// Load .env
-dotenv.config();
+// Load environment-specific .env file
+const envFile = process.env.ENV_FILE || '.env';
+dotenv.config({ path: envFile });
 
 // Connect to MongoDB
 const connectDB = require("./config/db");

@@ -8,6 +8,7 @@ const router = express.Router();
  * PhonePe Payment Routes
  * 
  * Available endpoints:
+ * - POST /api/phonepe/initiate-checkout - Initiate PhonePe checkout flow
  * - POST /api/phonepe/create-order - Create a new PhonePe SDK order
  * - GET /api/phonepe/order-status/:orderId - Check single order status
  */
@@ -112,7 +113,86 @@ const requestLogger = (req, res, next) => {
 const phonePeService = require('../services/phonePeService');
 
 /**
- * POST /api/payments/create-order
+ * POST /api/phonepe/initiate-checkout
+ * Initiate PhonePe checkout flow
+ * 
+ * @body {number} amount - Amount in rupees (required)
+ * @body {string} redirectUrl - URL where user will be redirected after payment (required)  
+ * @body {string} [merchantOrderId] - Optional merchant order ID
+ */
+router.post('/initiate-checkout',
+  requestLogger,
+  verifyAuthFlexible,
+  rateLimiter,
+  validateCreateOrderInput, // Reuse same validation as create-order
+  async (req, res) => {
+    try {
+      const { amount, redirectUrl, merchantOrderId } = req.body;
+      const userId = req.user?.uid || req.user?.id;
+
+      // Log checkout initiation attempt
+      console.log(`Processing checkout initiation for user: ${userId}`);
+
+      // Validate redirectUrl if provided
+      if (redirectUrl) {
+        try {
+          new URL(redirectUrl);
+        } catch (error) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              message: 'Invalid redirectUrl format',
+              code: 'INVALID_REDIRECT_URL'
+            }
+          });
+        }
+      }
+      
+      const result = await phonePeService.initiatePayment({
+        amount,
+        merchantOrderId,
+        redirectUrl
+      });
+
+      // If merchantOrderId is provided, find and update the existing order
+      if (merchantOrderId) {
+        try {
+          const order = await Order.findOne({ _id: merchantOrderId });
+          
+          if (order) {
+            // Update the transactionId with PhonePe orderId
+            order.transactionId = result.orderId;
+            await order.save();
+            
+            console.log(`Updated order ${order._id} with transactionId: ${result.orderId}`);
+          } else {
+            console.log(`No order found with merchantOrderId: ${merchantOrderId}`);
+          }
+        } catch (dbError) {
+          console.error('Database update failed:', dbError);
+          // Continue with PhonePe response even if database update fails
+        }
+      }
+      
+      res.status(201).json(result);
+
+    } catch (error) {
+      console.error('Checkout initiation controller error:', error);
+      
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Internal server error during checkout initiation',
+          code: 'INTERNAL_ERROR',
+          errMessage: error?.message
+        }
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/phonepe/create-order
  * Create a PhonePe SDK order
  * 
  * @body {number} amount - Amount in rupees (required)

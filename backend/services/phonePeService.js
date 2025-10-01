@@ -1,4 +1,4 @@
-const { CreateSdkOrderRequest, CheckOrderStatusRequest } = require('pg-sdk-node');
+const { CreateSdkOrderRequest, StandardCheckoutPayRequest } = require('pg-sdk-node');
 const { randomUUID } = require('crypto');
 const { getPhonePeClient, getPhonePeConfig } = require('../config/phonepe.js');
 
@@ -94,6 +94,56 @@ class PhonePeService {
     const timestamp = Date.now();
     const uuid = randomUUID().substring(0, 8);
     return `ORDER_${timestamp}_${uuid}`;
+  }
+
+  /**
+   * Create SDK Order using PhonePe SDK
+   * @param {Object} orderData - Order creation data
+   * @param {number} orderData.amount - Amount in rupees
+   * @param {string} [orderData.merchantOrderId] - Optional merchant order ID
+   * @param {string} [orderData.redirectUrl] - Optional redirect URL
+   * @returns {Promise<Object>} Order creation response
+   */
+  async initiatePayment(orderData) {
+    try {
+      // Validate input
+      const validation = this.validateOrderRequest(orderData);
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+      }
+
+      // Initialize client
+      this._initializeClient();
+
+      // Prepare order data
+      const merchantOrderId = orderData.merchantOrderId || this.generateMerchantOrderId();
+      const amountInPaisa = Math.round(orderData.amount * 100); // Convert to paisa
+      const redirectUrl = orderData.redirectUrl || this.config.redirectUrl;
+
+      console.log(`Creating Pay order: ${merchantOrderId} for ₹${orderData.amount}`);
+
+      // Create SDK order request
+      const request = StandardCheckoutPayRequest.builder()
+        .merchantOrderId(merchantOrderId)
+        .amount(amountInPaisa)
+        .redirectUrl(redirectUrl)
+        .build();
+
+      // Make API call with timeout
+      const response = await this.client.pay(request);
+
+      console.log(`PhonePe Pay order created successfully: ${response.orderId}`);
+      return {
+        ...response,
+        merchantOrderId,
+        amountInRupees: orderData.amount,
+        createdAt: new Date().toISOString()
+      };
+
+    } catch (error) {
+      console.error('PhonePe Pay order creation failed:', error.message);
+      throw new Error(`PhonePe Pay order creation failed: ${error.message}`);
+    }
   }
 
   /**
@@ -235,28 +285,6 @@ class PhonePeService {
       };
     } catch (error) {
       throw error;
-    }
-  }
-
-  /**
-   * Get service health status
-   * @returns {Object} Health status
-   */
-  getHealthStatus() {
-    try {
-      this._initializeClient();
-      return {
-        status: 'healthy',
-        environment: this.config.environment,
-        clientVersion: this.config.clientVersion,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return {
-        status: 'unhealthy',
-        error: error.message,
-        timestamp: new Date().toISOString()
-      };
     }
   }
 }
