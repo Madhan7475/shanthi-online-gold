@@ -150,7 +150,7 @@ class PhonePeService {
         }
       }
 
-      console.log(`PhonePe Pay order created successfully: ${response.orderId}`);
+      console.log(`PhonePe Pay order created: ${response.orderId} for ₹${orderData.amount}`);
       return {
         ...response,
         merchantOrderId,
@@ -232,7 +232,7 @@ class PhonePeService {
         }
       }
 
-      console.log(`PhonePe SDK order created successfully: ${response.orderId}`);
+      console.log(`PhonePe SDK order created: ${response.orderId} for ₹${orderData.amount}`);
       return {
         ...response,
         merchantOrderId,
@@ -277,12 +277,11 @@ class PhonePeService {
       this._initializeClient();
 
       const cleanOrderId = orderId.trim();
-      console.log(`Checking PhonePe order status: ${cleanOrderId}`);
 
       // Make API call with timeout
       const orderStatus = await this.client.getOrderStatus(cleanOrderId);
 
-      console.log(`PhonePe order status retrieved: ${cleanOrderId} - Status: ${orderStatus.state} ${orderStatus}`);
+      console.log(`PhonePe order status: ${cleanOrderId} - ${orderStatus.state}`);
       return orderStatus;
 
     } catch (error) {
