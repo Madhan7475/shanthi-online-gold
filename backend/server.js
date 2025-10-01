@@ -14,6 +14,10 @@ connectDB();
 
 const app = express();
 
+// Raw body parser middleware for PhonePe webhooks (must be before express.json())
+const rawBodyParser = require('./middleware/rawBodyParser');
+app.use(rawBodyParser);
+
 // Middleware
 app.use(express.json());
 
@@ -62,13 +66,15 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-
 const phonepeRoutes = require("./routes/phonepeRoutes");
 const marketRoutes = require("./routes/marketRoutes");
+const phonepeWebhookRoutes = require("./routes/phonepeWebhookRoutes");
+const paymentDetailRoutes = require("./routes/paymentDetailRoutes");
 app.use("/api/phonepe", phonepeRoutes);
+app.use("/api/phonepe", phonepeWebhookRoutes);
 app.use("/api/market", marketRoutes);
-
 app.use("/api/payment", paymentRoutes);
+app.use("/api/payments", paymentDetailRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
