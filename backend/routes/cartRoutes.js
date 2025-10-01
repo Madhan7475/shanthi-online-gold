@@ -309,20 +309,13 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
       return res.status(400).json({ message: 'Unable to identify user' });
     }
 
-    const { customer, paymentMethod = 'phonepe', transactionId } = req.body;
+    const { customer, paymentMethod = 'phonepe' } = req.body;
 
     // Validate required fields
     if (!customer || !customer.name || !customer.deliveryAddress) {
       return res.status(400).json({
         success: false,
         message: 'Customer information is required'
-      });
-    }
-
-    if (!transactionId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Transaction ID is required'
       });
     }
 
@@ -355,7 +348,7 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
       status: 'Pending',
       deliveryAddress: customer.deliveryAddress,
       paymentMethod: paymentMethod,
-      transactionId: transactionId,
+      transactionId: 'TEMP_' + Date.now(), // Placeholder, to be updated after payment confirmation
     });
 
     await newOrder.save();

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../utils/axiosInstance";
+import { toast } from "react-toastify";
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -13,15 +14,11 @@ export default function PaymentSuccess() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        if (!orderId) return;
-        const res = await axios.get(`/api/orders/${orderId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-          },
-        });
-        setOrder(res.data);
-      } catch (err) {
-        console.error("Failed to fetch order:", err);
+        const { data } = await axiosInstance.get(`/orders/${orderId}`);
+        setOrder(data);
+      } catch (error) {
+        console.error("Failed to fetch order details:", error);
+        toast.error("Could not load order details.");
       } finally {
         setLoading(false);
       }
@@ -96,7 +93,7 @@ export default function PaymentSuccess() {
         </div>
 
         <button
-          onClick={() => navigate("/orders")}
+          onClick={() => navigate("/my-orders")}
           className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700"
         >
           View My Orders
