@@ -5,6 +5,7 @@ import { FaHeart, FaShoppingCart, FaFilter, FaTimes } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useRequireAuth } from "../../utils/useRequireAuth";
+import Pagination from "../../components/Common/Pagination";
 
 const FILTER_DATA = {
   Price: ["< 25,000", "25,000 - 50,000", "50,000 - 1,00,000", "1,00,000+"],
@@ -80,13 +81,12 @@ const GoldPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await axiosInstance.get("/products");
-        const goldItems = data.filter((p) =>
-          p.category?.toLowerCase()?.includes("gold")
-        );
-        setProducts(goldItems);
+        const { data } = await axiosInstance.get("/products?category=gold");
+        const productsData = data.items || data;
+        setProducts(Array.isArray(productsData) ? productsData : []);
       } catch (err) {
         console.error("❌ Failed to load gold products:", err);
+        setProducts([]);
       }
     };
     fetchProducts();
@@ -106,6 +106,11 @@ const GoldPage = () => {
   const handleSaveItem = (product, e) => {
     e.stopPropagation();
     runWithAuth(() => saveForItemLater(product));
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (

@@ -43,13 +43,13 @@ const SilverPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
-        const silverItems = res.data.filter(
-          (p) => p.category?.toLowerCase() === "silver"
-        );
-        setProducts(silverItems);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products?category=silver`);
+        // Handle both paginated and plain array responses
+        const productsData = res.data.items || res.data;
+        setProducts(Array.isArray(productsData) ? productsData : []);
       } catch (err) {
         console.error("❌ Failed to load silver products:", err);
+        setProducts([]);
       }
     };
     fetchProducts();
@@ -192,6 +192,12 @@ const SilverPage = () => {
             </div>
           ))}
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       </div>
     </Layout>
   );

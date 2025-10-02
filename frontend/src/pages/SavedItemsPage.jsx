@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useRequireAuth } from "../utils/useRequireAuth";
+import Pagination from "../components/Common/Pagination";
 
 const SavedItemsPage = () => {
     const { savedItems, moveToCart, removeFromSaved, fetchWishlist, wishlistLoading, cartLoading } = useCart();

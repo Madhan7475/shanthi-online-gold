@@ -63,24 +63,34 @@ const DailyWearPage = () => {
   const [products, setProducts] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [expandedFilters, setExpandedFilters] = useState({});
-  const { addToCart, saveForItemLater } = useCart(); // ✅ Get saveForItemLater
+  const [loading, setLoading] = useState(false);
+  const { addToCart, saveForItemLater } = useCart();
   const navigate = useNavigate();
-  const { runWithAuth } = useRequireAuth(); // ✅ Get the auth wrapper
+  const { runWithAuth } = useRequireAuth();
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
-        const dailyWearItems = res.data.filter(
-          (p) => p.category?.toLowerCase() === "daily wear"
-        );
-        setProducts(dailyWearItems);
-      } catch (err) {
-        console.error("❌ Failed to load Daily Wear items:", err);
-      }
-    };
     fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products?category=Daily Wear&page=${currentPage}&limit=20`);
+      const fetchedProducts = res.data.items || res.data;
+      setProducts(Array.isArray(fetchedProducts) ? fetchedProducts : []);
+      setTotalPages(res.data.totalPages || 1);
+    } catch (err) {
+      console.error("❌ Failed to load Daily Wear items:", err);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const toggleFilter = (key) => {
     setExpandedFilters((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -176,8 +186,18 @@ const DailyWearPage = () => {
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {products.map((product) => (
+        {loading ? (
+          <div className="text-center py-20">
+            <p className="text-gray-500">Loading products...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            {products.length === 0 ? (
+              <div className="col-span-full text-center py-20">
+                <p className="text-gray-500">No products found.</p>
+              </div>
+            ) : (
+              products.map((product) => (
             <div
               key={product._id}
               className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
@@ -218,8 +238,10 @@ const DailyWearPage = () => {
                 <FaShoppingCart />
               </button>
             </div>
-          ))}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </Layout>
   );

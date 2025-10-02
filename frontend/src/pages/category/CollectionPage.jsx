@@ -17,18 +17,18 @@ const CollectionPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        const params = new URLSearchParams();
+        params.append('category', slug);
+
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/api/products`
+          `${import.meta.env.VITE_API_BASE_URL}/api/products?${params.toString()}`
         );
 
-        // ✅ filter by slug category
-        const filtered = res.data.filter(
-          (p) => p.category?.toLowerCase() === slug.toLowerCase()
-        );
-
-        setProducts(filtered);
+        const fetchedProducts = res.data.items || res.data;
+        setProducts(Array.isArray(fetchedProducts) ? fetchedProducts : []);
       } catch (err) {
         console.error("❌ Error fetching products:", err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }

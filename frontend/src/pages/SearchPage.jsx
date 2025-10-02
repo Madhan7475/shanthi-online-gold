@@ -1,63 +1,150 @@
-// src/pages/SearchPage.jsx
-import React, { useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { FaHeart, FaShoppingCart } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
-
-// Dummy Product Data (Replace with your actual API or product list)
-const PRODUCTS = [
-  { id: 1, name: "Gold Necklace", price: 12000, image: "/images/gold-necklace.jpg" },
-  { id: 2, name: "Diamond Ring", price: 25000, image: "/images/diamond-ring.jpg" },
-  { id: 3, name: "Silver Bracelet", price: 5000, image: "/images/silver-bracelet.jpg" },
-  { id: 4, name: "Gold Bangles", price: 15000, image: "/images/gold-bangles.jpg" },
-];
+import { useRequireAuth } from "../utils/useRequireAuth";
+import Pagination from "../components/Common/Pagination";
 
 const SearchPage = () => {
-  const { addToCart } = useCart();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [addingMap, setAddingMap] = useState({});
+  const { addToCart, saveForItemLater, cartItems } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { runWithAuth } = useRequireAuth();
 
   // Get search query from URL
-  const query = useMemo(() => new URLSearchParams(location.search).get("query") || "", [location]);
+  const query = new URLSearchParams(location.search).get("query") || "";
 
-  // Filter products based on search query
-  const filteredProducts = useMemo(() => {
-    if (!query.trim()) return [];
-    return PRODUCTS.filter((p) =>
-      p.name.toLowerCase().includes(query.toLowerCase())
-    );
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (!query.trim()) {
+        setProducts([]);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/products?q=${encodeURIComponent(query)}`
+        );
+        // Handle both paginated and plain array responses
+        const productsData = res.data.items || res.data;
+        setProducts(Array.isArray(productsData) ? productsData : []);
+      } catch (err) {
+        console.error("❌ Failed to search products:", err);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSearchResults();
   }, [query]);
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h2 className="text-2xl font-bold mb-6 text-[#400F45]">
-        Search Results for: <span className="text-black">"{query}"</span>
-      </h2>
+  const handleProductClick = (id) => navigate(`/product/${id}`);
+  const isInCart = (p) => cartItems?.some((ci) => String(ci.productId) === String(p._id));
 
-      {filteredProducts.length === 0 ? (
-        <p className="text-gray-500 text-lg">No products found for "{query}".</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="border rounded-lg p-4 shadow hover:shadow-lg transition"
-            >
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-md mb-3"
-              />
-              <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
-              <p className="text-[#400F45] font-bold mt-1">₹{product.price.toLocaleString()}</p>
-              <button
-                onClick={() => addToCart(product)}
-                className="mt-3 w-full bg-[#400F45] text-white py-2 rounded hover:bg-[#2e0a31] transition"
+  const handleAddToCart = async (product, e) => {
+    e.stopPropagation();
+    if (isInCart(product)) return;
+
+    setAddingMap((m) => ({ ...m, [product._id]: true }));
+    await runWithAuth(async () => {
+      try {
+        await addToCart(product);
+      } finally {
+        setAddingMap((m) => {
+          const { [product._id]: _, ...rest } = m;
+          return rest;
+        });
+      }
+    });
+  };
+
+  const handleSaveItem = (product, e) => {
+    e.stopPropagation();
+    runWithAuth(() => saveForItemLater(product));
+  };
+
+  return (
+    <div className="min-h-screen bg-[#fffdf6]">
+      <div className="px-6 sm:px-10 md:px-16 lg:px-20 max-w-7xl mx-auto py-8">
+        <h1 className="text-2xl font-bold mb-6 text-[#400F45]">
+          Search Results for: <span className="text-gray-800">"{query}"</span>
+        </h1>
+
+        {loading ? (
+          <div className="text-center py-20">
+            <p className="text-gray-500">Searching products...</p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-gray-500 text-lg">
+              {query.trim() ? `No products found for "${query}".` : "Please enter a search term."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <div
+                key={product._id}
+                className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+                onClick={() => handleProductClick(product._id)}
               >
-                Add to Cart
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+                <button
+                  className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
+                  onClick={(e) => handleSaveItem(product, e)}
+                >
+                  <FaHeart />
+                </button>
+                <div className="w-full h-72 bg-white">
+                  <img
+                    src={
+                      product.images?.[0]
+                        ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${product.images[0]}`
+                        : "/placeholder.png"
+                    }
+                    alt={product.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-4">
+                  <h2 className="text-sm font-medium text-gray-800 truncate">
+                    {product.title}
+                  </h2>
+                  <p className="text-sm text-gray-600 mb-1 truncate">
+                    {product.category}
+                  </p>
+                  <p className="text-base font-semibold text-[#1a1a1a]">
+                    ₹{product.price.toLocaleString()}
+                  </p>
+                </div>
+                <button
+                  className={`absolute bottom-2 right-2 ${
+                    isInCart(product)
+                      ? "text-green-600"
+                      : "text-gray-500 hover:text-[#c29d5f]"
+                  } ${addingMap[product._id] ? "opacity-50 cursor-not-allowed" : ""}`}
+                  onClick={(e) => handleAddToCart(product, e)}
+                  disabled={addingMap[product._id] || isInCart(product)}
+                  title={
+                    isInCart(product)
+                      ? "In Cart"
+                      : addingMap[product._id]
+                      ? "Adding..."
+                      : "Add to Cart"
+                  }
+                >
+                  <FaShoppingCart />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

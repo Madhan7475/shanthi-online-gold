@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../../components/Common/Layout";
+import Pagination from "../../components/Common/Pagination";
 import { FaHeart, FaShoppingCart, FaFilter, FaTimes } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
@@ -21,26 +22,87 @@ const FILTER_DATA = {
 };
 
 const AllJewellery = () => {
-  const [allProducts, setAllProducts] = useState([]); // Store all products fetched
+  const [allProducts, setAllProducts] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [expandedFilters, setExpandedFilters] = useState({});
-  const [selectedFilters, setSelectedFilters] = useState({}); // ✅ State for selected filters
+  const [selectedFilters, setSelectedFilters] = useState({});
   const [addingMap, setAddingMap] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const { addToCart, saveForItemLater, cartItems } = useCart();
   const navigate = useNavigate();
   const { runWithAuth } = useRequireAuth();
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
-        setAllProducts(res.data);
-      } catch (err) {
-        console.error("❌ Failed to load products:", err);
-      }
-    };
+    setCurrentPage(1);
     fetchProducts();
-  }, []);
+  }, [selectedFilters]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage]);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      
+      // Convert selected filters to API params
+      Object.entries(selectedFilters).forEach(([category, options]) => {
+        if (options.length === 0) return;
+
+        if (category === "Price") {
+          // Handle price ranges
+          const priceRanges = options.map(opt => {
+            if (opt === "< 25,000") return { max: 25000 };
+            if (opt === "25,000 - 50,000") return { min: 25000, max: 50000 };
+            if (opt === "50,000 - 1,00,000") return { min: 50000, max: 100000 };
+            if (opt === "1,00,000+") return { min: 100000 };
+            return null;
+          }).filter(Boolean);
+
+          // Use the widest range for now (min of all mins, max of all maxes)
+          if (priceRanges.length > 0) {
+            const allMins = priceRanges.filter(r => r.min).map(r => r.min);
+            const allMaxs = priceRanges.filter(r => r.max).map(r => r.max);
+            if (allMins.length > 0) params.append('priceMin', Math.min(...allMins));
+            if (allMaxs.length > 0) params.append('priceMax', Math.max(...allMaxs));
+          }
+        } else {
+          // Map category names to backend field names
+          const fieldMap = {
+            "Jewellery Type": "jewelleryType",
+            "Product": "product",
+            "Gender": "gender",
+            "Purity": "purity",
+            "Occasion": "occasion",
+            "Metal": "metal",
+            "Diamond Clarity": "diamondClarity",
+            "Collection": "collection",
+            "Community": "community",
+            "Type": "type"
+          };
+          
+          const fieldName = fieldMap[category];
+          if (fieldName && options.length > 0) {
+            params.append(fieldName, options.join(','));
+          }
+        }
+      });
+
+      const url = `${import.meta.env.VITE_API_BASE_URL}/api/products${params.toString() ? '?' + params.toString() : ''}`;
+      const res = await axios.get(url);
+      
+      // Handle both paginated and plain array responses
+      const products = res.data.items || res.data;
+      setAllProducts(products);
+    } catch (err) {
+      console.error("❌ Failed to load products:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFilterChange = (category, option) => {
     setSelectedFilters(prev => {
@@ -57,34 +119,6 @@ const AllJewellery = () => {
       return { ...prev, [category]: newCategoryFilters };
     });
   };
-
-  const filteredProducts = useMemo(() => {
-    if (Object.keys(selectedFilters).length === 0) {
-      return allProducts;
-    }
-
-    return allProducts.filter(product => {
-      return Object.entries(selectedFilters).every(([category, options]) => {
-        if (options.length === 0) return true;
-
-        const key = category.replace(/\s+/g, ''); // e.g., "Jewellery Type" -> "JewelleryType"
-        const productValue = product[key.charAt(0).toLowerCase() + key.slice(1)];
-
-        if (category === "Price") {
-          return options.some(option => {
-            if (option === "< 25,000") return product.price < 25000;
-            if (option === "25,000 - 50,000") return product.price >= 25000 && product.price <= 50000;
-            if (option === "50,000 - 1,00,000") return product.price > 50000 && product.price <= 100000;
-            if (option === "1,00,000+") return product.price > 100000;
-            return false;
-          });
-        }
-
-        return options.includes(productValue);
-      });
-    });
-  }, [allProducts, selectedFilters]);
-
 
   const toggleFilter = (key) => {
     setExpandedFilters((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -176,45 +210,56 @@ const AllJewellery = () => {
           </div>
         </div>
 
-        {/* ✅ Product Grid now uses filteredProducts */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 pb-10">
-          {filteredProducts.map((product) => (
-            <div
-              key={product._id}
-              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
-              onClick={() => handleProductClick(product._id)}
-            >
-              <button
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
-                onClick={(e) => handleSaveItem(product, e)}
-              >
-                <FaHeart />
-              </button>
-              <div className="w-full h-72 bg-white">
-                <img
-                  src={product.images?.[0] ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${product.images[0]}` : "/placeholder.png"}
-                  alt={product.title}
-                  className="w-full h-full object-cover"
-                />
+        {loading ? (
+          <div className="text-center py-20">
+            <p className="text-gray-500">Loading products...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 pb-10">
+            {allProducts.length === 0 ? (
+              <div className="col-span-full text-center py-20">
+                <p className="text-gray-500">No products found matching your filters.</p>
               </div>
-              <div className="p-4">
-                <h2 className="text-sm font-medium text-gray-800 truncate">{product.title}</h2>
-                <p className="text-sm text-gray-600 mb-1 truncate">{product.category}</p>
-                <p className="text-base font-semibold text-[#1a1a1a]">
-                  ₹{product.price.toLocaleString()}
-                </p>
-              </div>
-              <button
-                className={`absolute bottom-2 right-2 ${isInCart(product) ? "text-green-600" : "text-gray-500 hover:text-[#c29d5f]"} ${addingMap[product._id] ? "opacity-50 cursor-not-allowed" : ""}`}
-                onClick={(e) => handleAddToCart(product, e)}
-                disabled={addingMap[product._id] || isInCart(product)}
-                title={isInCart(product) ? "In Cart" : (addingMap[product._id] ? "Adding..." : "Add to Cart")}
-              >
-                <FaShoppingCart />
-              </button>
-            </div>
-          ))}
-        </div>
+            ) : (
+              allProducts.map((product) => (
+                <div
+                  key={product._id}
+                  className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+                  onClick={() => handleProductClick(product._id)}
+                >
+                  <button
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
+                    onClick={(e) => handleSaveItem(product, e)}
+                  >
+                    <FaHeart />
+                  </button>
+                  <div className="w-full h-72 bg-white">
+                    <img
+                      src={product.images?.[0] ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${product.images[0]}` : "/placeholder.png"}
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h2 className="text-sm font-medium text-gray-800 truncate">{product.title}</h2>
+                    <p className="text-sm text-gray-600 mb-1 truncate">{product.category}</p>
+                    <p className="text-base font-semibold text-[#1a1a1a]">
+                      ₹{product.price.toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    className={`absolute bottom-2 right-2 ${isInCart(product) ? "text-green-600" : "text-gray-500 hover:text-[#c29d5f]"} ${addingMap[product._id] ? "opacity-50 cursor-not-allowed" : ""}`}
+                    onClick={(e) => handleAddToCart(product, e)}
+                    disabled={addingMap[product._id] || isInCart(product)}
+                    title={isInCart(product) ? "In Cart" : (addingMap[product._id] ? "Adding..." : "Add to Cart")}
+                  >
+                    <FaShoppingCart />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </Layout>
   );

@@ -176,117 +176,6 @@ const OrderDetailPage = () => {
     );
   }
 
-  return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-[#fffdf6]">
-      <Link
-        to="/my-orders"
-        className="text-sm text-[#9e886e] underline mb-4 inline-block hover:text-[#b19874]"
-      >
-        ← Back to My Orders
-      </Link>
-      <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-[#d4af37]">
-        Order Details
-      </h1>
-
-      <div className="bg-white p-6 rounded-xl border border-[#f4e0b9] shadow-md">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#f4e0b9] pb-4 mb-4">
-          <div>
-            <p className="text-sm text-gray-500">Order placed on</p>
-            {/* ✅ FIX: Changed to toLocaleString() to include time */}
-            <p className="font-semibold text-gray-800">
-              {new Date(order.date).toLocaleString()}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Order ID</p>
-            <p className="font-semibold text-gray-800 font-mono">{order._id}</p>
-            {order.transactionId && (
-              <>
-                <p className="text-sm text-gray-500 mt-2">Transaction ID</p>
-                <p className="font-semibold text-gray-800 font-mono text-sm">{order.transactionId}</p>
-              </>
-            )}
-          </div>
-          <div
-            className={`text-sm font-bold px-3 py-1 rounded-full mt-2 sm:mt-0 ${getStatusColor(
-              order.status
-            )}`}
-          >
-            {order.status}
-          </div>
-        </div>
-
-        {/* Address and Payment */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-          <div>
-            <h3 className="font-semibold text-[#3e2f1c] mb-2">
-              Shipping Address
-            </h3>
-            <p className="text-sm text-gray-600">{order.customerName}</p>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap">
-              {order.deliveryAddress}
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold text-[#3e2f1c] mb-2">
-              Payment Method
-            </h3>
-            <p className="text-sm text-gray-600 capitalize">
-              {order.paymentMethod.replace("cod", "Cash on Delivery")}
-            </p>
-            
-            {/* Payment Status for PhonePe orders */}
-            {order.paymentMethod === 'phonepe' && (
-              <div className="mt-3">
-                <h4 className="font-semibold text-[#3e2f1c] text-sm mb-1">
-                  Payment Status
-                </h4>
-                {paymentStatusLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#d4af37]"></div>
-                    <span className="text-sm text-gray-600">Checking payment status...</span>
-                    {retryCount > 0 && (
-                      <span className="text-xs text-gray-500">
-                        (Attempt {retryCount}/3)
-                      </span>
-                    )}
-                  </div>
-                ) : paymentStatus ? (
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        paymentStatus.state === 'COMPLETED'
-                          ? 'bg-green-100 text-green-800'
-                          : paymentStatus.state === 'FAILED'
-                          ? 'bg-red-100 text-red-800'
-                          : paymentStatus.state === 'PENDING'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {paymentStatus.mappedStatus?.userFriendly || paymentStatus.state}
-                    </span>
-                    {paymentStatus.state === 'PENDING' && retryIntervalRef.current && (
-                      <span className="text-xs text-gray-500">
-                        Checking every 30s...
-                      </span>
-                    )}
-                    <button
-                      onClick={manualCheckPaymentStatus}
-                      disabled={paymentStatusLoading}
-                      className="text-xs text-[#d4af37] hover:text-[#b8941f] underline disabled:opacity-50"
-                    >
-                      Refresh Status
-                    </button>
-                  </div>
-                ) : (
-                  <span className="text-sm text-gray-600">Payment status not available</span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Items List */}
         <div className="border-t border-[#f4e0b9] pt-4">
@@ -309,7 +198,7 @@ const OrderDetailPage = () => {
               </div>
               <p className="font-semibold">
                 ₹{(item.price * item.quantity).toLocaleString()}
-              </p>
+                
             </div>
           ))}
           <div className="text-right mt-4">

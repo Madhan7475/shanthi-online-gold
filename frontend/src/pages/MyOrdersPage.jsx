@@ -4,6 +4,7 @@ import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Common/Layout";
 import { toast } from "react-toastify";
+import Pagination from "../components/Common/Pagination";
 
 const MyOrdersPage = () => {
     const [orders, setOrders] = useState([]);
@@ -99,16 +100,25 @@ const MyOrdersPage = () => {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="border-t border-[#f4e0b9] pt-3 mt-3 flex flex-col sm:flex-row justify-between items-center">
-                                    <p className="text-lg font-bold text-[#c29d5f]">Total: ₹{order.total.toLocaleString()}</p>
-                                    {/* {order.status === 'Pending' && (
-                                        <button
-                                            onClick={e => handleCancelOrder(e, order._id)}
-                                            className="mt-4 sm:mt-0 w-full sm:w-auto bg-red-100 text-red-700 px-4 py-2 rounded-md hover:bg-red-200 transition text-sm font-semibold"
-                                        >
-                                            Cancel Order
-                                        </button>
-                                    )} */}
+                                <div className="border-t border-[#f4e0b9] pt-3 mt-3">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+                                        <div className="mb-2 sm:mb-0">
+                                            <p className="text-lg font-bold text-[#c29d5f]">Total: ₹{order.total.toLocaleString()}</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Payment: {order.paymentMethod === 'phonepe' ? 'PhonePe' : order.paymentMethod}
+                                                {order.transactionId && <span className="ml-2 font-mono">#{order.transactionId.slice(-8)}</span>}
+                                            </p>
+                                        </div>
+                                        {order.status === 'Pending' && (
+                                            <button
+                                                onClick={e => handleCancelOrder(e, order._id)}
+                                                className="mt-2 sm:mt-0 w-full sm:w-auto bg-red-100 text-red-700 px-4 py-2 rounded-md hover:bg-red-200 transition text-sm font-semibold"
+                                            >
+                                                Cancel Order
+                                            </button>
+                                        )}
+                                    </div>
+
                                 </div>
                             </div>
                         </Link>
