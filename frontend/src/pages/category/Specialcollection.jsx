@@ -36,25 +36,33 @@ const SpecialCollectionPage = () => {
   const [products, setProducts] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [expandedFilters, setExpandedFilters] = useState({});
-  const { addToCart, saveForItemLater } = useCart(); // ✅ Get saveForItemLater
+  const [loading, setLoading] = useState(false);
+  const { addToCart, saveForItemLater } = useCart();
   const navigate = useNavigate();
-  const { runWithAuth } = useRequireAuth(); // ✅ Get the auth wrapper
+  const { runWithAuth } = useRequireAuth();
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
-        const filtered = res.data.filter(
-          (p) => p.category?.toLowerCase() === "special collection"
-        );
-        setProducts(filtered);
-      } catch (err) {
-        console.error("❌ Failed to load Special Collection products:", err);
-      }
-    };
-
     fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      params.append('category', 'Special Collection');
+      
+      const url = `${import.meta.env.VITE_API_BASE_URL}/api/products?${params.toString()}`;
+      const res = await axios.get(url);
+      
+      const fetchedProducts = res.data.items || res.data;
+      setProducts(Array.isArray(fetchedProducts) ? fetchedProducts : []);
+    } catch (err) {
+      console.error("❌ Failed to load Special Collection products:", err);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleFilter = (key) => {
     setExpandedFilters((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -149,50 +157,68 @@ const SpecialCollectionPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {products.map((product) => (
-            <div
-              key={product._id}
-              className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
-              onClick={() => handleProductClick(product._id)}
-            >
-              <button
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
-                onClick={(e) => handleSaveItem(product, e)}
-              >
-                <FaHeart />
-              </button>
-              <div className="w-full h-72 bg-white">
-                <img
-                  src={
-                    product.images?.[0]
-                      ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${product.images[0]}`
-                      : "/placeholder.png"
-                  }
-                  alt={product.title}
-                  className="w-full h-full object-cover"
-                />
+        {loading ? (
+          <div className="text-center py-20">
+            <p className="text-gray-500">Loading products...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            {products.length === 0 ? (
+              <div className="col-span-full text-center py-20">
+                <p className="text-gray-500">No products found in Special Collection.</p>
               </div>
-              <div className="p-4">
-                <h2 className="text-sm font-medium text-gray-800 truncate">
-                  {product.title}
-                </h2>
-                <p className="text-sm text-gray-600 mb-1 truncate">
-                  {product.category}
-                </p>
-                <p className="text-base font-semibold text-[#1a1a1a]">
-                  ₹{product.price ? product.price.toLocaleString() : 'N/A'}
-                </p>
-              </div>
-              <button
-                className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f]"
-                onClick={(e) => handleAddToCart(product, e)}
-              >
-                <FaShoppingCart />
-              </button>
-            </div>
-          ))}
-        </div>
+            ) : (
+              products.map((product) => (
+                <div
+                  key={product._id}
+                  className="relative border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+                  onClick={() => handleProductClick(product._id)}
+                >
+                  <button
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10"
+                    onClick={(e) => handleSaveItem(product, e)}
+                  >
+                    <FaHeart />
+                  </button>
+                  <div className="w-full h-72 bg-white">
+                    <img
+                      src={
+                        product.images?.[0]
+                          ? `${import.meta.env.VITE_API_BASE_URL}/uploads/${product.images[0]}`
+                          : "/placeholder.png"
+                      }
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h2 className="text-sm font-medium text-gray-800 truncate">
+                      {product.title}
+                    </h2>
+                    <p className="text-sm text-gray-600 mb-1 truncate">
+                      {product.category}
+                    </p>
+                    <p className="text-base font-semibold text-[#1a1a1a]">
+                      ₹{product.price ? product.price.toLocaleString() : 'N/A'}
+                    </p>
+                  </div>
+                  <button
+                    className="absolute bottom-2 right-2 text-gray-500 hover:text-[#c29d5f]"
+                    onClick={(e) => handleAddToCart(product, e)}
+                  >
+                    <FaShoppingCart />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       </div>
     </Layout>
   );

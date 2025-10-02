@@ -75,8 +75,29 @@ const OrderDetailPage = () => {
                         <p className="text-sm text-gray-600 whitespace-pre-wrap">{order.deliveryAddress}</p>
                     </div>
                     <div>
-                        <h3 className="font-semibold text-[#3e2f1c] mb-2">Payment Method</h3>
-                        <p className="text-sm text-gray-600 capitalize">{order.paymentMethod.replace('cod', 'Cash on Delivery')}</p>
+                        <h3 className="font-semibold text-[#3e2f1c] mb-2">Payment Information</h3>
+                        <div className="space-y-1">
+                            <p className="text-sm text-gray-600">
+                                <span className="font-medium">Method:</span>{" "}
+                                <span className="capitalize">
+                                    {order.paymentMethod === 'phonepe' ? 'PhonePe' : order.paymentMethod.replace('cod', 'Cash on Delivery')}
+                                </span>
+                            </p>
+                            {order.transactionId && (
+                                <p className="text-sm text-gray-600">
+                                    <span className="font-medium">Transaction ID:</span>{" "}
+                                    <span className="font-mono text-xs">{order.transactionId}</span>
+                                </p>
+                            )}
+                            {order.paymentStatus && (
+                                <p className="text-sm text-gray-600">
+                                    <span className="font-medium">Payment Status:</span>{" "}
+                                    <span className={`font-semibold ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>
+                                        {order.paymentStatus === 'paid' ? 'Paid' : 'Pending'}
+                                    </span>
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
 
