@@ -23,9 +23,19 @@ services:
         sync: false
       - key: FIREBASE_PRIVATE_KEY
         sync: false
-      - key: RAZORPAY_KEY_ID
+      - key: PHONEPE_ENV
         sync: false
-      - key: RAZORPAY_KEY_SECRET
+      - key: PHONEPE_CLIENT_ID
+        sync: false
+      - key: PHONEPE_CLIENT_SECRET
+        sync: false
+      - key: PHONEPE_KEY_INDEX
+        sync: false
+      - key: PHONEPE_CLIENT_VERSION
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: BACKEND_URL
         sync: false
     disk:
       name: uploads

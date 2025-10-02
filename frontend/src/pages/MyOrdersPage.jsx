@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../context/AuthContext";
@@ -28,23 +28,23 @@ const MyOrdersPage = () => {
         }
     }, [user]);
 
-    const handleCancelOrder = async (e, orderId) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (window.confirm("Are you sure you want to cancel this order?")) {
-            try {
-                const { data: updatedOrder } = await axiosInstance.put(`/orders/${orderId}/cancel`);
-                setOrders(prevOrders =>
-                    prevOrders.map(order =>
-                        order._id === orderId ? updatedOrder : order
-                    )
-                );
-                toast.success("Order successfully cancelled.");
-            } catch (error) {
-                toast.error(error.response?.data?.msg || "Failed to cancel order.");
-            }
-        }
-    };
+    // const handleCancelOrder = async (e, orderId) => {
+    //     e.preventDefault();
+    //     e.stopPropagation();
+    //     if (window.confirm("Are you sure you want to cancel this order?")) {
+    //         try {
+    //             const { data: updatedOrder } = await axiosInstance.put(`/orders/${orderId}/cancel`);
+    //             setOrders(prevOrders =>
+    //                 prevOrders.map(order =>
+    //                     order._id === orderId ? updatedOrder : order
+    //                 )
+    //             );
+    //             toast.success("Order successfully cancelled.");
+    //         } catch (error) {
+    //             toast.error(error.response?.data?.msg || "Failed to cancel order.");
+    //         }
+    //     }
+    // };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -91,7 +91,7 @@ const MyOrdersPage = () => {
                                 <div className="mb-4">
                                     {order.items.map(item => (
                                         <div key={item._id} className="flex items-center gap-4 py-2 text-sm">
-                                            <img src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${item.images[0]}`} alt={item.title} className="w-12 h-12 object-contain rounded border border-[#f4e0b9]" />
+                                            <img src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${item.image}`} alt={item.title} className="w-12 h-12 object-contain rounded border border-[#f4e0b9]" />
                                             <div className="flex-grow">
                                                 <p className="font-semibold text-[#3e2f1c]">{item.title}</p>
                                                 <p className="text-gray-500">Qty: {item.quantity}</p>
@@ -118,6 +118,7 @@ const MyOrdersPage = () => {
                                             </button>
                                         )}
                                     </div>
+
                                 </div>
                             </div>
                         </Link>
