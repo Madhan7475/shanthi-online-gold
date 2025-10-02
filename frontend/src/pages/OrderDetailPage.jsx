@@ -14,28 +14,28 @@ const OrderDetailPage = () => {
   const [retryCount, setRetryCount] = useState(0);
   const retryIntervalRef = useRef(null);
 
-    useEffect(() => {
+  useEffect(() => {
     // Function to check payment status using PhonePe service (moved inside useEffect)
     const checkPaymentStatus = async (orderData) => {
       try {
         setPaymentStatusLoading(true);
-        
+
         // Use transactionId from order if available, otherwise use orderId
         const checkId = orderData._id;
         console.log(`Checking payment status for: ${checkId}`);
 
         const response = await phonePeService.checkPaymentStatus(checkId);
         console.log("Payment status response:", response);
-        
+
         setPaymentStatus(response);
-        
+
         // If payment is successful or failed, stop retrying
         if (response.state === 'COMPLETED' || response.state === 'FAILED') {
           if (retryIntervalRef.current) {
             clearInterval(retryIntervalRef.current);
             retryIntervalRef.current = null;
           }
-          
+
           // Update order status if payment is completed
           if (response.state === 'COMPLETED' && orderData.status?.toLowerCase() === 'pending') {
             setOrder(prev => ({ ...prev, status: 'Processing' }));
@@ -44,7 +44,7 @@ const OrderDetailPage = () => {
             toast.error("Payment failed. Please try again or contact support.");
           }
         }
-        
+
         return response;
       } catch (error) {
         console.error("Failed to check payment status:", error);
@@ -59,7 +59,7 @@ const OrderDetailPage = () => {
       try {
         const { data } = await axiosInstance.get(`/orders/${orderId}`);
         setOrder(data);
-        
+
         // Start payment status checking after order is loaded
         if (data.paymentMethod !== 'cod') {
           // Clear any existing interval
@@ -73,28 +73,28 @@ const OrderDetailPage = () => {
           // Set up retry mechanism - retry every 30 seconds for 3 times
           let attempts = 0;
           const maxRetries = 3;
-          
+
           retryIntervalRef.current = setInterval(async () => {
             attempts++;
             setRetryCount(attempts);
-            
+
             console.log(`Payment status check attempt ${attempts}/${maxRetries}`);
-            
+
             const result = await checkPaymentStatus(data);
-            
+
             // Stop retrying if:
             // 1. Max retries reached
             // 2. Payment is completed, failed, or cancelled
             // 3. No result returned (error occurred)
             if (
-              attempts >= maxRetries || 
-              !result || 
-              result.state === 'COMPLETED' || 
+              attempts >= maxRetries ||
+              !result ||
+              result.state === 'COMPLETED' ||
               result.state === 'FAILED'
             ) {
               clearInterval(retryIntervalRef.current);
               retryIntervalRef.current = null;
-              
+
               if (attempts >= maxRetries && result?.state === 'PENDING') {
                 toast.info("Payment is still pending. Please refresh the page later to check status.");
               }
@@ -121,15 +121,15 @@ const OrderDetailPage = () => {
   // Manual refresh function for payment status
   const manualCheckPaymentStatus = React.useCallback(async () => {
     if (!order) return;
-    
+
     try {
       setPaymentStatusLoading(true);
-      
+
       const checkId = order._id;
       const response = await phonePeService.checkPaymentStatus(checkId);
-      
+
       setPaymentStatus(response);
-      
+
       if (response.state === 'COMPLETED' && order.status?.toLowerCase() === 'pending') {
         setOrder(prev => ({ ...prev, status: 'Processing' }));
         toast.success("Payment completed! Order status updated.");
@@ -177,6 +177,11 @@ const OrderDetailPage = () => {
   }
 
 
+  return (
+    <Layout>
+      <div className="container mx-auto px-4 py-6">
+        <h2 className="text-xl font-semibold text-[#3e2f1c] mb-4">Order Details</h2>
+
         {/* Items List */}
         <div className="border-t border-[#f4e0b9] pt-4">
           <h3 className="font-semibold text-[#3e2f1c] mb-2">Order Summary</h3>
@@ -186,9 +191,7 @@ const OrderDetailPage = () => {
               className="flex items-center gap-4 py-3 text-sm border-b border-gray-100 last:border-b-0"
             >
               <img
-                src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${
-                  item.image
-                }`}
+                src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${item.image}`}
                 alt={item.title}
                 className="w-16 h-16 object-contain rounded border border-[#f4e0b9]"
               />
@@ -198,7 +201,7 @@ const OrderDetailPage = () => {
               </div>
               <p className="font-semibold">
                 ₹{(item.price * item.quantity).toLocaleString()}
-                
+              </p>
             </div>
           ))}
           <div className="text-right mt-4">
@@ -208,7 +211,7 @@ const OrderDetailPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 
