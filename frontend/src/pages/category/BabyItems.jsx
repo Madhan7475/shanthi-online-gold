@@ -5,8 +5,10 @@ import { FaHeart, FaShoppingCart, FaFilter, FaTimes } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useRequireAuth } from "../../utils/useRequireAuth";
+import Pagination from "../../components/Common/Pagination"; // assuming you have a pagination component
 
 const FILTER_DATA = {
+  Price: ["< 25,000", "25,000 - 50,000", "50,000 - 1,00,000", "1,00,000+"],
   "Jewellery Type": [
     "Diamond Jewellery", "Gold Jewellery", "Jewellery with Gemstones", "Plain Jewellery with Stones", "Platinum Jewellery"
   ],
@@ -26,92 +28,68 @@ const FILTER_DATA = {
     "SI1-SI2, VS, VS2", "SI1-SI2, VS1", "SI1-SI2, VS2", "SI2", "VS", "VS,VS1", "VS, VS1", "VS1", "VS2",
     "VVS", "VVS,VS", "VVS1", "VVS1,VVS2", "VVS2"
   ],
-  Collection: [
-    "22KT Range", "A Chain Story", "A Fine Finish", "Aaheli", "Aalo", "Aarambh", "Aarna", "Akshayam", "Alekhya",
-    "Alphabet Pendants", "Amara", "Arpanam", "Aurum", "Aveer", "Bestsellers", "Birthstone", "Bring the Shine",
-    "Celeste", "Chakra Pendants", "Chozha", "Christmas Collection", "Classic", "Classics", "Cocktail Turkish Mount",
-    "Colour Charms", "Colour Me Joy", "Commitment Bands", "Contemporary", "Core 20", "Couple Rings", "Devyani",
-    "Dharohar", "Diamond Treats", "Dibyani", "Disco", "Divyam", "Diwali 19", "Dor", "Dots and Dashes", "Drops of Radiance",
-    "Ekatvam", "Elan", "Enchanted Trails", "Engagement", "Engagement Ring", "Engagement Rings", "Eternity Bangles",
-    "Evil Eye", "Exclusive Online", "Festive", "Festive Collection", "Ganesh Products", "Gifting Range", "Glamdays",
-    "Glow with Flow", "Go with the flow", "God Pendant", "Homecoming", "Hoops", "Hues for you", "Impressions of Nature",
-    "Into Eternity", "Kakatiya", "Kalai", "Kiss of Spring", "KonkonKotha", "Kundan Polki", "Kundan Stories",
-    "lilac allure", "Little Big Moments", "Live a Dream", "Lotus", "Lucky Charms", "Maithili", "Mamma Mia", "Mangalam",
-    "Men's Rings", "Mia Festive", "Mia Icicles", "Mia Play", "Mia sutra", "Mia Sutra", "Mia Symphony", "Miatini",
-    "Modern Gold", "Modern Polki", "Moods of the Earth", "Multifinish Finger Rings", "Native", "Nature's Finest",
-    "Nav raani", "Nityam", "Nyusha", "Nyusha 2", "Nyusha1", "Once Upon a Moment", "Open Polki", "Padmaavat", "Padmaja",
-    "Platinum Collections", "Platinum Kadas", "Preen", "Pretty in Pink", "Rainbow Rhythm", "Rajadhiraj", "Rare Pair Collection",
-    "Red Dot Awards Collection", "Religious", "Rhythms of Rain", "Rivaah", "RivaahXTarun Tahiliani", "Sarang Hearts", "Shaaj",
-    "Shagun", "Sleek", "Solitaire", "Solitaires", "Soulmate Diamond Pair", "Sparkling Avenues", "Srotika", "Starburst",
-    "String it", "Stunning Every Ear", "Svarupam", "Swarnam", "Swayahm", "Switch and Shine", "Tales of Mystique",
-    "The Cocktail Edit", "The Cupid Edit", "The Initial edit", "The Initial Edit", "The Italian Connection",
-    "The Signature Edit", "The Spotlight Edit", "Trims", "Udayam", "Ugadi", "Unbound", "Utsaah", "Utsava", "Uttama",
-    "Uttara", "Valentines", "Vinayaka Pendants", "Virasat", "Wear Your Prayer", "Wonderlust", "Zodiac Sign Pendants",
-    "Zodiac Sign Ring", "Zuhur"
-  ],
-  Community: [
-    "Bengali", "Bihari", "Classic must haves", "Contemporary", "Gujarati", "Indian Bridal", "Kannada", "Maharashtrian",
-    "Marwari", "Metro", "North Indian", "Punjabi", "South Indian", "Tamil", "Telugu"
-  ],
-  Type: [
-    "Choor", "Drops", "Gala Bala", "Hoops", "Jhumka", "Kankan", "Loha Bangle", "OTHERS", "Solid Bala", "Studs"
-  ]
+  Collection: ["Classic", "Contemporary", "Festive", "Modern Gold", "Solitaire", "Sparkling Avenues"],
+  Community: ["North Indian", "South Indian", "Gujarati", "Tamil", "Punjabi"],
+  Type: ["Studs", "Hoops", "Jhumka", "Drops", "Pendant"]
 };
 
-const BabyItemsPage = () => {
+const EarringsPage = () => {
   const [products, setProducts] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [expandedFilters, setExpandedFilters] = useState({});
   const [selectedFilters, setSelectedFilters] = useState({});
   const [addingMap, setAddingMap] = useState({});
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const { addToCart, saveForItemLater, cartItems } = useCart();
   const navigate = useNavigate();
   const { runWithAuth } = useRequireAuth();
 
   useEffect(() => {
     fetchProducts();
-  }, [selectedFilters]);
+  }, [selectedFilters, currentPage]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      
-      // Add category filter for baby items
-      params.append('category', 'Baby Items');
-      
-      // Convert selected filters to API params
-      Object.entries(selectedFilters).forEach(([category, options]) => {
-        if (options.length === 0) return;
+      params.append("category", "Earrings");
+      params.append("page", currentPage);
 
-        // Map category names to backend field names
-        const fieldMap = {
-          "Jewellery Type": "jewelleryType",
-          "Product": "product",
-          "Gender": "gender",
-          "Purity": "purity",
-          "Occasion": "occasion",
-          "Metal": "metal",
-          "Diamond Clarity": "diamondClarity",
-          "Collection": "collection",
-          "Community": "community",
-          "Type": "type"
-        };
-        
-        const fieldName = fieldMap[category];
-        if (fieldName && options.length > 0) {
-          params.append(fieldName, options.join(','));
+      // map UI filter categories to backend fields
+      const fieldMap = {
+        "Price": "priceRange",
+        "Jewellery Type": "jewelleryType",
+        "Product": "product",
+        "Gender": "gender",
+        "Purity": "purity",
+        "Occasion": "occasion",
+        "Metal": "metal",
+        "Diamond Clarity": "diamondClarity",
+        "Collection": "collection",
+        "Community": "community",
+        "Type": "type"
+      };
+
+      Object.entries(selectedFilters).forEach(([category, options]) => {
+        if (options.length > 0) {
+          const fieldName = fieldMap[category];
+          if (fieldName) {
+            params.append(fieldName, options.join(","));
+          }
         }
       });
 
       const url = `${import.meta.env.VITE_API_BASE_URL}/api/products?${params.toString()}`;
       const res = await axios.get(url);
-      
-      const products = res.data.items || res.data;
-      setProducts(Array.isArray(products) ? products : []);
+
+      const productData = res.data.items || res.data.products || res.data;
+      setProducts(Array.isArray(productData) ? productData : []);
+      setTotalPages(res.data.totalPages || 1);
     } catch (err) {
-      console.error("❌ Failed to load Baby Items:", err);
+      console.error("❌ Failed to load earrings:", err);
       setProducts([]);
     } finally {
       setLoading(false);
@@ -119,18 +97,17 @@ const BabyItemsPage = () => {
   };
 
   const handleFilterChange = (category, option) => {
-    setSelectedFilters(prev => {
-      const currentCategoryFilters = prev[category] || [];
-      const newCategoryFilters = currentCategoryFilters.includes(option)
-        ? currentCategoryFilters.filter(item => item !== option)
-        : [...currentCategoryFilters, option];
+    setSelectedFilters((prev) => {
+      const current = prev[category] || [];
+      const updated = current.includes(option)
+        ? current.filter((o) => o !== option)
+        : [...current, option];
 
-      if (newCategoryFilters.length === 0) {
+      if (updated.length === 0) {
         const { [category]: _, ...rest } = prev;
         return rest;
       }
-
-      return { ...prev, [category]: newCategoryFilters };
+      return { ...prev, [category]: updated };
     });
   };
 
@@ -163,18 +140,25 @@ const BabyItemsPage = () => {
     runWithAuth(() => saveForItemLater(product));
   };
 
+  const handlePageChange = (page) => setCurrentPage(page);
+
   return (
     <Layout>
+      {/* Banner */}
       <div className="w-screen h-40 md:h-72 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
         <img
-          src="/gold11.jpg"
+          src="/gold9.jpg"
           alt="Jewellery Banner"
           className="w-full h-full object-cover"
         />
       </div>
 
       <div className="pt-[30px] px-4 sm:px-6 md:px-8 max-w-7xl mx-auto relative">
-        <h1 className="text-2xl font-bold mb-4 text-gray-800 text-center">Baby Items</h1>
+        <h1 className="text-2xl font-bold mb-4 text-gray-800 text-center">
+          Earrings
+        </h1>
+
+        {/* Filter Button */}
         <div className="flex justify-start mb-6">
           <button
             className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-full text-sm text-[#400F45] hover:bg-gray-100"
@@ -186,22 +170,30 @@ const BabyItemsPage = () => {
           </button>
         </div>
 
+        {/* Overlay */}
         <div
-          className={`fixed inset-0 bg-black bg-opacity-30 z-30 transition-opacity duration-300 ${showFilters ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-            }`}
+          className={`fixed inset-0 bg-black bg-opacity-30 z-30 transition-opacity duration-300 ${
+            showFilters ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
           onClick={() => setShowFilters(false)}
         />
 
+        {/* Filters Drawer */}
         <div
-          className={`fixed top-0 left-0 w-80 h-full bg-white z-40 p-6 shadow-lg overflow-y-auto transform transition-transform duration-300 ease-in-out ${showFilters ? "translate-x-0" : "-translate-x-full"
-            }`}
+          className={`fixed top-0 left-0 w-80 h-full bg-white z-40 p-6 shadow-lg overflow-y-auto transform transition-transform duration-300 ease-in-out ${
+            showFilters ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-[#400F45]">Filters</h2>
-            <button onClick={() => setShowFilters(false)} className="text-gray-500 hover:text-[#400F45]">
+            <button
+              onClick={() => setShowFilters(false)}
+              className="text-gray-500 hover:text-[#400F45]"
+            >
               <FaTimes size={18} />
             </button>
           </div>
+
           <div className="space-y-4">
             {Object.entries(FILTER_DATA).map(([label, options]) => (
               <div key={label}>
@@ -212,8 +204,11 @@ const BabyItemsPage = () => {
                   {label}
                 </button>
                 <div
-                  className={`mt-2 transition-all duration-300 ease-in-out ${expandedFilters[label] ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
-                    }`}
+                  className={`mt-2 transition-all duration-300 ease-in-out ${
+                    expandedFilters[label]
+                      ? "max-h-[500px] opacity-100"
+                      : "max-h-0 opacity-0 overflow-hidden"
+                  }`}
                 >
                   <ul className="pl-2 pr-1 py-1 space-y-1 text-sm text-[#333] max-h-[300px] overflow-y-auto">
                     {options.map((opt, idx) => (
@@ -236,15 +231,16 @@ const BabyItemsPage = () => {
           </div>
         </div>
 
+        {/* Product Grid */}
         {loading ? (
           <div className="text-center py-20">
-            <p className="text-gray-500">Loading products...</p>
+            <p className="text-gray-500">Loading earrings...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
             {products.length === 0 ? (
               <div className="col-span-full text-center py-20">
-                <p className="text-gray-500">No products found matching your filters.</p>
+                <p className="text-gray-500">No earrings found matching your filters.</p>
               </div>
             ) : (
               products.map((product) => (
@@ -271,17 +267,31 @@ const BabyItemsPage = () => {
                     />
                   </div>
                   <div className="p-4">
-                    <h2 className="text-sm font-medium text-gray-800 truncate">{product.title}</h2>
-                    <p className="text-sm text-gray-600 mb-1 truncate">{product.category}</p>
+                    <h2 className="text-sm font-medium text-gray-800 truncate">
+                      {product.title}
+                    </h2>
+                    <p className="text-sm text-gray-600 mb-1 truncate">
+                      {product.category}
+                    </p>
                     <p className="text-base font-semibold text-[#1a1a1a]">
-                      ₹{product.price.toLocaleString()}
+                      ₹{product.price ? product.price.toLocaleString() : "N/A"}
                     </p>
                   </div>
                   <button
-                    className={`absolute bottom-2 right-2 ${isInCart(product) ? "text-green-600" : "text-gray-500 hover:text-[#c29d5f]"} ${addingMap[product._id] ? "opacity-50 cursor-not-allowed" : ""}`}
+                    className={`absolute bottom-2 right-2 ${
+                      isInCart(product)
+                        ? "text-green-600"
+                        : "text-gray-500 hover:text-[#c29d5f]"
+                    } ${addingMap[product._id] ? "opacity-50 cursor-not-allowed" : ""}`}
                     onClick={(e) => handleAddToCart(product, e)}
                     disabled={addingMap[product._id] || isInCart(product)}
-                    title={isInCart(product) ? "In Cart" : (addingMap[product._id] ? "Adding..." : "Add to Cart")}
+                    title={
+                      isInCart(product)
+                        ? "In Cart"
+                        : addingMap[product._id]
+                        ? "Adding..."
+                        : "Add to Cart"
+                    }
                   >
                     <FaShoppingCart />
                   </button>
@@ -291,6 +301,7 @@ const BabyItemsPage = () => {
           </div>
         )}
 
+        {/* Pagination */}
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -301,4 +312,4 @@ const BabyItemsPage = () => {
   );
 };
 
-export default BabyItemsPage;
+export default EarringsPage;

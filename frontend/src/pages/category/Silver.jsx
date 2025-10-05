@@ -6,6 +6,7 @@ import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useRequireAuth } from "../../utils/useRequireAuth";
 
+
 const FILTER_DATA = {
   Price: ["< 25,000", "25,000 - 50,000", "50,000 - 1,00,000", "1,00,000+"],
   "Jewellery Type": [
@@ -148,7 +149,7 @@ const SilverPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 pb-10">
           {products.map((product) => (
             <div
               key={product._id}
@@ -192,12 +193,6 @@ const SilverPage = () => {
             </div>
           ))}
         </div>
-
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
       </div>
     </Layout>
   );
