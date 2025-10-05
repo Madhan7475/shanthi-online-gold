@@ -2,6 +2,7 @@ const express = require("express");
 const Product = require("../models/Product");
 const { upload } = require("../middleware/upload");
 const adminAuth = require("../middleware/adminAuth");
+const { repriceAllProducts } = require("../services/productRepriceService");
 
 const router = express.Router();
 
@@ -467,6 +468,22 @@ router.get("/feed", async (req, res) => {
     } catch (err) {
         console.error("❌ Error fetching product feed:", err);
         res.status(500).json({ error: "Failed to fetch product feed" });
+    }
+});
+
+/**
+ * @route   POST /api/products/admin/reprice-today?dryRun=true|false
+ * @desc    Reprice all products using today's cached gold rates and product grossWeight × karat
+ * @access  Admin only
+ */
+router.post("/admin/reprice-today", adminAuth, async (req, res) => {
+    try {
+        const dryRun = String(req.query.dryRun || "").toLowerCase() === "true";
+        const summary = await repriceAllProducts({ dryRun });
+        res.json(summary);
+    } catch (err) {
+        console.error("❌ Error repricing products:", err);
+        res.status(500).json({ error: "Failed to reprice products", details: err.message || String(err) });
     }
 });
 

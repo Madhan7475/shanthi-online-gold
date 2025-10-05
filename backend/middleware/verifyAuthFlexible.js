@@ -16,10 +16,18 @@ const User = require("../models/User");
  */
 async function verifyAuthFlexible(req, res, next) {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    let token = null;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+    }
+    // Allow token via query for file downloads opened in a new tab: ?auth=TOKEN or ?token=TOKEN
+    if (!token) {
+        token = (req.query && (req.query.auth || req.query.token)) || null;
+    }
+    if (!token) {
         return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
-    const token = authHeader.split(" ")[1];
 
     // 1) Try Firebase ID token
     try {

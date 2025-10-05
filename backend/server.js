@@ -46,7 +46,9 @@ const cartRoutes = require("./routes/cartRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
 const phonepeRoutes = require("./routes/phonepeRoutes");
+const marketRoutes = require("./routes/marketRoutes");
 app.use("/api/phonepe", phonepeRoutes);
+app.use("/api/market", marketRoutes);
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/products", productRoutes);
@@ -66,6 +68,20 @@ app.use((err, req, res, next) => {
   console.error("❌ Global Error:", err.stack || err);
   res.status(500).json({ message: "Server error", error: err.message || err });
 });
+
+const startGoldPriceScheduler = require("./scheduler/goldPriceCron");
+const { refreshForTodayIfNeeded } = require("./services/goldPriceService");
+const { repriceAllProducts } = require("./services/productRepriceService");
+startGoldPriceScheduler();
+(async () => {
+  try {
+    await refreshForTodayIfNeeded();
+    const summary = await repriceAllProducts({ dryRun: false });
+    console.log("🧮 Initial product repricing complete:", { updated: summary.updated, inspected: summary.inspected });
+  } catch (e) {
+    console.error("⚠️ Initial setup (price refresh + reprice) failed:", e?.message || e);
+  }
+})();
 
 // Start server
 const PORT = process.env.PORT || 9000;
