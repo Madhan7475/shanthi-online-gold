@@ -1,13 +1,13 @@
 {
   "data": {
-    "pricePerGram24kInr": 11420.52,
-    "pricePerGram22kInr": 10468.81,
+    "pricePerGram24kInr": 11921.46,
+    "pricePerGram22kInr": 10928.01,
     "currency": "INR",
     "unit": "GRAM",
-    "lastUpdated": "2025-10-05T13:06:23.106Z",
+    "lastUpdated": "2025-10-09T13:02:30.349Z",
     "source": "GoldAPI.io",
     "ttlSeconds": 86400
   },
-  "fetchedAt": 1759669583106,
+  "fetchedAt": 1760014950349,
   "source": "GoldAPI.io"
 }

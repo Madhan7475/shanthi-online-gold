@@ -21,6 +21,10 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: 'Pending'
   },
+  statusUpdatedAt: {
+    type: Date,
+    default: Date.now
+  },
   deliveryAddress: {
     type: String,
     required: true,
@@ -39,5 +43,8 @@ const orderSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Index to support my-orders pagination and date sorting efficiently
+orderSchema.index({ userId: 1, date: -1 }, { name: 'userId_date_desc' });
 
 module.exports = mongoose.model('Order', orderSchema);

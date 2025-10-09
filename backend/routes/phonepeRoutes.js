@@ -18,7 +18,7 @@ const router = express.Router();
  */
 const validateCreateOrderInput = (req, res, next) => {
   const { amount } = req.body;
-  
+
   // Basic validation
   if (!amount) {
     return res.status(400).json({
@@ -62,15 +62,15 @@ const rateLimiter = (() => {
   return (req, res, next) => {
     const userId = req.user?.uid || req.user?.id || req.ip;
     const now = Date.now();
-    
+
     if (!requests.has(userId)) {
       requests.set(userId, []);
     }
-    
+
     const userRequests = requests.get(userId);
     // Remove old requests
     const validRequests = userRequests.filter(time => now - time < WINDOW_MS);
-    
+
     if (validRequests.length >= MAX_REQUESTS) {
       return res.status(429).json({
         success: false,
@@ -80,10 +80,10 @@ const rateLimiter = (() => {
         }
       });
     }
-    
+
     validRequests.push(now);
     requests.set(userId, validRequests);
-    
+
     next();
   };
 })();
@@ -92,9 +92,9 @@ const rateLimiter = (() => {
 const requestLogger = (req, res, next) => {
   const startTime = Date.now();
   const requestId = `phonePe_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
+
   req.phonepeRequestId = requestId;
-  
+
   console.log(`[${requestId}] PhonePe ${req.method} ${req.path}`, {
     ip: req.ip,
     userAgent: req.get('User-Agent'),
@@ -147,7 +147,7 @@ router.post('/initiate-checkout',
           });
         }
       }
-      
+
       const result = await phonePeService.initiatePayment({
         amount,
         merchantOrderId,
@@ -158,12 +158,12 @@ router.post('/initiate-checkout',
       if (merchantOrderId) {
         try {
           const order = await Order.findOne({ _id: merchantOrderId });
-          
+
           if (order) {
             // Update the transactionId with PhonePe orderId
             order.transactionId = result.orderId;
             await order.save();
-            
+
             console.log(`Updated order ${order._id} with transactionId: ${result.orderId}`);
           } else {
             console.log(`No order found with merchantOrderId: ${merchantOrderId}`);
@@ -173,12 +173,12 @@ router.post('/initiate-checkout',
           // Continue with PhonePe response even if database update fails
         }
       }
-      
+
       res.status(201).json(result);
 
     } catch (error) {
       console.error('Checkout initiation controller error:', error);
-      
+
       res.status(500).json({
         success: false,
         error: {
@@ -199,11 +199,11 @@ router.post('/initiate-checkout',
  * @body {string} [merchantOrderId] - Optional merchant order ID
  * @body {string} [redirectUrl] - Optional redirect URL
  */
-router.post('/create-order', 
+router.post('/create-order',
   requestLogger,
-  verifyAuthFlexible, 
+  verifyAuthFlexible,
   rateLimiter,
-  validateCreateOrderInput, 
+  validateCreateOrderInput,
   async (req, res) => {
     try {
       const { amount, merchantOrderId, redirectUrl } = req.body;
@@ -211,7 +211,7 @@ router.post('/create-order',
 
       // Log order creation attempt
       console.log(`Processing order creation for user: ${userId}`);
-      
+
       // Create order using PhonePe service
       const result = await phonePeService.createSdkOrder({
         amount,
@@ -223,12 +223,12 @@ router.post('/create-order',
       if (merchantOrderId) {
         try {
           const order = await Order.findOne({ _id: merchantOrderId });
-          
+
           if (order) {
             // Update the transactionId with PhonePe orderId
             order.transactionId = result.orderId;
             await order.save();
-            
+
             console.log(`Updated order ${order._id} with transactionId: ${result.orderId}`);
           } else {
             console.log(`No order found with merchantOrderId: ${merchantOrderId}`);
@@ -238,12 +238,12 @@ router.post('/create-order',
           // Continue with PhonePe response even if database update fails
         }
       }
-      
+
       res.status(201).json(result);
 
     } catch (error) {
       console.error('Order creation controller error:', error);
-      
+
       res.status(500).json({
         success: false,
         error: {
@@ -262,7 +262,7 @@ router.post('/create-order',
  * 
  * @param {string} orderId - PhonePe order ID (required)
  */
-router.get('/order-status/:orderId', 
+router.get('/order-status/:orderId',
   requestLogger,
   verifyAuthFlexible,
   async (req, res) => {
@@ -282,7 +282,7 @@ router.get('/order-status/:orderId',
 
       // Log order status check attempt
       console.log(`Processing order status check for orderId: ${orderId}`);
-      
+
       // Check order status using PhonePe service with enhanced mapping
       const result = await phonePeService.getEnhancedOrderStatus(orderId.trim());
 
@@ -290,11 +290,15 @@ router.get('/order-status/:orderId',
       if (result.state === 'COMPLETED') {
         try {
           const order = await Order.findOne({ _id: orderId.trim() });
-          
+
           if (order && order.status !== 'Processing') {
+            const prev = order.status;
             order.status = 'Processing';
+            if (prev !== order.status) {
+              order.statusUpdatedAt = new Date();
+            }
             await order.save();
-            
+
             console.log(`Updated order ${order._id} status to Processing (payment completed)`);
           } else if (!order) {
             console.log(`No order found with transactionId: ${orderId}`);
@@ -311,7 +315,7 @@ router.get('/order-status/:orderId',
 
     } catch (error) {
       console.error('Order status check controller error:', error);
-      
+
       // Handle specific PhonePe errors
       if (error.message.includes('Order not found') || error.message.includes('Invalid order')) {
         return res.status(404).json({
@@ -334,7 +338,7 @@ router.get('/order-status/:orderId',
           }
         });
       }
-      
+
       res.status(500).json({
         success: false,
         error: {
@@ -353,7 +357,7 @@ router.get('/order-status/:orderId',
  */
 router.use((error, req, res, next) => {
   console.error('Payment route error:', error);
-  
+
   res.status(500).json({
     success: false,
     error: {

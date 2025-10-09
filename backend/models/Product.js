@@ -5,6 +5,10 @@ const productSchema = new mongoose.Schema({
   title: String,
   description: String,
   category: String,
+  // Normalized category slug for fast exact filtering
+  categorySlug: { type: String, index: true },
+  // Optional link to Category collection for joins/aggregations
+  categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", default: null, index: true },
   price: Number,
   stocks: { type: Number, default: 0 },
   karatage: String,
@@ -24,6 +28,20 @@ const productSchema = new mongoose.Schema({
   occasion: String,
   images: [String],
 }, { timestamps: true });
+
+// Indexes to accelerate backend filtering via query params
+productSchema.index({ createdAt: -1 });
+productSchema.index({ price: 1 });
+productSchema.index({ jewelleryType: 1 });
+productSchema.index({ gender: 1 });
+productSchema.index({ karatage: 1 });
+productSchema.index({ metal: 1 });
+productSchema.index({ diamondClarity: 1 });
+productSchema.index({ collection: 1 });
+// Helpful compound indexes for common facets
+productSchema.index({ categorySlug: 1, gender: 1 });
+productSchema.index({ categorySlug: 1, karatage: 1 });
+productSchema.index({ categorySlug: 1, price: 1 });
 
 // ✅ CORRECT EXPORT
 module.exports = mongoose.model("Product", productSchema);

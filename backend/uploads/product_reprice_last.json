@@ -1,10 +1,10 @@
 {
-  "timestamp": "2025-10-05T13:46:31.340Z",
+  "timestamp": "2025-10-09T13:37:04.727Z",
   "source": "GoldAPI.io",
   "goldRates": {
-    "pricePerGram24kInr": 11420.52,
-    "pricePerGram22kInr": 10468.81,
-    "lastUpdated": "2025-10-05T13:06:23.106Z"
+    "pricePerGram24kInr": 11921.46,
+    "pricePerGram22kInr": 10928.01,
+    "lastUpdated": "2025-10-09T13:02:30.349Z"
   },
   "inspected": 4,
   "updated": 0,
