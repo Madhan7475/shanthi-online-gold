@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../utils/axiosInstance";
 import { FaHeart, FaShoppingCart } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
 import { useRequireAuth } from "../utils/useRequireAuth";
@@ -10,6 +10,8 @@ const SearchPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [addingMap, setAddingMap] = useState({});
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const { addToCart, saveForItemLater, cartItems } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
@@ -17,6 +19,11 @@ const SearchPage = () => {
 
   // Get search query from URL
   const query = new URLSearchParams(location.search).get("query") || "";
+
+  // Always reset pagination when the search query changes
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
 
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -27,12 +34,11 @@ const SearchPage = () => {
 
       try {
         setLoading(true);
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/api/products?q=${encodeURIComponent(query)}`
-        );
-        // Handle both paginated and plain array responses
-        const productsData = res.data.items || res.data;
+        const { data } = await axiosInstance.get("/products", { params: { q: query, page, limit: 12 } });
+        const productsData = data.items || data;
         setProducts(Array.isArray(productsData) ? productsData : []);
+        const pages = data.pages || data.totalPages || 1;
+        setTotalPages(pages);
       } catch (err) {
         console.error("❌ Failed to search products:", err);
         setProducts([]);
@@ -42,7 +48,7 @@ const SearchPage = () => {
     };
 
     fetchSearchResults();
-  }, [query]);
+  }, [query, page]);
 
   const handleProductClick = (id) => navigate(`/product/${id}`);
   const isInCart = (p) => cartItems?.some((ci) => String(ci.productId) === String(p._id));
@@ -123,25 +129,36 @@ const SearchPage = () => {
                   </p>
                 </div>
                 <button
-                  className={`absolute bottom-2 right-2 ${
-                    isInCart(product)
-                      ? "text-green-600"
-                      : "text-gray-500 hover:text-[#c29d5f]"
-                  } ${addingMap[product._id] ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`absolute bottom-2 right-2 ${isInCart(product)
+                    ? "text-green-600"
+                    : "text-gray-500 hover:text-[#c29d5f]"
+                    } ${addingMap[product._id] ? "opacity-50 cursor-not-allowed" : ""}`}
                   onClick={(e) => handleAddToCart(product, e)}
                   disabled={addingMap[product._id] || isInCart(product)}
                   title={
                     isInCart(product)
                       ? "In Cart"
                       : addingMap[product._id]
-                      ? "Adding..."
-                      : "Add to Cart"
+                        ? "Adding..."
+                        : "Add to Cart"
                   }
                 >
                   <FaShoppingCart />
                 </button>
               </div>
             ))}
+          </div>
+        )}
+        {!loading && totalPages > 1 && (
+          <div className="pb-12">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(p) => {
+                setPage(p);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
           </div>
         )}
       </div>

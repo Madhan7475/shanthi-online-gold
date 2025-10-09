@@ -189,6 +189,16 @@ const OrderDetailPage = () => {
   // Currency formatter
   const formatCurrency = (n) => `₹${Number(n || 0).toLocaleString()}`;
 
+  // Date/time formatter
+  const formatDateTime = (d) => {
+    if (!d) return "N/A";
+    try {
+      return new Date(d).toLocaleString("en-IN");
+    } catch {
+      return "N/A";
+    }
+  };
+
   // Resolve item image (supports filename or url fields)
   const getImageSrc = (item) => {
     if (item?.image) {
@@ -232,6 +242,9 @@ const OrderDetailPage = () => {
             >
               {order.status}
             </span>
+            <div className="text-xs text-gray-500 mt-1">
+              Updated: {formatDateTime(order.statusUpdatedAt || order.updatedAt || order.date)}
+            </div>
           </div>
           <div>
             <div className="text-sm text-gray-500">Payment</div>
