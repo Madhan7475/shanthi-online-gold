@@ -25,6 +25,7 @@ import OrderDetailPage from "./pages/OrderDetailPage"; // ✅ Import the new pag
 import SearchPage from "./pages/SearchPage";
 import ProductDetail from "./pages/ProductDetail";
 import DigiGold from "./pages/DigiGold"; // Correct casing
+import FiltersPage from "./pages/Filters";
 
 
 
@@ -79,6 +80,7 @@ const App = () => {
           <Route path="signin" element={<SigninPage />} />
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="products" element={<FiltersPage />} />
           <Route path="/digigold" element={<DigiGold />} />
 
 
@@ -143,7 +145,7 @@ const App = () => {
         <Route path="/category/Privacypolicies" element={<Privacypolicies />} /> {/* ✅ New Route */}
         <Route path="/collection/:slug" element={<CollectionPage />} />
         <Route path="/category/RefundReturn" element={<RefundReturn />} />
-        <Route path="/category/Shipping" element={<Shipping />} />  
+        <Route path="/category/Shipping" element={<Shipping />} />
 
         {/* ---------------- Admin Routes ---------------- */}
         <Route path="/admin/login" element={<AdminLogin />} />

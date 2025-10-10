@@ -10,6 +10,7 @@ const OrderDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [paymentStatusLoading, setPaymentStatusLoading] = useState(false);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const retryIntervalRef = useRef(null);
 
@@ -135,6 +136,40 @@ const OrderDetailPage = () => {
     }
   }, [order]);
 
+  const downloadInvoice = async () => {
+    if (!order?._id) return;
+    try {
+      setInvoiceLoading(true);
+      // Use axiosInstance to include auth headers; request PDF as blob
+      const res = await axiosInstance.get(`/invoices/${order._id}/pdf`, {
+        responseType: "blob",
+        headers: { Accept: "application/pdf" },
+      });
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `Invoice_${order._id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Invoice downloaded.");
+    } catch (e) {
+      console.error("Invoice download failed:", e);
+      // Fallback: try to open in a new tab (may still require auth)
+      try {
+        const base = import.meta.env.VITE_API_BASE_URL || "";
+        const token = localStorage.getItem("token");
+        const url = token
+          ? `${base}/api/invoices/${order._id}/pdf?auth=${encodeURIComponent(token)}`
+          : `${base}/api/invoices/${order._id}/pdf`;
+        window.open(url, "_blank");
+      } catch { }
+      toast.error("Could not download invoice.");
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Pending":
@@ -151,6 +186,28 @@ const OrderDetailPage = () => {
     }
   };
 
+  // Currency formatter
+  const formatCurrency = (n) => `₹${Number(n || 0).toLocaleString()}`;
+
+  // Date/time formatter
+  const formatDateTime = (d) => {
+    if (!d) return "N/A";
+    try {
+      return new Date(d).toLocaleString("en-IN");
+    } catch {
+      return "N/A";
+    }
+  };
+
+  // Resolve item image (supports filename or url fields)
+  const getImageSrc = (item) => {
+    if (item?.image) {
+      const base = import.meta.env.VITE_API_BASE_URL || "";
+      return `${base}/uploads/${item.image}`;
+    }
+    return item?.imageUrl || item?.imageUrls?.[0] || "";
+  };
+
   if (loading) {
     return <div className="text-center py-20">Loading Order Details...</div>;
   }
@@ -160,34 +217,153 @@ const OrderDetailPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <h2 className="text-xl font-semibold text-[#3e2f1c] mb-4">Order Details</h2>
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h2 className="text-2xl md:text-3xl font-semibold text-[#3e2f1c] mb-6 tracking-tight">Order Details</h2>
+
+      {/* Top summary */}
+      <div className="bg-white border border-[#f4e0b9] rounded-lg p-5 mb-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-sm text-gray-500">Order ID</div>
+            <div className="font-mono text-sm">{order._id}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">Placed on</div>
+            <div className="text-sm">
+              {new Date(order.date || order.createdAt).toLocaleString("en-IN")}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">Status</div>
+            <span
+              className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide ring-1 ring-current ${getStatusColor(
+                order.status
+              )}`}
+            >
+              {order.status}
+            </span>
+            <div className="text-xs text-gray-500 mt-1">
+              Updated: {formatDateTime(order.statusUpdatedAt || order.updatedAt || order.date)}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">Payment</div>
+            <div className="text-sm capitalize">{order.paymentMethod || "N/A"}</div>
+          </div>
+          {order.transactionId ? (
+            <div className="min-w-0">
+              <div className="text-sm text-gray-500">Transaction ID</div>
+              <div className="text-xs font-mono break-all">{order.transactionId}</div>
+            </div>
+          ) : null}
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={downloadInvoice}
+            disabled={invoiceLoading}
+            className="inline-flex items-center gap-2 bg-[#400F45] text-white text-sm px-3 py-1.5 rounded hover:opacity-90 disabled:opacity-60"
+          >
+            {invoiceLoading ? "Preparing..." : "Download Invoice (PDF)"}
+          </button>
+        </div>
+      </div>
+
+      {/* Customer and Address */}
+      <div className="grid md:grid-cols-2 gap-4 mb-4">
+        <div className="bg-white border border-[#f4e0b9] rounded-lg p-4 shadow-sm">
+          <h3 className="font-semibold text-[#3e2f1c] mb-2">Customer</h3>
+          <p className="text-sm">{order.customerName}</p>
+        </div>
+        <div className="bg-white border border-[#f4e0b9] rounded-lg p-4 shadow-sm">
+          <h3 className="font-semibold text-[#3e2f1c] mb-2">Delivery Address</h3>
+          <p className="text-sm whitespace-pre-wrap">{order.deliveryAddress}</p>
+        </div>
+      </div>
+
+      {/* Payment status */}
+      <div className="bg-white border border-[#f4e0b9] rounded-lg p-4 mb-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-[#3e2f1c]">Payment Status</h3>
+          <button
+            onClick={manualCheckPaymentStatus}
+            disabled={paymentStatusLoading}
+            className="text-sm bg-[#400F45] text-white px-3 py-1 rounded disabled:opacity-60"
+          >
+            {paymentStatusLoading ? "Checking..." : "Refresh"}
+          </button>
+        </div>
+        <div className="mt-2 text-sm">
+          <div>State: {paymentStatus?.state || "N/A"}</div>
+          {typeof retryCount === "number" ? (
+            <div className="text-xs text-gray-500">Auto-check attempts: {retryCount}</div>
+          ) : null}
+          {paymentStatus?.message ? (
+            <div className="text-xs text-gray-500">Message: {paymentStatus.message}</div>
+          ) : null}
+        </div>
+      </div>
 
       {/* Items List */}
-      <div className="border-t border-[#f4e0b9] pt-4">
+      <div className="bg-white border border-[#f4e0b9] rounded-lg p-4 shadow-sm">
         <h3 className="font-semibold text-[#3e2f1c] mb-2">Order Summary</h3>
-        {order.items.map((item) => (
+        {order.items.map((item, i) => (
           <div
-            key={item._id}
-            className="flex items-center gap-4 py-3 text-sm border-b border-gray-100 last:border-b-0"
+            key={item._id || item.id || item.sku || `${item.title}-${i}`}
+            className="flex items-center gap-4 py-3 px-2 text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50 rounded-md"
           >
             <img
-              src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${item.image}`}
+              src={getImageSrc(item)}
               alt={item.title}
-              className="w-16 h-16 object-contain rounded border border-[#f4e0b9]"
+              className="w-20 h-20 object-contain rounded-md border border-[#f4e0b9] bg-white"
             />
             <div className="flex-grow">
               <p className="font-semibold text-[#3e2f1c]">{item.title}</p>
               <p className="text-gray-500">Qty: {item.quantity}</p>
+              <p className="text-gray-500">Unit: {formatCurrency(item.price)}</p>
+              {item.karatage ? (
+                <p className="text-gray-500">Karat: {item.karatage}</p>
+              ) : null}
+              {item.grossWeight ? (
+                <p className="text-gray-500">Weight: {item.grossWeight}</p>
+              ) : null}
+              {item.metal ? (
+                <p className="text-gray-500">Metal: {item.metal}</p>
+              ) : null}
+              {item.size ? (
+                <p className="text-gray-500">Size: {item.size}</p>
+              ) : null}
+              {item.materialColour ? (
+                <p className="text-gray-500">Color: {item.materialColour}</p>
+              ) : null}
+              {item.brand ? (
+                <p className="text-gray-500">Brand: {item.brand}</p>
+              ) : null}
+              {item.collection ? (
+                <p className="text-gray-500">Collection: {item.collection}</p>
+              ) : null}
+              {item.jewelleryType ? (
+                <p className="text-gray-500">Type: {item.jewelleryType}</p>
+              ) : null}
             </div>
             <p className="font-semibold">
-              ₹{(item.price * item.quantity).toLocaleString()}
+              {formatCurrency((item.price || 0) * (item.quantity || 1))}
             </p>
           </div>
         ))}
-        <div className="text-right mt-4">
+        <div className="text-right mt-6 space-y-1 border-t border-gray-100 pt-4">
+          <p className="text-sm text-gray-600">
+            Subtotal:{" "}
+            {formatCurrency(
+              Array.isArray(order.items)
+                ? order.items.reduce(
+                  (sum, i) => sum + (i.price || 0) * (i.quantity || 1),
+                  0
+                )
+                : 0
+            )}
+          </p>
           <p className="text-lg font-bold text-[#c29d5f]">
-            Total: ₹{order.total.toLocaleString()}
+            Total: {formatCurrency(order.total)}
           </p>
         </div>
       </div>

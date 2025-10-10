@@ -1,6 +1,7 @@
 import Topbar from "../Layout/Topbar";
 import Navbar from "./Navbar";
 import { useEffect, useState } from "react";
+import axiosInstance from "../../utils/axiosInstance";
 
 const Header = () => {
   const [goldPrices, setGoldPrices] = useState({
@@ -10,38 +11,23 @@ const Header = () => {
   });
 
   useEffect(() => {
+
     const fetchGoldPrices = async () => {
       try {
-        // Fetch live gold price from MetalPriceAPI
-        const apiKey = import.meta.env.VITE_METALPRICE_API_KEY;
-        if (!apiKey) throw new Error('No metal price API key configured');
-        const response = await fetch(
-          `https://api.metalpriceapi.com/v1/latest?api_key=${apiKey}&base=USD&currencies=XAU`
-        );
+        // Fetch normalized INR/gram prices from backend (cached, single provider call daily at noon)
+        const res = await axiosInstance.get("/market/gold/price");
+        const { pricePerGram24kInr, pricePerGram22kInr } = res.data || {};
 
-        if (!response.ok) throw new Error("API request failed");
-
-        const data = await response.json();
-        const rate = data?.rates?.XAU;
-        if (!rate || typeof rate !== 'number' || !isFinite(rate)) {
-          throw new Error('Invalid XAU rate in response');
+        if (typeof pricePerGram24kInr !== "number" || typeof pricePerGram22kInr !== "number") {
+          throw new Error("Invalid response from backend");
         }
 
-        // XAU (gold) price in USD → USD per ounce
-        const usdPerOunce = 1 / rate;
-        const usdToInrRate = 83; // Better: fetch live forex INR rate
-        const ozToGram = 31.1035;
-
-        // Convert to INR per gram
-        const inrPerGram = (usdPerOunce * usdToInrRate) / ozToGram;
-
         setGoldPrices({
-          "24K": Math.round(inrPerGram),
-          "22K": Math.round(inrPerGram * 0.916),
-          "18K": Math.round(inrPerGram * 0.75),
+          "24K": Math.round(pricePerGram24kInr),
+          "22K": Math.round(pricePerGram22kInr),
+          "18K": Math.round(pricePerGram24kInr * 0.75),
         });
       } catch (err) {
-        // Quietly fall back to defaults in dev if API key is missing/invalid
         if (import.meta.env.DEV) {
           console.warn("Gold price API unavailable, using fallback:", err?.message || err);
         }
@@ -54,8 +40,8 @@ const Header = () => {
     };
 
     fetchGoldPrices();
-    const interval = setInterval(fetchGoldPrices, 60000); // refresh every 60s
-    return () => clearInterval(interval);
+    // No periodic refresh: backend updates once daily at noon IST. Frontend fetches once per load.
+    return () => { };
   }, []);
 
   const tickerItems = ["24K", "22K", "18K"];

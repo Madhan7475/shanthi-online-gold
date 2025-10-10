@@ -10,23 +10,67 @@ const MyOrdersPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
+        let cancelled = false;
         const fetchOrders = async () => {
             try {
-                const { data } = await axiosInstance.get("/orders/my-orders");
-                setOrders(data);
+                setLoading(true);
+                const { data } = await axiosInstance.get("/orders/my-orders", {
+                    params: { page: currentPage, limit: pageSize },
+                });
+                if (cancelled) return;
+                const items = data.items || data;
+                setOrders(Array.isArray(items) ? items : []);
+                const pages =
+                    Number(data.pages) ||
+                    Math.max(
+                        1,
+                        Math.ceil(
+                            (Array.isArray(data) ? data.length : Number(data.total || 0)) / pageSize
+                        )
+                    );
+                setTotalPages(pages);
             } catch (error) {
-                console.error("Failed to fetch orders:", error);
-                toast.error("Could not load your orders.");
+                if (!cancelled) {
+                    console.error("Failed to fetch orders:", error);
+                    toast.error("Could not load your orders.");
+                }
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
         if (user) {
             fetchOrders();
         }
-    }, [user]);
+        return () => {
+            cancelled = true;
+        };
+    }, [user, currentPage, pageSize]);
+
+    // Responsive page size: 3 (mobile), 4 (tablet), 5 (desktop)
+    useEffect(() => {
+        const compute = () => {
+            if (window.matchMedia("(max-width: 640px)").matches) return 3;
+            if (window.matchMedia("(max-width: 1024px)").matches) return 4;
+            return 5;
+        };
+        const update = () => {
+            setPageSize(compute());
+            setCurrentPage(1);
+        };
+        update();
+        window.addEventListener("resize", update);
+        return () => window.removeEventListener("resize", update);
+    }, []);
+
+    // Clamp current page when data or page size changes
+    useEffect(() => {
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [totalPages, currentPage]);
 
     // const handleCancelOrder = async (e, orderId) => {
     //     e.preventDefault();
@@ -56,6 +100,8 @@ const MyOrdersPage = () => {
         }
     };
 
+    const visibleOrders = Array.isArray(orders) ? orders.slice(0, pageSize) : [];
+
     if (loading) {
         return <Layout><div className="text-center py-20">Loading your orders...</div></Layout>;
     }
@@ -72,7 +118,7 @@ const MyOrdersPage = () => {
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {orders.map(order => (
+                    {visibleOrders.map(order => (
                         <Link
                             to={`/order/${order._id}`}
                             key={order._id}
@@ -89,7 +135,7 @@ const MyOrdersPage = () => {
                                     </div>
                                 </div>
                                 <div className="mb-4">
-                                    {order.items.map(item => (
+                                    {(order.items || []).slice(0, 1).map(item => (
                                         <div key={item._id} className="flex items-center gap-4 py-2 text-sm">
                                             <img src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${item.image}`} alt={item.title} className="w-12 h-12 object-contain rounded border border-[#f4e0b9]" />
                                             <div className="flex-grow">
@@ -99,6 +145,11 @@ const MyOrdersPage = () => {
                                             <p className="font-semibold">₹{(item.price * item.quantity).toLocaleString()}</p>
                                         </div>
                                     ))}
+                                    {Array.isArray(order.items) && order.items.length > 1 && (
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            +{order.items.length - 1} more item{order.items.length - 1 > 1 ? "s" : ""}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="border-t border-[#f4e0b9] pt-3 mt-3">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
@@ -123,6 +174,11 @@ const MyOrdersPage = () => {
                             </div>
                         </Link>
                     ))}
+                </div>
+            )}
+            {orders.length > 0 && totalPages > 1 && (
+                <div className="pt-6">
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </div>
             )}
         </div>

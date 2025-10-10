@@ -27,7 +27,11 @@ router.put('/:id', async (req, res) => {
     if (!order) {
       return res.status(404).json({ msg: 'Order not found' });
     }
+    const prevStatus = order.status;
     order.status = req.body.status;
+    if (prevStatus !== order.status) {
+      order.statusUpdatedAt = new Date();
+    }
     await order.save();
     res.json(order);
   } catch (err) {
@@ -44,6 +48,7 @@ router.put('/:id', async (req, res) => {
 // @access  Private
 router.get('/my-orders', verifyAuthFlexible, async (req, res) => {
   try {
+    // Determine the user's identifiers to match orders
     const ids = [];
     if (req.auth?.type === 'firebase') {
       ids.push(req.user.uid);
@@ -52,8 +57,21 @@ router.get('/my-orders', verifyAuthFlexible, async (req, res) => {
       ids.push(req.user.userId);
     }
 
-    const orders = await Order.find({ userId: { $in: ids } }).sort({ date: -1 });
-    res.json(orders);
+    // Server-side pagination (defaults to 5, allow client 3–5+, clamp 1–10)
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limitRaw = parseInt(req.query.limit);
+    const limit = Math.min(Math.max(Number.isFinite(limitRaw) ? limitRaw : 5, 1), 5);
+    const skip = (page - 1) * limit;
+
+    const filter = { userId: { $in: ids } };
+
+    const [items, total] = await Promise.all([
+      Order.find(filter).sort({ date: -1 }).skip(skip).limit(limit),
+      Order.countDocuments(filter),
+    ]);
+
+    const pages = Math.max(1, Math.ceil(total / limit));
+    return res.json({ items, total, page, pages });
   } catch (err) {
     console.error("Error fetching user's orders:", err.message);
     res.status(500).send('Server Error');
@@ -168,7 +186,11 @@ router.put('/:id/cancel', verifyAuthFlexible, async (req, res) => {
       return res.status(400).json({ msg: 'Order cannot be cancelled.' });
     }
 
+    const prevStatus = order.status;
     order.status = 'Cancelled';
+    if (prevStatus !== order.status) {
+      order.statusUpdatedAt = new Date();
+    }
     await order.save();
     res.json(order);
   } catch (err) {
