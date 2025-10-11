@@ -81,6 +81,9 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const testNotificationRoutes = require("./routes/testNotificationRoutes");
+
 const phonepeRoutes = require("./routes/phonepeRoutes");
 const marketRoutes = require("./routes/marketRoutes");
 const phonepeWebhookRoutes = require("./routes/phonepeWebhookRoutes");
@@ -101,6 +104,8 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/test-notifications", testNotificationRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -111,7 +116,10 @@ app.use((err, req, res, next) => {
 const startGoldPriceScheduler = require("./scheduler/goldPriceCron");
 const { getLatestGoldPrice, refreshForTodayIfNeeded } = require("./services/goldPriceService");
 const { repriceAllProducts } = require("./services/productRepriceService");
+
 startGoldPriceScheduler();
+
+// Initialize core services (price refresh + repricing)
 (async () => {
   try {
     // Ensure today's rate is present; if cache is from a previous IST day, refresh now.
@@ -169,6 +177,10 @@ startGoldPriceScheduler();
     });
   }
 })();
+
+// Initialize notification services (moved to dedicated module for cleaner code)
+const { initializeNotificationServices } = require("./services/notificationInit");
+initializeNotificationServices();
 
 // Start server
 const PORT = process.env.PORT || 9000;
