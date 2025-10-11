@@ -35,6 +35,7 @@ router.get("/me", verifyFirebaseToken, async (req, res) => {
       phone: user.phone,
       role: user.role,
       createdAt: user.createdAt,
+      name: user.name
     });
   } catch (error) {
     console.error("❌ Error fetching user:", error.message);

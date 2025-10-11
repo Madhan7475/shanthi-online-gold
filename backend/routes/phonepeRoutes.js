@@ -296,15 +296,28 @@ router.get('/order-status/:orderId',
         try {
           const order = await Order.findOne({ _id: orderId.trim() });
 
-          if (order && order.status !== 'Processing') {
-            const prev = order.status;
+          if (order && order.status?.toLowerCase() === 'pending') {
+            const prevStatus = order.status;
             order.status = 'Processing';
-            if (prev !== order.status) {
+            if (prevStatus !== order.status) {
               order.statusUpdatedAt = new Date();
             }
             await order.save();
 
-            console.log(`Order ${order._id} status updated to Processing`);
+            console.log(`Updated order ${order._id} status to Processing (payment completed)`);
+
+            // Trigger order confirmation notification
+            try {
+              console.log(`Payment completed for order ${order._id} - sending confirmation notification`);
+              await AutomatedNotificationService.triggerOrderNotification(order._id, 'confirmed');
+            } catch (notificationError) {
+              console.error('Error sending order confirmation notification:', notificationError);
+              // Don't fail the status update if notification fails
+            }
+          } else if (!order) {
+            console.log(`No order found with transactionId: ${orderId}`);
+          } else {
+            console.log(`Order ${order._id} already has Processing status`);
           }
         } catch (dbError) {
           console.error('Database order status update failed:', dbError);
