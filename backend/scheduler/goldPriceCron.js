@@ -54,12 +54,30 @@ async function runRefresh() {
             pricePerGram22kInr: data.pricePerGram22kInr,
             lastUpdated: data.lastUpdated,
         });
+        
+        // Product repricing
         try {
             const summary = await repriceAllProducts({ dryRun: false });
             console.log("🧮 Products repriced:", { updated: summary.updated, inspected: summary.inspected });
         } catch (e) {
             console.error("⚠️ Product repricing after refresh failed:", e?.message || e);
         }
+        
+        // Send gold price notifications
+        try {
+            const AutomatedNotificationService = require("../services/AutomatedNotificationService");
+            console.log("📱 Triggering gold price notifications...");
+            const notificationResult = await AutomatedNotificationService.sendDailyGoldPriceUpdate();
+            console.log("📊 Gold price notifications result:", {
+                sent: notificationResult.sent,
+                failed: notificationResult.failed,
+                price24k: notificationResult.currentPrice24k,
+                price22k: notificationResult.currentPrice22k
+            });
+        } catch (e) {
+            console.error("⚠️ Gold price notifications failed:", e?.message || e);
+        }
+        
     } catch (err) {
         console.error("❌ Scheduled gold price refresh failed:", err.message || err);
         // If provider (e.g., GoldAPI) rejects (403/429) or network fails, try short backoff retries
