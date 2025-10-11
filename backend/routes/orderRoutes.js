@@ -4,6 +4,7 @@ const Order = require('../models/Order');
 const Payment = require('../models/Payment');
 const Invoice = require('../models/Invoice');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
+const AutomatedNotificationService = require('../services/AutomatedNotificationService');
 
 // --- Admin Routes ---
 
@@ -29,11 +30,28 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ msg: 'Order not found' });
     }
     const prevStatus = order.status;
-    order.status = req.body.status;
+    const newStatus = req.body.status;
+    
+    order.status = newStatus;
     if (prevStatus !== order.status) {
       order.statusUpdatedAt = new Date();
     }
     await order.save();
+
+    // Trigger notifications for status changes
+    try {
+      if (prevStatus?.toLowerCase() === 'pending' && newStatus?.toLowerCase() === 'processing') {
+        console.log(`Order ${order._id} status changed from Pending to Processing - sending notification`);
+        await AutomatedNotificationService.triggerOrderNotification(order._id, 'confirmed');
+      } else if (prevStatus?.toLowerCase() === 'processing' && newStatus?.toLowerCase() === 'shipped') {
+        console.log(`Order ${order._id} status changed from Processing to Shipped - sending notification`);
+        await AutomatedNotificationService.triggerOrderNotification(order._id, 'shipped');
+      }
+    } catch (notificationError) {
+      console.error('Error sending order status notification:', notificationError);
+      // Don't fail the order update if notification fails
+    }
+
     res.json(order);
   } catch (err) {
     console.error(`Error updating order status for ${req.params.id}:`, err.message);
