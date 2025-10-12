@@ -1,14 +1,10 @@
 {
-<<<<<<< HEAD
-  "timestamp": "2025-10-06T11:28:26.981Z",
-=======
-  "timestamp": "2025-10-09T13:37:04.727Z",
->>>>>>> 78ec1b3bad550e0940cc0125c361d7fa11c1d871
+  "timestamp": "2025-10-12T09:45:43.243Z",
   "source": "GoldAPI.io",
   "goldRates": {
-    "pricePerGram24kInr": 11921.46,
-    "pricePerGram22kInr": 10928.01,
-    "lastUpdated": "2025-10-09T13:02:30.349Z"
+    "pricePerGram24kInr": 11811.67,
+    "pricePerGram22kInr": 10827.37,
+    "lastUpdated": "2025-10-12T06:51:40.914Z"
   },
   "inspected": 4,
   "updated": 0,

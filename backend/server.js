@@ -13,6 +13,7 @@ const connectDB = require("./config/db");
 connectDB();
 
 const app = express();
+console.log("[config] ENV_FILE =", envFile, "DEV_ALLOW_PRODUCT_WRITE =", process.env.DEV_ALLOW_PRODUCT_WRITE, "NODE_ENV =", process.env.NODE_ENV || "undefined");
 
 // Middleware
 app.use(express.json());
@@ -31,6 +32,16 @@ app.use("/uploads", express.static(uploadsDir));
 
 // Health check
 app.get("/", (req, res) => res.send("🟢 Backend is running"));
+// Extra health and env introspection for dev
+app.get("/healthz", (req, res) => res.json({ ok: true }));
+app.get("/env", (req, res) => {
+  res.json({
+    envFile,
+    nodeEnv: process.env.NODE_ENV || null,
+    devAllowProductWrite: process.env.DEV_ALLOW_PRODUCT_WRITE || null,
+    frontendUrl: process.env.FRONTEND_URL || null,
+  });
+});
 
 // Import and mount routes
 const paymentRoutes = require("./routes/paymentRoutes");

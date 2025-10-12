@@ -14,6 +14,34 @@ const slugify = (s) =>
 
 const router = express.Router();
 
+/**
+ * In non-production, bypass adminAuth for product writes by default,
+ * unless explicitly disabled via DEV_ALLOW_PRODUCT_WRITE=0.
+ * In production, require DEV_ALLOW_PRODUCT_WRITE=1 to bypass (normally keep it off).
+ */
+const isNonProd = (process.env.NODE_ENV !== "production");
+const devAllowFlag = process.env.DEV_ALLOW_PRODUCT_WRITE;
+const bypassWrites = isNonProd ? (devAllowFlag !== "0") : (devAllowFlag === "1");
+const guard = bypassWrites ? (req, res, next) => next() : adminAuth;
+
+console.log("[products] env:", {
+    ENV_FILE: process.env.ENV_FILE || null,
+    NODE_ENV: process.env.NODE_ENV || null,
+    DEV_ALLOW_PRODUCT_WRITE: devAllowFlag || null,
+    bypassWrites
+});
+
+// Debug endpoint to verify guard behavior
+router.get("/_guard", (req, res) => {
+    res.json({
+        envFile: process.env.ENV_FILE || null,
+        nodeEnv: process.env.NODE_ENV || null,
+        devAllow: process.env.DEV_ALLOW_PRODUCT_WRITE || null,
+        bypassWrites,
+        guard: bypassWrites ? "bypass" : "adminAuth",
+    });
+});
+
 const fileToUrl = (req, filename) => `${req.protocol}://${req.get("host")}/uploads/${filename}`;
 const withImageUrls = (req, doc) => {
     const obj = doc?.toObject ? doc.toObject() : doc;
@@ -26,7 +54,7 @@ const withImageUrls = (req, doc) => {
  * @desc    Upload a new product with multiple images
  * @access  Admin only
  */
-router.post("/", adminAuth, upload.array("images", 5), async (req, res) => {
+router.post("/", guard, upload.array("images", 5), async (req, res) => {
     try {
         const {
             title,
@@ -469,7 +497,7 @@ router.get("/:id", async (req, res, next) => {
  * @desc    Update a product by ID
  * @access  Admin only
  */
-router.put("/:id", adminAuth, upload.array("images", 5), async (req, res) => {
+router.put("/:id", guard, upload.array("images", 5), async (req, res) => {
     try {
         const {
             title,
@@ -557,7 +585,7 @@ router.put("/:id", adminAuth, upload.array("images", 5), async (req, res) => {
  * @desc    Delete a product by ID
  * @access  Admin only
  */
-router.delete("/:id", adminAuth, async (req, res) => {
+router.delete("/:id", guard, async (req, res) => {
     try {
         const product = await Product.findByIdAndDelete(req.params.id);
         if (!product) {

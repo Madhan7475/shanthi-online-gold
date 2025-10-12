@@ -126,12 +126,71 @@ const CartPage = () => {
             )}
 
             {cartItems.length > 0 && (
-              <div className="pt-6 flex justify-center">
-                <img
-                  src="/payment-icons.png"
-                  alt="Payment Methods"
-                  className="w-24 sm:w-60 md:w-72"
-                />
+              <div className="mt-10">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  {/* Purity Guaranteed */}
+                  <div className="flex items-center gap-4 bg-white border border-[#f4e0b9] rounded-lg p-5 shadow-sm">
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="w-12 h-12 text-[#400F45]"
+                      fill="currentColor"
+                    >
+                      <path d="M12 2.25l8.485 3.03c.3.107.515.39.515.707V12c0 5.25-3.25 9.75-9 11.25C6.25 21.75 3 17.25 3 12V6c0-.317.215-.6.515-.707L12 2.25z" />
+                      <path d="M10.25 12.5l1.75 1.75 3.75-3.75" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <div>
+                      <div className="text-lg font-semibold text-[#3e2f1c]">Purity Guaranteed</div>
+                      <div className="text-sm text-gray-600">on every online purchases</div>
+                    </div>
+                  </div>
+
+                  {/* Secure Delivery */}
+                  <div className="flex items-center gap-4 bg-white border border-[#f4e0b9] rounded-lg p-5 shadow-sm">
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="w-12 h-12 text-[#400F45]"
+                      fill="currentColor"
+                    >
+                      <path d="M2.75 7.5h10.5v7.5H2.75z" />
+                      <path d="M13.25 7.5h4.25l3.75 3.75V15h-8V7.5z" />
+                      <circle cx="7" cy="18" r="2.5" />
+                      <circle cx="17" cy="18" r="2.5" />
+                    </svg>
+                    <div>
+                      <div className="text-lg font-semibold text-[#3e2f1c]">Secure Delivery</div>
+                      <div className="text-sm text-gray-600">by our trusted partners</div>
+                    </div>
+                  </div>
+
+                  {/* Easy & Secure Payments (PhonePe) */}
+                  <div className="flex items-center gap-4 bg-white border border-[#f4e0b9] rounded-lg p-5 shadow-sm">
+                    <svg
+                      role="img"
+                      aria-label="PhonePe payments"
+                      viewBox="0 0 24 24"
+                      className="w-12 h-12"
+                    >
+                      <circle cx="12" cy="12" r="11" fill="#5F259F" />
+                      <text
+                        x="12"
+                        y="12"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize="12"
+                        fontWeight="700"
+                        fill="#FFFFFF"
+                      >
+                        पे
+                      </text>
+                    </svg>
+                    <div>
+                      <div className="text-lg font-semibold text-[#3e2f1c]">Easy & Secure Payments</div>
+                      <div className="text-sm text-gray-600">backed by the trust of PhonePe</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
