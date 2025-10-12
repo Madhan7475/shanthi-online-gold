@@ -17,10 +17,28 @@ console.log("[config] ENV_FILE =", envFile, "DEV_ALLOW_PRODUCT_WRITE =", process
 
 // Middleware
 app.use(express.json());
-const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+
+// Parse CORS origins from environment variable (comma-separated)
+const corsOriginEnv = process.env.CORS_ORIGIN || "http://localhost:5173";
+const allowedOrigins = corsOriginEnv
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(origin => origin.length > 0);
+
+console.log('CORS allowed origins:', allowedOrigins);
+
 app.use(
   cors({
-    origin: allowedOrigin, // frontend
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.warn('CORS blocked origin:', origin);
+        return callback(new Error('Not allowed by CORS policy'), false);
+      }
+    },
     credentials: true, // required if frontend sends cookies/auth headers
   })
 );
