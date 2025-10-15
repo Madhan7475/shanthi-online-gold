@@ -4,6 +4,7 @@ const Cart = require('../models/Cart');
 const Order = require('../models/Order');
 const Invoice = require('../models/Invoice');
 const Product = require('../models/Product');
+const { getLatestGoldPrice } = require('../services/goldPriceService');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
 
 // Helper function to get user ID
@@ -41,6 +42,60 @@ const mapCart = (req, cart) => {
   };
 };
 
+// Live price helpers (making charges waived)
+const parseGrams = (s) => {
+  if (s == null) return null;
+  const n = parseFloat(String(s).replace(",", ".").replace(/[^\d.]/g, ""));
+  return Number.isFinite(n) ? n : null;
+};
+const parseKarat = (karatage) => {
+  if (!karatage) return null;
+  const s = String(karatage).toUpperCase().trim();
+  const m = s.match(/([0-9]{2})\s*K|([0-9]{2})\s*KT|^([0-9]{2})$/i);
+  if (m) {
+    const k = parseInt(m[1] || m[2] || m[3], 10);
+    if (k > 0 && k <= 24) return k;
+  }
+  if (s.includes("24")) return 24;
+  if (s.includes("22")) return 22;
+  if (s.includes("18")) return 18;
+  return null;
+};
+const rateForKarat = (karat, pricePerGram24kInr, pricePerGram22kInr) => {
+  if (!pricePerGram24kInr) return null;
+  if (karat === 24) return pricePerGram24kInr;
+  if (karat === 22 && pricePerGram22kInr) return pricePerGram22kInr;
+  if (typeof karat === "number" && karat > 0 && karat <= 24) {
+    return pricePerGram24kInr * (karat / 24);
+  }
+  return pricePerGram22kInr || pricePerGram24kInr;
+};
+const computeLivePriceFrom = (weight, purity, rates) => {
+  const grams = parseGrams(weight);
+  const karat = parseKarat(purity) ?? 22;
+  const perGram = rateForKarat(karat, rates?.pricePerGram24kInr, rates?.pricePerGram22kInr);
+  if (grams != null && perGram != null && isFinite(grams) && isFinite(perGram)) {
+    return Math.round(grams * perGram);
+  }
+  return null;
+};
+const mapCartWithLive = (req, cart, rates) => {
+  const c = cart.toObject ? cart.toObject() : cart;
+  const items = (c.items || []).map((it) => {
+    const base = mapItem(req, it);
+    const livePrice = computeLivePriceFrom(base.weight, base.purity, rates);
+    const price = (livePrice != null ? livePrice : base.price);
+    return {
+      ...base,
+      originalPrice: base.price,
+      price,
+    };
+  });
+  const totalAmount = items.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
+  const totalItems = items.reduce((sum, it) => sum + Number(it.quantity || 0), 0);
+  return { items, totalAmount, totalItems };
+};
+
 // @route   GET /api/cart
 // @desc    Get user's cart items
 // @access  Private
@@ -58,7 +113,10 @@ router.get('/', verifyAuthFlexible, async (req, res) => {
       await cart.save();
     }
 
-    const mappedCart = mapCart(req, cart);
+    let rates = null;
+    try { rates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
+    const mappedCart = mapCartWithLive(req, cart, rates);
+    res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
       cart: mappedCart
@@ -85,8 +143,8 @@ router.post('/', verifyAuthFlexible, async (req, res) => {
 
     const { productId, name, price, image, quantity = 1, category, description, weight, purity } = req.body;
 
-    // Validate required fields
-    if (!productId || !name || !price || !image || !category) {
+    // Validate required fields (server computes price; price not required from client)
+    if (!productId || !name || !image || !category) {
       return res.status(400).json({
         success: false,
         message: 'Missing required product information'
@@ -122,23 +180,34 @@ router.post('/', verifyAuthFlexible, async (req, res) => {
         cart: mappedCart
       });
     } else {
-      // Add new item to cart
+      // Add new item to cart (compute server-side price using live rates; making charges waived)
+      let liveRates = null;
+      try { liveRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
+      const weightSrc = (typeof weight !== 'undefined' && weight !== null) ? weight : product.grossWeight;
+      const puritySrc = (typeof purity !== 'undefined' && purity !== null) ? purity : product.karatage;
+      const livePrice = computeLivePriceFrom(weightSrc, puritySrc, liveRates);
+      const serverPrice = Number.isFinite(Number(price)) ? Number(price) : (Number.isFinite(Number(product.price)) ? Number(product.price) : 0);
+      const finalPrice = (livePrice != null ? livePrice : serverPrice);
+
       cart.items.push({
         productId,
         name,
-        price,
+        price: finalPrice,
         image,
         quantity,
         category,
         description,
-        weight,
-        purity,
+        weight: weightSrc,
+        purity: puritySrc,
       });
     }
 
     await cart.save();
 
-    const mappedCart = mapCart(req, cart);
+    let addRates = null;
+    try { addRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
+    const mappedCart = mapCartWithLive(req, cart, addRates);
+    res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
       message: 'Item added to cart successfully',
@@ -194,9 +263,19 @@ router.put('/:itemId', verifyAuthFlexible, async (req, res) => {
     }
 
     cart.items[itemIndex].quantity = quantity;
+
+    // Recompute item price using live rate (making charges waived)
+    let updRates = null;
+    try { updRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
+    const updItem = cart.items[itemIndex];
+    const newPrice = computeLivePriceFrom(updItem.weight, updItem.purity, updRates);
+    if (newPrice != null) {
+      cart.items[itemIndex].price = newPrice;
+    }
     await cart.save();
 
-    const mappedCart = mapCart(req, cart);
+    const mappedCart = mapCartWithLive(req, cart, updRates);
+    res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
       message: 'Cart item updated successfully',
@@ -246,7 +325,10 @@ router.delete('/:itemId', verifyAuthFlexible, async (req, res) => {
     cart.items.splice(itemIndex, 1);
     await cart.save();
 
-    const mappedCart = mapCart(req, cart);
+    let delRates = null;
+    try { delRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
+    const mappedCart = mapCartWithLive(req, cart, delRates);
+    res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
       message: 'Item removed from cart successfully',
@@ -283,7 +365,10 @@ router.delete('/', verifyAuthFlexible, async (req, res) => {
     cart.items = [];
     await cart.save();
 
-    const mappedCart = mapCart(req, cart);
+    let clrRates = null;
+    try { clrRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
+    const mappedCart = mapCartWithLive(req, cart, clrRates);
+    res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
       message: 'Cart cleared successfully',
@@ -327,24 +412,31 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
       });
     }
 
-    // Create order from cart items
-    const orderItems = cart.items.map(item => ({
-      productId: item.productId,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-      quantity: item.quantity,
-      category: item.category,
-      description: item.description,
-      weight: item.weight,
-      purity: item.purity,
-    }));
+    // Create order from cart items using live prices
+    let coRates = null;
+    try { coRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
+    const orderItems = cart.items.map(item => {
+      const lp = computeLivePriceFrom(item.weight, item.purity, coRates);
+      const price = (lp != null ? lp : item.price);
+      return {
+        productId: item.productId,
+        name: item.name,
+        price,
+        image: item.image,
+        quantity: item.quantity,
+        category: item.category,
+        description: item.description,
+        weight: item.weight,
+        purity: item.purity,
+      };
+    });
+    const orderTotal = orderItems.reduce((sum, it) => sum + (it.price * it.quantity), 0);
 
     const newOrder = new Order({
       userId: userId,
       customerName: customer.name,
       items: orderItems,
-      total: cart.totalAmount,
+      total: orderTotal,
       status: 'Pending',
       deliveryAddress: customer.deliveryAddress,
       paymentMethod: paymentMethod,
@@ -356,7 +448,7 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
     // Create invoice
     const newInvoice = new Invoice({
       customerName: customer.name,
-      amount: cart.totalAmount,
+      amount: orderTotal,
       status: 'Pending',
       orderId: newOrder._id,
     });

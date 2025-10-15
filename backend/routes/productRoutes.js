@@ -4,6 +4,10 @@ const { upload } = require("../middleware/upload");
 const adminAuth = require("../middleware/adminAuth");
 const { repriceAllProducts } = require("../services/productRepriceService");
 const Category = require("../models/Category");
+const MakingCharge = require("../models/MakingCharge");
+const { getLatestGoldPrice } = require("../services/goldPriceService");
+const fs = require("fs");
+const path = require("path");
 // Basic slugify (no external dependency)
 const slugify = (s) =>
     String(s || "")
@@ -49,6 +53,49 @@ const withImageUrls = (req, doc) => {
     return { ...obj, imageUrls, primaryImageUrl: imageUrls[0] || null };
 };
 
+// Helpers to derive weight and rate on backend for price breakup
+const parseGrams = (s) => {
+    if (s == null) return null;
+    const n = parseFloat(String(s).replace(",", ".").replace(/[^\d.]/g, ""));
+    return Number.isFinite(n) ? n : null;
+};
+const parseKarat = (karatage) => {
+    if (!karatage) return null;
+    const s = String(karatage).toUpperCase().trim();
+    const m = s.match(/([0-9]{2})\s*K|([0-9]{2})\s*KT|^([0-9]{2})$/i);
+    if (m) {
+        const k = parseInt(m[1] || m[2] || m[3], 10);
+        if (k > 0 && k <= 24) return k;
+    }
+    if (s.includes("24")) return 24;
+    if (s.includes("22")) return 22;
+    if (s.includes("18")) return 18;
+    return null;
+};
+const rateForKarat = (karat, pricePerGram24kInr, pricePerGram22kInr, pricePerGram18kInr) => {
+    if (!pricePerGram24kInr) return null;
+    if (karat === 24) return pricePerGram24kInr;
+    if (karat === 22 && pricePerGram22kInr) return pricePerGram22kInr;
+    if (karat === 18 && pricePerGram18kInr) return pricePerGram18kInr;
+    if (typeof karat === "number" && karat > 0 && karat <= 24) {
+        return pricePerGram24kInr * (karat / 24);
+    }
+    return pricePerGram22kInr || pricePerGram24kInr;
+};
+
+// Compute live total for list views (making charges waived), using same parsing helpers.
+const computeLiveTotalForProduct = (doc, rates) => {
+    try {
+        const weightGrams = parseGrams(doc?.grossWeight);
+        const karat = parseKarat(doc?.karatage) ?? 22;
+        const perGram = rateForKarat(karat, rates?.pricePerGram24kInr, rates?.pricePerGram22kInr, rates?.pricePerGram18kInr);
+        if (weightGrams != null && perGram != null && isFinite(weightGrams) && isFinite(perGram)) {
+            return Math.round(weightGrams * perGram);
+        }
+    } catch { /* noop */ }
+    return null;
+};
+
 /**
  * @route   POST /api/products
  * @desc    Upload a new product with multiple images
@@ -77,6 +124,9 @@ router.post("/", guard, upload.array("images", 5), async (req, res) => {
             collection,
             gender,
             occasion,
+            makingChargeType,
+            makingChargeAmount,
+            makingChargeCurrency,
         } = req.body;
 
         // Resolve category relations
@@ -120,6 +170,22 @@ router.post("/", guard, upload.array("images", 5), async (req, res) => {
         });
 
         await newProduct.save();
+
+        // Optional: create making charge if provided and amount is valid
+        if (makingChargeType && makingChargeAmount !== undefined && Number.isFinite(parseFloat(makingChargeAmount))) {
+            try {
+                const mc = await MakingCharge.create({
+                    type: String(makingChargeType).toLowerCase() === "variable" ? "variable" : "fixed",
+                    amount: parseFloat(makingChargeAmount),
+                    currency: makingChargeCurrency || "INR",
+                    product: newProduct._id,
+                });
+                newProduct.makingCharge = mc._id;
+                await newProduct.save();
+            } catch (e) {
+                console.warn("⚠️ MakingCharge creation failed:", e?.message || String(e));
+            }
+        }
 
         res.status(201).json({
             message: "✅ Product uploaded successfully",
@@ -181,7 +247,18 @@ router.get("/", async (req, res) => {
         // Backward-compatible: when no query params, return plain array
         if (!hasQuery) {
             const products = await Product.find().sort({ createdAt: -1 }).lean();
-            return res.json(products.map((p) => withImageUrls(req, p)));
+
+            // Enrich with live total so listing pages show updated price consistently
+            let rates = null;
+            try { rates = await getLatestGoldPrice({ allowFetch: true }); } catch { /* fail-soft */ }
+            const list = products.map((p) => {
+                const obj = withImageUrls(req, p);
+                const liveTotal = computeLiveTotalForProduct(obj, rates);
+                return liveTotal != null ? { ...obj, price: liveTotal } : obj;
+            });
+
+            res.set("Cache-Control", "no-store");
+            return res.json(list);
         }
 
         const filter = {};
@@ -293,8 +370,18 @@ router.get("/", async (req, res) => {
             Product.countDocuments(filter),
         ]);
 
+        // Map items and override price with live total (waived MC) so grids show updated price
+        let rates = null;
+        try { rates = await getLatestGoldPrice({ allowFetch: true }); } catch { /* ignore */ }
+        const mapped = items.map((p) => {
+            const obj = withImageUrls(req, p);
+            const liveTotal = computeLiveTotalForProduct(obj, rates);
+            return liveTotal != null ? { ...obj, price: liveTotal } : obj;
+        });
+
+        res.set("Cache-Control", "no-store");
         res.json({
-            items: items.map((p) => withImageUrls(req, p)),
+            items: mapped,
             total,
             page: pageNum,
             pages: Math.ceil(total / limitNum),
@@ -485,7 +572,130 @@ router.get("/:id", async (req, res, next) => {
         if (!product) {
             return res.status(404).json({ error: "Product not found" });
         }
-        res.json(withImageUrls(req, product));
+
+        // Build response enriched with image URLs and price breakup computed on backend
+        const base = withImageUrls(req, product);
+
+        try {
+            let rates = null;
+            let rateSource = "none";
+            try {
+                // 1) Try in-memory cache (valid TTL) — fastest path
+                rates = await getLatestGoldPrice({ allowFetch: false });
+                rateSource = "cache";
+            } catch (eCache) {
+                // 2) Serve stale from disk immediately to keep product details snappy
+                try {
+                    const cachePath = path.join(__dirname, "..", "uploads", "gold_price_cache.json");
+                    if (fs.existsSync(cachePath)) {
+                        const raw = fs.readFileSync(cachePath, "utf8");
+                        const parsed = JSON.parse(raw);
+                        const data = parsed && (parsed.data || parsed);
+                        if (data && (data.pricePerGram24kInr || data.pricePerGram22kInr)) {
+                            rates = data;
+                            rateSource = "stale-disk";
+                            // Kick off a background refresh without blocking this request
+                            setImmediate(() => {
+                                getLatestGoldPrice({ allowFetch: true }).catch(() => { });
+                            });
+                        }
+                    }
+                } catch { /* ignore disk stale read errors */ }
+                // 3) If no disk stale available, fall back to fetching live (blocking)
+                if (!rates) {
+                    try {
+                        rates = await getLatestGoldPrice({ allowFetch: true });
+                        rateSource = "fetch";
+                    } catch { /* leave rates null */ }
+                }
+            }
+            const weightGrams = parseGrams(base.grossWeight);
+            const karat = parseKarat(base.karatage) ?? 22;
+            const perGram = rateForKarat(karat, rates?.pricePerGram24kInr, rates?.pricePerGram22kInr, rates?.pricePerGram18kInr);
+            const goldValueRaw = (weightGrams != null && perGram != null) ? (weightGrams * perGram) : null;
+
+            // Ensure making charge is pulled from DB (since we no longer populate for perf)
+            let mc = base.makingCharge || null;
+            try {
+                if (!mc || typeof mc !== "object" || typeof mc.amount === "undefined") {
+                    const doc = await MakingCharge.findOne({ product: base._id }).lean();
+                    if (doc) {
+                        mc = { type: doc.type, amount: doc.amount, currency: doc.currency || "INR" };
+                        // Attach minimal makingCharge to response so frontend can render the per-gram/fixed rate
+                        base.makingCharge = mc;
+                    }
+                }
+            } catch { /* ignore making-charge lookup errors */ }
+            const mcType = mc?.type || null;
+            const mcRatePerGram = mcType === "variable" ? Number(mc?.amount || 0) : null;
+            const mcFixed = mcType === "fixed" ? Number(mc?.amount || 0) : null;
+
+            let mcValueRaw = null;
+            if (mcType === "variable" && weightGrams != null) mcValueRaw = weightGrams * (mcRatePerGram || 0);
+            if (mcType === "fixed") mcValueRaw = mcFixed || 0;
+
+            // Only compute totals when inputs are available; otherwise leave null so UI can fall back to persisted DB price
+            const goldValue = goldValueRaw != null ? Math.round(goldValueRaw) : null;
+            const mcValue = mcValueRaw != null ? Math.round(mcValueRaw) : null;
+            const mcDiscountPercent = 100;
+            const mcWaived = true;
+            const mcValueDiscounted = mcWaived ? 0 : (mcValue != null ? Math.round(mcValue * (1 - Math.max(0, Math.min(100, mcDiscountPercent)) / 100)) : null);
+            const total = goldValue != null ? (goldValue + (mcValueDiscounted ?? 0)) : null;
+
+            base.priceBreakup = {
+                weightGrams,
+                karat,
+                goldRatePerGramInr: perGram ?? null,
+                goldValue: goldValue,
+                makingCharge: {
+                    type: mcType,
+                    ratePerGram: mcRatePerGram,
+                    fixed: mcFixed,
+                    value: mcValue,
+                    discountPercent: mcDiscountPercent,
+                    waived: mcWaived,
+                    valueDiscounted: mcValueDiscounted,
+                },
+                total: Number.isFinite(total) ? total : null,
+                goldRates: {
+                    pricePerGram24kInr: rates?.pricePerGram24kInr ?? null,
+                    pricePerGram22kInr: rates?.pricePerGram22kInr ?? null,
+                    lastUpdated: rates?.lastUpdated ?? null,
+                    source: rates?.source ?? null,
+                },
+            };
+        } catch (e) {
+            // Fail-soft: if rates unavailable, just return base object
+            console.warn("⚠️ Failed to compute priceBreakup:", e?.message || String(e));
+        }
+
+        // Debug headers to verify live rate used on this response
+        const pb = base && base.priceBreakup ? base.priceBreakup : null;
+        try {
+            if (pb && typeof pb.goldRatePerGramInr === "number") {
+                res.set("X-Gold-RatePerGram", String(pb.goldRatePerGramInr));
+            }
+            if (pb && typeof pb.karat !== "undefined" && pb.karat !== null) {
+                res.set("X-Gold-Karat", String(pb.karat));
+            }
+            if (pb && typeof pb.weightGrams === "number") {
+                res.set("X-Gold-WeightGrams", String(pb.weightGrams));
+            }
+            if (pb && pb.goldRates) {
+                if (pb.goldRates.source) res.set("X-Gold-Source", String(pb.goldRates.source));
+                if (pb.goldRates.lastUpdated) res.set("X-Gold-Updated", String(pb.goldRates.lastUpdated));
+            }
+            try {
+                if (typeof rateSource !== "undefined" && rateSource) {
+                    res.set("X-Gold-Rate-Source", String(rateSource));
+                }
+            } catch { /* best-effort header */ }
+        } catch (_) {
+            // header set is best-effort
+        }
+        // Prevent caching so each request can fetch the latest rate if needed
+        res.set("Cache-Control", "no-store");
+        res.json(base);
     } catch (err) {
         console.error("❌ Error fetching product by ID:", err);
         res.status(500).json({ error: "Failed to fetch product" });
@@ -520,6 +730,9 @@ router.put("/:id", guard, upload.array("images", 5), async (req, res) => {
             collection,
             gender,
             occasion,
+            makingChargeType,
+            makingChargeAmount,
+            makingChargeCurrency,
         } = req.body;
 
         const product = await Product.findById(req.params.id);
@@ -568,6 +781,30 @@ router.put("/:id", guard, upload.array("images", 5), async (req, res) => {
             product.images = req.files.map((file) => file.filename);
         }
 
+        // Upsert making charge if provided
+        if (makingChargeType && makingChargeAmount !== undefined && Number.isFinite(parseFloat(makingChargeAmount))) {
+            try {
+                const amountNum = parseFloat(makingChargeAmount);
+                let mc = await MakingCharge.findOne({ product: product._id });
+                if (mc) {
+                    mc.type = String(makingChargeType).toLowerCase() === "variable" ? "variable" : "fixed";
+                    mc.amount = amountNum;
+                    mc.currency = makingChargeCurrency || mc.currency || "INR";
+                    await mc.save();
+                } else {
+                    mc = await MakingCharge.create({
+                        type: String(makingChargeType).toLowerCase() === "variable" ? "variable" : "fixed",
+                        amount: amountNum,
+                        currency: makingChargeCurrency || "INR",
+                        product: product._id,
+                    });
+                }
+                product.makingCharge = mc._id;
+            } catch (e) {
+                console.warn("⚠️ MakingCharge upsert failed:", e?.message || String(e));
+            }
+        }
+
         await product.save();
 
         res.json({
@@ -590,6 +827,12 @@ router.delete("/:id", guard, async (req, res) => {
         const product = await Product.findByIdAndDelete(req.params.id);
         if (!product) {
             return res.status(404).json({ error: "Product not found" });
+        }
+        // Clean up linked making charge if present
+        try {
+            await MakingCharge.deleteOne({ product: product._id });
+        } catch (e) {
+            console.warn("⚠️ Failed to delete linked MakingCharge:", e?.message || String(e));
         }
         res.json({ message: "🗑️ Product deleted successfully", product });
     } catch (err) {
@@ -657,8 +900,17 @@ router.get("/search", async (req, res) => {
             Product.countDocuments(filter),
         ]);
 
+        let rates = null;
+        try { rates = await getLatestGoldPrice({ allowFetch: true }); } catch { /* ignore */ }
+        const mapped = items.map((p) => {
+            const obj = withImageUrls(req, p);
+            const liveTotal = computeLiveTotalForProduct(obj, rates);
+            return liveTotal != null ? { ...obj, price: liveTotal } : obj;
+        });
+
+        res.set("Cache-Control", "no-store");
         res.json({
-            items: items.map((p) => withImageUrls(req, p)),
+            items: mapped,
             total,
             page: pageNum,
             pages: Math.ceil(total / limitNum),
@@ -747,16 +999,21 @@ router.get("/feed", async (req, res) => {
             Product.countDocuments(filter),
         ]);
 
+        let rates = null;
+        try { rates = await getLatestGoldPrice({ allowFetch: true }); } catch { /* ignore */ }
+
         const list = items.map((p) => {
             const withUrls = withImageUrls(req, p);
+            const liveTotal = computeLiveTotalForProduct(withUrls, rates);
             return {
                 id: String(withUrls._id),
                 title: withUrls.title,
-                price: withUrls.price,
+                price: (liveTotal != null ? liveTotal : withUrls.price),
                 image: withUrls.primaryImageUrl,
             };
         });
 
+        res.set("Cache-Control", "no-store");
         res.json({
             items: list,
             total,
@@ -777,7 +1034,8 @@ router.get("/feed", async (req, res) => {
 router.post("/admin/reprice-today", adminAuth, async (req, res) => {
     try {
         const dryRun = String(req.query.dryRun || "").toLowerCase() === "true";
-        const summary = await repriceAllProducts({ dryRun });
+        const allowFetch = String(req.query.allowFetch || "").toLowerCase() === "true";
+        const summary = await repriceAllProducts({ dryRun, allowFetch });
         res.json(summary);
     } catch (err) {
         console.error("❌ Error repricing products:", err);

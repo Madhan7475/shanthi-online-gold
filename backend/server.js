@@ -31,7 +31,7 @@ app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
-      
+
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       } else {
@@ -99,16 +99,64 @@ app.use((err, req, res, next) => {
 });
 
 const startGoldPriceScheduler = require("./scheduler/goldPriceCron");
-const { refreshForTodayIfNeeded } = require("./services/goldPriceService");
+const { getLatestGoldPrice, refreshForTodayIfNeeded } = require("./services/goldPriceService");
 const { repriceAllProducts } = require("./services/productRepriceService");
 startGoldPriceScheduler();
 (async () => {
   try {
+    // Ensure today's rate is present; if cache is from a previous IST day, refresh now.
     await refreshForTodayIfNeeded();
-    const summary = await repriceAllProducts({ dryRun: false });
-    console.log("🧮 Initial product repricing complete:", { updated: summary.updated, inspected: summary.inspected });
+
+    // Use cached rate if available (no network). If missing, warm in background without failing startup.
+    let rates = null;
+    try {
+      rates = await getLatestGoldPrice({ allowFetch: false });
+    } catch { /* no cached rates yet */ }
+
+    if (!rates) {
+      setImmediate(async () => {
+        try {
+          await getLatestGoldPrice({ allowFetch: true });
+          console.log("🔄 Gold price warmed on startup");
+        } catch (e) {
+          console.warn("⛔ Gold price provider unavailable on startup:", e?.message || e);
+        }
+      });
+    }
+
+    // Only reprice synchronously when a rate is already cached
+    if (rates) {
+      const summary = await repriceAllProducts({ dryRun: false });
+      console.log("🧮 Initial product repricing complete:", { updated: summary.updated, inspected: summary.inspected });
+    } else {
+      console.log("⏭️ Skipping initial reprice (no cached rates). Scheduler will reprice once rates are available.");
+    }
   } catch (e) {
-    console.error("⚠️ Initial setup (price refresh + reprice) failed:", e?.message || e);
+    console.warn("⚠️ Startup warm skipped:", e?.message || e);
+
+    // Ensure we still fetch today's price: schedule a few retries in case the provider (e.g., GoldAPI) temporarily rejects (403/429)
+    const RETRY_DELAYS_MIN = [10, 30, 60]; // minutes from now
+    RETRY_DELAYS_MIN.forEach((min, idx) => {
+      setTimeout(async () => {
+        try {
+          const r = await getLatestGoldPrice({ forceRefresh: true });
+          console.log("🔁 Gold price refresh retry succeeded:", {
+            source: r.source,
+            lastUpdated: r.lastUpdated,
+            pricePerGram24kInr: r.pricePerGram24kInr,
+            pricePerGram22kInr: r.pricePerGram22kInr,
+          });
+          try {
+            const s = await repriceAllProducts({ dryRun: false });
+            console.log("🧮 Repriced after retry:", { updated: s.updated, inspected: s.inspected });
+          } catch (e2) {
+            console.warn("⚠️ Repricing after retry failed:", e2?.message || e2);
+          }
+        } catch (err) {
+          console.warn(`⏳ Gold price retry #${idx + 1} failed after ${min} min:`, err?.message || err);
+        }
+      }, min * 60 * 1000);
+    });
   }
 })();
 

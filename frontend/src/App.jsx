@@ -58,6 +58,7 @@ import Invoice from "./pages/Invoice";
 import AdminPanel from "./pages/Panel";
 import AdminDashboard from "./components/Admin/products/AdminDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import GoldRateAdmin from "./components/Admin/Market/GoldRateAdmin";
 
 // Admin Features
 import ProductUpload from "./components/Admin/products/ProductUpload";
@@ -156,6 +157,7 @@ const App = () => {
         <Route path="/admin/products" element={<ProductUpload />} />
         <Route path="/admin/products/list" element={<ProductList />} />
         <Route path="/admin/products/edit/:id" element={<ProductEdit />} />
+        <Route path="/admin/market" element={<AdminLayout><GoldRateAdmin /></AdminLayout>} />
         <Route path="/admin/orders" element={<AdminLayout><OrderManagement /></AdminLayout>} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/invoices" element={<Invoice />} />

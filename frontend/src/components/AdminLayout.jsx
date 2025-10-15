@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Package, ShoppingCart, Users, LogOut } from "lucide-react";
+import { Package, ShoppingCart, Users, LogOut, Coins } from "lucide-react";
 
 const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
@@ -24,6 +24,7 @@ const AdminLayout = ({ children }) => {
 
         <nav className="space-y-10 text-gray-200">
           <NavItem to="/admin/products" icon={<Package size={18} />} label="Products" />
+          <NavItem to="/admin/market" icon={<Coins size={18} />} label="Gold Rate" />
           <NavItem to="/admin/orders" icon={<ShoppingCart size={18} />} label="Orders" />
           <NavItem to="/admin/profiles" icon={<Users size={18} />} label="Profile Management" />
         </nav>
