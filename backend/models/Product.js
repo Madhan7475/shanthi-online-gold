@@ -27,7 +27,8 @@ const productSchema = new mongoose.Schema({
   gender: String,
   occasion: String,
   images: [String],
-}, { timestamps: true });
+  makingCharge: { type: mongoose.Schema.Types.ObjectId, ref: "MakingCharge", default: null, index: true },
+}, { timestamps: true, suppressReservedKeysWarning: true });
 
 // Indexes to accelerate backend filtering via query params
 productSchema.index({ createdAt: -1 });

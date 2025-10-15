@@ -71,7 +71,8 @@ const ProductUpload = () => {
     karatage: "", materialColour: "", grossWeight: "", metal: "", size: "",
     diamondClarity: "", diamondColor: "", numberOfDiamonds: "",
     diamondSetting: "", diamondShape: "", jewelleryType: "", brand: "",
-    collection: "", gender: "", occasion: ""
+    collection: "", gender: "", occasion: "",
+    makingChargeType: "fixed", makingChargeAmount: ""
   });
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -97,7 +98,8 @@ const ProductUpload = () => {
         karatage: "", materialColour: "", grossWeight: "", metal: "", size: "",
         diamondClarity: "", diamondColor: "", numberOfDiamonds: "",
         diamondSetting: "", diamondShape: "", jewelleryType: "", brand: "",
-        collection: "", gender: "", occasion: ""
+        collection: "", gender: "", occasion: "",
+        makingChargeType: "fixed", makingChargeAmount: ""
       });
       setImages([]);
     } catch (err) {
@@ -120,89 +122,113 @@ const ProductUpload = () => {
         </div>
       </div>
 
-        <div className="bg-white border border-[#d1bfd9] rounded-2xl p-8 shadow-lg">
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <div>
-                <label className={labelClass}>Product Name</label>
-                <input type="text" className={inputClass} value={formData.title} onChange={(e) => handleChange("title", e.target.value)} required />
-              </div>
-              <div>
-                <label className={labelClass}>Description</label>
-                <textarea className={`${inputClass} resize-none`} rows="3" value={formData.description} onChange={(e) => handleChange("description", e.target.value)} required />
-              </div>
+      <div className="bg-white border border-[#d1bfd9] rounded-2xl p-8 shadow-lg">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>Product Name</label>
+              <input type="text" className={inputClass} value={formData.title} onChange={(e) => handleChange("title", e.target.value)} required />
+            </div>
+            <div>
+              <label className={labelClass}>Description</label>
+              <textarea className={`${inputClass} resize-none`} rows="3" value={formData.description} onChange={(e) => handleChange("description", e.target.value)} required />
+            </div>
 
-              {/* ✅ Updated Category Dropdown */}
-              <div>
-                <label className={labelClass}>Category</label>
-                <select className={inputClass} value={formData.category} onChange={(e) => handleChange("category", e.target.value)} required>
-                  <option value="" disabled>Select category</option>
+            {/* ✅ Updated Category Dropdown */}
+            <div>
+              <label className={labelClass}>Category</label>
+              <select className={inputClass} value={formData.category} onChange={(e) => handleChange("category", e.target.value)} required>
+                <option value="" disabled>Select category</option>
 
-                  <optgroup label="Main Categories">
-                    {CATEGORIES.map((cat, i) => (
-                      <option key={i} value={cat}>{cat}</option>
-                    ))}
-                  </optgroup>
-
-                  <optgroup label="Category Slugs">
-                    {CATEGORY_SLUGS.map((slug, i) => (
-                      <option key={i} value={slug.value}>{slug.label}</option>
-                    ))}
-                  </optgroup>
-                </select>
-              </div>
-
-              <div>
-                <label className={labelClass}>Price (₹)</label>
-                <input type="number" className={inputClass} value={formData.price} onChange={(e) => handleChange("price", e.target.value)} required />
-              </div>
-              <div>
-                <label className={labelClass}>Stock Quantity</label>
-                <input type="number" className={inputClass} value={formData.stocks} onChange={(e) => handleChange("stocks", e.target.value)} required />
-              </div>
-              <div>
-                <label className={labelClass}>Upload Images</label>
-                <label htmlFor="imageUpload" className="inline-block cursor-pointer bg-[#400F45] text-white px-6 py-2 rounded-full hover:bg-[#330d37] transition text-sm">Choose Images</label>
-                <input id="imageUpload" type="file" onChange={handleImageChange} multiple accept="image/*" className="hidden" />
-                <div className="mt-3 grid grid-cols-4 gap-2">
-                  {images.map((img, idx) => (
-                    <img key={idx} src={URL.createObjectURL(img)} alt="preview" className="w-20 h-20 rounded-lg object-cover border border-[#d1bfd9]" />
+                <optgroup label="Main Categories">
+                  {CATEGORIES.map((cat, i) => (
+                    <option key={i} value={cat}>{cat}</option>
                   ))}
-                </div>
-              </div>
+                </optgroup>
+
+                <optgroup label="Category Slugs">
+                  {CATEGORY_SLUGS.map((slug, i) => (
+                    <option key={i} value={slug.value}>{slug.label}</option>
+                  ))}
+                </optgroup>
+              </select>
             </div>
 
-            {/* Dynamic Options */}
-            <div className="grid grid-cols-2 gap-4">
-              {Object.keys(formData).filter(key =>
-                !["title", "description", "category", "price", "stocks"].includes(key)
-              ).map((key) => (
-                <div key={key}>
-                  <label className={labelClass}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
-                  {OPTIONS_MAP[key] ? (
-                    <select className={inputClass} value={formData[key]} onChange={(e) => handleChange(key, e.target.value)}>
-                      <option value="">Select {key}</option>
-                      {OPTIONS_MAP[key].map((option, i) => <option key={i} value={option}>{option}</option>)}
-                    </select>
-                  ) : (
-                    <input className={inputClass} value={formData[key]} onChange={(e) => handleChange(key, e.target.value)} />
-                  )}
-                </div>
-              ))}
+            <div>
+              <label className={labelClass}>Price (₹)</label>
+              <input type="number" className={inputClass} value={formData.price} onChange={(e) => handleChange("price", e.target.value)} required />
+            </div>
+            <div>
+              <label className={labelClass}>Stock Quantity</label>
+              <input type="number" className={inputClass} value={formData.stocks} onChange={(e) => handleChange("stocks", e.target.value)} required />
             </div>
 
-            <div className="md:col-span-2 flex justify-end mt-6">
-              <button type="submit" disabled={loading} className="bg-[#400F45] text-white px-6 py-2 rounded-full hover:bg-[#330d37] transition">
-                {loading ? "Uploading..." : "Upload Product"}
-              </button>
+            {/* Making Charges */}
+            <div>
+              <label className={labelClass}>Making Charge Type</label>
+              <select
+                className={inputClass}
+                value={formData.makingChargeType}
+                onChange={(e) => handleChange("makingChargeType", e.target.value)}
+              >
+                <option value="fixed">Fixed (per product)</option>
+                <option value="variable">Variable (per gram)</option>
+              </select>
             </div>
-            {message && (
-              <div className="md:col-span-2 text-center text-sm font-medium mt-4">
-                <span className={message.includes("✅") ? "text-green-600" : "text-red-600"}>{message}</span>
+            <div>
+              <label className={labelClass}>Making Charge Amount (₹)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className={inputClass}
+                value={formData.makingChargeAmount}
+                onChange={(e) => handleChange("makingChargeAmount", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Upload Images</label>
+              <label htmlFor="imageUpload" className="inline-block cursor-pointer bg-[#400F45] text-white px-6 py-2 rounded-full hover:bg-[#330d37] transition text-sm">Choose Images</label>
+              <input id="imageUpload" type="file" onChange={handleImageChange} multiple accept="image/*" className="hidden" />
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {images.map((img, idx) => (
+                  <img key={idx} src={URL.createObjectURL(img)} alt="preview" className="w-20 h-20 rounded-lg object-cover border border-[#d1bfd9]" />
+                ))}
               </div>
-            )}
-          </form>
-        </div>
+            </div>
+          </div>
+
+          {/* Dynamic Options */}
+          <div className="grid grid-cols-2 gap-4">
+            {Object.keys(formData).filter(key =>
+              !["title", "description", "category", "price", "stocks", "makingChargeType", "makingChargeAmount"].includes(key)
+            ).map((key) => (
+              <div key={key}>
+                <label className={labelClass}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
+                {OPTIONS_MAP[key] ? (
+                  <select className={inputClass} value={formData[key]} onChange={(e) => handleChange(key, e.target.value)}>
+                    <option value="">Select {key}</option>
+                    {OPTIONS_MAP[key].map((option, i) => <option key={i} value={option}>{option}</option>)}
+                  </select>
+                ) : (
+                  <input className={inputClass} value={formData[key]} onChange={(e) => handleChange(key, e.target.value)} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="md:col-span-2 flex justify-end mt-6">
+            <button type="submit" disabled={loading} className="bg-[#400F45] text-white px-6 py-2 rounded-full hover:bg-[#330d37] transition">
+              {loading ? "Uploading..." : "Upload Product"}
+            </button>
+          </div>
+          {message && (
+            <div className="md:col-span-2 text-center text-sm font-medium mt-4">
+              <span className={message.includes("✅") ? "text-green-600" : "text-red-600"}>{message}</span>
+            </div>
+          )}
+        </form>
+      </div>
     </AdminLayout>
   );
 };

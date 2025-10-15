@@ -30,6 +30,19 @@ function msUntilNextNoonIST() {
     return Math.max(delayMs, 0);
 }
 
+function scheduleShortRetries() {
+    const delaysMin = [10, 30, 60]; // retry after 10, 30, 60 minutes
+    delaysMin.forEach((min, idx) => {
+        setTimeout(async () => {
+            try {
+                await runRefresh();
+            } catch (e) {
+                console.warn(`⏳ Scheduled gold price retry #${idx + 1} failed after ${min} min:`, e?.message || e);
+            }
+        }, min * 60 * 1000);
+    });
+}
+
 async function runRefresh() {
     try {
         const cfg = getProviderConfig();
@@ -49,6 +62,8 @@ async function runRefresh() {
         }
     } catch (err) {
         console.error("❌ Scheduled gold price refresh failed:", err.message || err);
+        // If provider (e.g., GoldAPI) rejects (403/429) or network fails, try short backoff retries
+        scheduleShortRetries();
     }
 }
 

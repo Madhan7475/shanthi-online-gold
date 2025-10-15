@@ -33,10 +33,13 @@ function loadCacheFromDisk() {
         if (fs.existsSync(CACHE_FILE)) {
             const raw = fs.readFileSync(CACHE_FILE, "utf8");
             const parsed = JSON.parse(raw);
-            if (parsed && parsed.data && typeof parsed.fetchedAt === "number") {
+            const fetchedAtMs = (typeof parsed.fetchedAt === "number")
+                ? parsed.fetchedAt
+                : (typeof parsed.fetchedAt === "string" ? Date.parse(parsed.fetchedAt) : 0);
+            if (parsed && parsed.data && fetchedAtMs) {
                 cache = {
                     data: parsed.data,
-                    fetchedAt: parsed.fetchedAt,
+                    fetchedAt: fetchedAtMs,
                     source: parsed.data.source || parsed.source || null,
                 };
                 console.log("💾 Loaded gold price cache from disk:", {
@@ -96,13 +99,16 @@ function applyAdjustments(pricePerGramInr) {
     return p;
 }
 
-function normalizeOutput({ perGram24kInr, perGram22kInr, source }) {
+function normalizeOutput({ perGram24kInr, perGram22kInr, perGram18kInr, source }) {
     const adj24 = applyAdjustments(perGram24kInr);
     const adj22 = applyAdjustments(perGram22kInr);
+    const basis18 = perGram18kInr != null ? perGram18kInr : (perGram24kInr * (18 / 24));
+    const adj18 = applyAdjustments(basis18);
     const now = new Date();
     return {
         pricePerGram24kInr: Number(adj24.toFixed(2)),
         pricePerGram22kInr: Number(adj22.toFixed(2)),
+        pricePerGram18kInr: Number(adj18.toFixed(2)),
         currency: "INR",
         unit: "GRAM",
         lastUpdated: now.toISOString(),
@@ -142,10 +148,12 @@ async function fetchFromMetalsApi() {
     const inrPerXau = rateINR / rateXAU;
     const perGram24 = inrPerXau / TROY_OUNCE_IN_GRAMS;
     const perGram22 = perGram24 * (22 / 24);
+    const perGram18 = perGram24 * (18 / 24);
 
     return normalizeOutput({
         perGram24kInr: perGram24,
         perGram22kInr: perGram22,
+        perGram18kInr: perGram18,
         source: "Metals-API",
     });
 }
@@ -176,6 +184,7 @@ async function fetchFromGoldApi() {
     if (!perGram22 && perGram24) {
         perGram22 = perGram24 * (22 / 24);
     }
+    const perGram18 = perGram24 ? perGram24 * (18 / 24) : null;
 
     if (!perGram24 || !perGram22) {
         throw new Error("GoldAPI.io response missing gram prices");
@@ -184,19 +193,21 @@ async function fetchFromGoldApi() {
     return normalizeOutput({
         perGram24kInr: perGram24,
         perGram22kInr: perGram22,
+        perGram18kInr: perGram18,
         source: "GoldAPI.io",
     });
 }
 
 async function getLatestGoldPrice({ forceRefresh = false, allowFetch = true } = {}) {
     const now = Date.now();
+    const sameDay = cache.data ? isSameISTDate(now, cache.fetchedAt) : false;
     if (!allowFetch) {
-        if (cache.data && now - cache.fetchedAt < TTL_MS) {
+        if (cache.data && (now - cache.fetchedAt < TTL_MS) && sameDay) {
             return cache.data;
         }
         throw new Error("Gold price not available. Await scheduled refresh at 12:00 Asia/Kolkata.");
     }
-    if (!forceRefresh && cache.data && now - cache.fetchedAt < TTL_MS) {
+    if (!forceRefresh && cache.data && (now - cache.fetchedAt < TTL_MS) && sameDay) {
         return cache.data;
     }
 
@@ -224,6 +235,23 @@ async function getLatestGoldPrice({ forceRefresh = false, allowFetch = true } = 
     }
 
     if (!result) {
+        // Service-level fallback: if providers failed (e.g., 403/429), try serving stale disk cache
+        try {
+            if (fs.existsSync(CACHE_FILE)) {
+                const raw = fs.readFileSync(CACHE_FILE, "utf8");
+                const parsed = JSON.parse(raw);
+                const fallback = parsed && (parsed.data || parsed);
+                if (fallback && (fallback.pricePerGram24kInr || fallback.pricePerGram22kInr)) {
+                    // Keep in-memory cache coherent for downstream reads
+                    cache = {
+                        data: fallback,
+                        fetchedAt: cache.fetchedAt || Date.now(),
+                        source: fallback.source || cache.source || null,
+                    };
+                    return fallback;
+                }
+            }
+        } catch (_) { /* ignore stale read errors */ }
         throw lastErr || new Error("No gold price provider configured. Set METALS_API_KEY or GOLDAPI_KEY.");
     }
 
@@ -234,6 +262,38 @@ async function getLatestGoldPrice({ forceRefresh = false, allowFetch = true } = 
     };
     persistCacheToDisk();
 
+    return result;
+}
+
+function setGoldPriceManual({ pricePerGram24kInr, pricePerGram22kInr, pricePerGram18kInr, source = "Manual-Override" } = {}) {
+    const p24 = Number(pricePerGram24kInr);
+    if (!Number.isFinite(p24)) {
+        throw new Error("pricePerGram24kInr is required and must be a number");
+    }
+    let p22 = pricePerGram22kInr != null ? Number(pricePerGram22kInr) : (p24 * (22 / 24));
+    if (!Number.isFinite(p22)) {
+        p22 = p24 * (22 / 24);
+    }
+    let p18 = pricePerGram18kInr != null ? Number(pricePerGram18kInr) : (p24 * (18 / 24));
+    if (!Number.isFinite(p18)) {
+        p18 = p24 * (18 / 24);
+    }
+    const result = {
+        pricePerGram24kInr: Number(p24.toFixed(2)),
+        pricePerGram22kInr: Number(p22.toFixed(2)),
+        pricePerGram18kInr: Number(p18.toFixed(2)),
+        currency: "INR",
+        unit: "GRAM",
+        lastUpdated: new Date().toISOString(),
+        source,
+        ttlSeconds: Math.floor(TTL_MS / 1000),
+    };
+    cache = {
+        data: result,
+        fetchedAt: Date.now(),
+        source: result.source,
+    };
+    persistCacheToDisk();
     return result;
 }
 
@@ -251,4 +311,5 @@ module.exports = {
     getLatestGoldPrice,
     getProviderConfig,
     refreshForTodayIfNeeded,
+    setGoldPriceManual,
 };

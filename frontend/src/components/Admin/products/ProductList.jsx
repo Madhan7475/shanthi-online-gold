@@ -71,87 +71,92 @@ const ProductList = () => {
         </div>
       </div>
 
-        {/* Filters */}
-        <div className="bg-white border border-[#d1bfd9] rounded-2xl p-6 shadow-lg mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {["title", "category", "price"].map((field) => (
-            <input
-              key={field}
-              type="text"
-              name={field}
-              value={filters[field]}
-              onChange={handleFilterChange}
-              placeholder={`Search ${field}`}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-[#400F45]"
-            />
-          ))}
-        </div>
+      {/* Filters */}
+      <div className="bg-white border border-[#d1bfd9] rounded-2xl p-6 shadow-lg mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {["title", "category", "price"].map((field) => (
+          <input
+            key={field}
+            type="text"
+            name={field}
+            value={filters[field]}
+            onChange={handleFilterChange}
+            placeholder={`Search ${field}`}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-[#400F45]"
+          />
+        ))}
+      </div>
 
-        {/* Loading & error states */}
-        {loading && (
-          <p className="text-center text-gray-500 py-6">Loading products...</p>
-        )}
-        {error && <p className="text-center text-red-600 py-4">{error}</p>}
+      {/* Loading & error states */}
+      {loading && (
+        <p className="text-center text-gray-500 py-6">Loading products...</p>
+      )}
+      {error && <p className="text-center text-red-600 py-4">{error}</p>}
 
-        {/* Product Table */}
-        {!loading && !error && (
-          <div className="bg-white border border-[#d1bfd9] rounded-2xl shadow overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-[#400F45] text-white">
-                <tr>
-                  <th className="p-4 text-left">Product</th>
-                  <th className="p-4 text-left">Category</th>
-                  <th className="p-4 text-left">Price</th>
-                  <th className="p-4 text-left">Stock</th>
-                  <th className="p-4 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map((product) => (
-                    <tr key={product._id} className="border-b hover:bg-[#f4eef8]">
-                      <td className="p-4 flex items-center gap-4">
-                        <img
-                          src={product.images?.[0] || "/placeholder.png"}
-                          alt={product.title}
-                          className="w-12 h-12 object-cover rounded-md border"
-                        />
-                        <div>
-                          <p className="font-semibold">{product.title}</p>
-                          <span className="text-xs text-gray-500">
-                            ID: {product._id?.slice(-6)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4">{product.category || "—"}</td>
-                      <td className="p-4">₹{product.price}</td>
-                      <td className="p-4">{product.stocks || 0}</td>
-                      <td className="p-4 text-center">
-                        <Link
-                          to={`/admin/products/edit/${product._id}`}
-                          className="text-[#400F45] font-medium hover:underline"
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(product._id)}
-                          className="ml-4 text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center py-6 text-gray-500">
-                      No matching products found.
+      {/* Product Table */}
+      {!loading && !error && (
+        <div className="bg-white border border-[#d1bfd9] rounded-2xl shadow overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-[#400F45] text-white">
+              <tr>
+                <th className="p-4 text-left">Product</th>
+                <th className="p-4 text-left">Category</th>
+                <th className="p-4 text-left">Price</th>
+                <th className="p-4 text-left">Stock</th>
+                <th className="p-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <tr key={product._id} className="border-b hover:bg-[#f4eef8]">
+                    <td className="p-4 flex items-center gap-4">
+                      <img
+                        src={
+                          product.primaryImageUrl ||
+                          (product.imageUrls && product.imageUrls[0]) ||
+                          (product.images && `${import.meta.env.VITE_API_BASE_URL || "http://localhost:9000"}/uploads/${product.images[0]}`) ||
+                          "/placeholder.png"
+                        }
+                        alt={product.title}
+                        className="w-12 h-12 object-cover rounded-md border"
+                      />
+                      <div>
+                        <p className="font-semibold">{product.title}</p>
+                        <span className="text-xs text-gray-500">
+                          ID: {product._id?.slice(-6)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4">{product.category || "—"}</td>
+                    <td className="p-4">₹{product.price}</td>
+                    <td className="p-4">{product.stocks || 0}</td>
+                    <td className="p-4 text-center">
+                      <Link
+                        to={`/admin/products/edit/${product._id}`}
+                        className="text-[#400F45] font-medium hover:underline"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(product._id)}
+                        className="ml-4 text-red-600 hover:underline"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="text-center py-6 text-gray-500">
+                    No matching products found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </AdminLayout>
   );
 };

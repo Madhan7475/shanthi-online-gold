@@ -74,9 +74,9 @@ function writeSnapshot(summary) {
  *
  * By default, persists to MongoDB (updates Product.price). If dryRun=true, only returns a summary.
  */
-async function repriceAllProducts({ dryRun = false } = {}) {
-    // Do NOT fetch provider here; we rely on cached rates for today.
-    const rates = await getLatestGoldPrice({ allowFetch: false });
+async function repriceAllProducts({ dryRun = false, allowFetch = false } = {}) {
+    // Fetch strategy is configurable: by default use cached rates; when allowFetch=true, refresh if needed.
+    const rates = await getLatestGoldPrice({ allowFetch });
     const { pricePerGram24kInr, pricePerGram22kInr, lastUpdated, source } = rates;
 
     const cursor = Product.find({}, { title: 1, price: 1, grossWeight: 1, karatage: 1 }).cursor();
@@ -88,6 +88,8 @@ async function repriceAllProducts({ dryRun = false } = {}) {
     let unchanged = 0;
 
     const sampleChanges = [];
+    const sampleUnchanged = [];
+    const MAX_SAMPLES = 10;
     const bulkOps = [];
     const BATCH = 500;
 
@@ -120,7 +122,7 @@ async function repriceAllProducts({ dryRun = false } = {}) {
                 });
             }
             updated++;
-            if (sampleChanges.length < 10) {
+            if (sampleChanges.length < MAX_SAMPLES) {
                 sampleChanges.push({
                     id: String(p._id),
                     title: p.title,
@@ -132,6 +134,16 @@ async function repriceAllProducts({ dryRun = false } = {}) {
             }
         } else {
             unchanged++;
+            if (sampleUnchanged.length < MAX_SAMPLES) {
+                sampleUnchanged.push({
+                    id: String(p._id),
+                    title: p.title,
+                    karatage: p.karatage,
+                    grossWeight: p.grossWeight,
+                    price: p.price,
+                    computed: newPrice,
+                });
+            }
         }
 
         if (!dryRun && bulkOps.length >= BATCH) {
@@ -159,6 +171,7 @@ async function repriceAllProducts({ dryRun = false } = {}) {
         skippedNoKarat,
         dryRun,
         sampleChanges,
+        sampleUnchanged,
     };
 
     writeSnapshot(summary);
