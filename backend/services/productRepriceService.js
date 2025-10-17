@@ -117,7 +117,7 @@ async function repriceAllProducts({ dryRun = false, allowFetch = false } = {}) {
             if (!dryRun) {
                 const perGramApplied = rateForKarat(karat, pricePerGram24kInr, pricePerGram22kInr);
                 const goldValue = Math.round(weight * perGramApplied);
-                const makingValue = Math.max(0, newPrice - goldValue);
+                const makingValue = 0;
                 const priceBreakup = {
                     total: newPrice,
                     weightGrams: weight,
