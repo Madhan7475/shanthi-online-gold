@@ -1,7 +1,8 @@
 // backend/routes/notificationRoutes.js
 const express = require("express");
 const router = express.Router();
-const NotificationService = require("../services/NotificationService");
+const NotificationManager = require("../services/NotificationManager");
+const NotificationService = require("../services/NotificationService"); // Keep for device management
 const NotificationTemplate = require("../models/NotificationTemplate");
 const NotificationCampaign = require("../models/NotificationCampaign");
 const UserDevice = require("../models/UserDevice");
@@ -9,13 +10,14 @@ const NotificationLog = require("../models/NotificationLog");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 const adminAuth = require("../middleware/adminAuth");
 
-// Initialize notification service (safe initialization)
+// Initialize notification systems (safe initialization)
 (async () => {
   try {
-    await NotificationService.initialize();
+    await NotificationManager.initialize();
+    await NotificationService.initialize(); // For device management
   } catch (error) {
     console.warn(
-      "Notification service initialization failed in routes:",
+      "Notification system initialization failed in routes:",
       error.message
     );
   }
@@ -399,6 +401,9 @@ router.put(
         });
       }
 
+      // Store old preferences for topic subscription management
+      const oldPreferences = { ...device.preferences };
+
       // Update preferences
       const allowedPreferences = [
         "enabled",
@@ -425,9 +430,53 @@ router.put(
         }
       });
 
+      // Manage Firebase topic subscriptions based on preference changes
+      if (device.fcmToken) {
+        try {
+          // Get current topics based on new preferences
+          const { getTopicsForPreferences } = require("../constants/notificationTopics");
+          const newTopics = getTopicsForPreferences(
+            device.preferences, 
+            device.userSegment, 
+            device.deviceInfo?.platform
+          );
+          const oldTopics = getTopicsForPreferences(
+            oldPreferences, 
+            device.userSegment, 
+            device.deviceInfo?.platform
+          );
+
+          // Find topics to unsubscribe from (were subscribed but no longer should be)
+          const topicsToUnsubscribe = oldTopics.filter(topic => !newTopics.includes(topic));
+          
+          // Find topics to subscribe to (should be subscribed but weren't before)
+          const topicsToSubscribe = newTopics.filter(topic => !oldTopics.includes(topic));
+
+          // Handle topic subscription changes
+          if (topicsToUnsubscribe.length > 0) {
+            await NotificationService.unsubscribeFromTopics(device.fcmToken, topicsToUnsubscribe);
+          }
+          
+          if (topicsToSubscribe.length > 0) {
+            for (const topic of topicsToSubscribe) {
+              await NotificationService.subscribeToTopic(device.fcmToken, topic);
+            }
+          }
+
+          console.log(`Updated topic subscriptions for device ${device._id}: +${topicsToSubscribe.length} -${topicsToUnsubscribe.length}`);
+        } catch (topicError) {
+          console.warn('Topic subscription update failed:', topicError.message);
+          // Don't fail the preference update if topic management fails
+        }
+      }
+
       await device.save();
 
-      res.json(device.preferences);
+      res.json({
+        success: true,
+        preferences: device.preferences,
+        message: "Preferences updated successfully"
+      });
     } catch (error) {
       console.error("Error updating preferences:", error);
       res.status(500).json({
@@ -1289,12 +1338,18 @@ router.post("/send", adminAuth, async (req, res) => {
     const results = [];
     for (const targetUserId of targetUsers) {
       try {
-        const result = await NotificationService.sendNotification({
-          userId: targetUserId,
-          templateId,
-          variables,
-          priority,
-          source: "manual",
+        const result = await NotificationManager.sendNotification({
+          type: 'manual',
+          trigger: 'admin_manual',
+          data: {
+            templateId,
+            variables
+          },
+          recipients: [targetUserId],
+          options: {
+            priority,
+            source: "manual",
+          }
         });
         results.push({ userId: targetUserId, ...result });
       } catch (error) {

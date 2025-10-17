@@ -3,8 +3,14 @@ const admin = require("../config/firebaseAdmin");
 const NotificationTemplate = require("../models/NotificationTemplate");
 const UserDevice = require("../models/UserDevice");
 const NotificationLog = require("../models/NotificationLog");
+const TopicNotificationLog = require("../models/TopicNotificationLog");
 const NotificationCampaign = require("../models/NotificationCampaign");
 const { v4: uuidv4 } = require("uuid");
+const { 
+  NOTIFICATION_TOPICS,
+  getTopicsForPreferences,
+  isValidTopic
+} = require("../constants/notificationTopics");
 
 class NotificationService {
   constructor() {
@@ -15,6 +21,9 @@ class NotificationService {
       this.messaging = null;
     }
     this.isInitialized = false;
+    
+    // Use centralized topic definitions
+    this.topics = NOTIFICATION_TOPICS;
   }
 
   /**
@@ -258,6 +267,22 @@ class NotificationService {
         );
       }
 
+      // Auto-subscribe to Firebase topics based on preferences and user segment
+      try {
+        const userSegment = device.userSegment;
+        const topicSubscriptionResult = await this.manageTopicSubscriptions(
+          fcmToken, 
+          device.preferences, 
+          userSegment, 
+          platform
+        );
+        
+        console.log(`Topic subscriptions for device ${deviceId}: ${topicSubscriptionResult.totalSubscribed} successful, ${topicSubscriptionResult.totalErrors} errors`);
+      } catch (topicError) {
+        console.warn(`Failed to manage topic subscriptions for device ${deviceId}:`, topicError.message);
+        // Don't fail device registration due to topic subscription errors
+      }
+
       return {
         success: true,
         message: "Device registered successfully",
@@ -408,6 +433,324 @@ class NotificationService {
         success: false,
         message: "Failed to get user devices",
         error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Send notification to Firebase topic (for broadcast notifications)
+   */
+  async sendTopicNotification(options) {
+    const {
+      topic,
+      templateId,
+      variables = {},
+      priority = "normal",
+      source = "automated",
+      campaignId = null,
+      logDelivery = false, // Optional logging for topic notifications
+    } = options;
+
+    const notificationId = uuidv4();
+
+    try {
+      // Check if service is ready
+      if (!this.isReady()) {
+        throw new Error("Notification service not initialized");
+      }
+
+      // Validate topic using centralized validation
+      if (!isValidTopic(topic)) {
+        throw new Error(`Invalid topic: ${topic}. Must be one of: ${Object.values(NOTIFICATION_TOPICS).join(', ')}`);
+      }
+
+      // Get notification template
+      const template = await NotificationTemplate.findById(templateId);
+      if (!template || template.status !== "active") {
+        throw new Error("Template not found or inactive");
+      }
+
+      // Validate template variables
+      const validation = template.validateVariables(variables);
+      if (!validation.isValid) {
+        throw new Error(
+          `Missing required variables: ${validation.missingVariables.join(", ")}`
+        );
+      }
+
+      // Render notification content
+      const content = template.render(variables);
+
+      // Prepare FCM topic message
+      const renderedAction = content.action || template.action;
+      const fcmMessage = {
+        topic: topic,
+        notification: {
+          title: content.title,
+          body: content.body,
+        },
+        data: {
+          templateId: template._id.toString(),
+          notificationId,
+          campaignId: campaignId || "",
+          actionType: renderedAction?.type || "none",
+          actionValue: renderedAction?.value || "",
+          buttonText: renderedAction?.buttonText || "",
+          notificationType: 'topic',
+          source: source,
+          variables: JSON.stringify(variables)
+        },
+        android: {
+          priority: priority === "high" ? "high" : "normal",
+          notification: {
+            imageUrl: template.imageUrl,
+            icon: template.iconUrl,
+            clickAction: renderedAction?.value,
+          },
+        },
+        apns: {
+          payload: {
+            aps: {
+              badge: 1,
+              sound: "default",
+            },
+          },
+        },
+      };
+
+      // Add image for rich notifications
+      if (template.imageUrl) {
+        fcmMessage.notification.imageUrl = template.imageUrl;
+      }
+
+      const startTime = Date.now();
+
+      // Send notification to topic via FCM
+      const response = await this.messaging.send(fcmMessage);
+
+      const endTime = Date.now();
+      const processingTime = endTime - startTime;
+
+      // Update template stats
+      template.stats.totalSent += 1;
+      template.stats.lastUsed = new Date();
+      await template.save();
+
+      // Optional lightweight logging for topic notifications (enabled by logDelivery flag)
+      if (logDelivery) {
+        try {
+          await TopicNotificationLog.create({
+            notificationId,
+            campaignId,
+            templateId: template._id,
+            templateVersion: template.version,
+            topic: topic,
+            content: {
+              title: content.title,
+              body: content.body,
+              imageUrl: template.imageUrl,
+              variables: variables
+            },
+            delivery: {
+              status: 'sent',
+              sentAt: new Date(),
+              fcmMessageId: response
+            },
+            source: source,
+            priority: priority,
+            performance: {
+              processingTime: processingTime
+            }
+          });
+        } catch (logError) {
+          console.warn('Failed to create topic notification log:', logError.message);
+          // Don't fail the notification if logging fails
+        }
+      }
+
+      console.log(`📢 Topic notification sent successfully to "${topic}" (Template: ${template.templateId})`);
+
+      return {
+        success: true,
+        notificationId,
+        messageId: response,
+        processingTime,
+        topic: topic,
+        deliveryType: 'topic',
+        templateId: template.templateId,
+        subscriberEstimate: 'Unknown (topic-based)', // Firebase doesn't provide subscriber counts
+        logged: logDelivery
+      };
+
+    } catch (error) {
+      console.error(`❌ Failed to send topic notification to "${topic}":`, error);
+
+      // Update template failure stats
+      try {
+        const template = await NotificationTemplate.findById(templateId);
+        if (template) {
+          template.stats.totalFailed = (template.stats.totalFailed || 0) + 1;
+          template.stats.lastUsed = new Date();
+          await template.save();
+        }
+      } catch (statsError) {
+        console.error('Failed to update template failure stats:', statsError);
+      }
+
+      // Optional lightweight failure logging for topic notifications
+      if (logDelivery) {
+        try {
+          await TopicNotificationLog.create({
+            notificationId,
+            campaignId,
+            templateId: templateId,
+            topic: topic,
+            content: {
+              title: 'Failed to render',
+              body: 'Notification failed before sending',
+              variables: variables
+            },
+            delivery: {
+              status: 'failed',
+              failedAt: new Date(),
+              failureReason: error.message,
+              errorCode: error.code
+            },
+            source: source,
+            priority: priority
+          });
+        } catch (logError) {
+          console.warn('Failed to create topic notification failure log:', logError.message);
+        }
+      }
+
+      return {
+        success: false,
+        error: error.message,
+        notificationId,
+        topic: topic,
+        deliveryType: 'topic',
+        logged: logDelivery
+      };
+    }
+  }
+
+  /**
+   * Subscribe device to topic
+   */
+  async subscribeToTopic(fcmToken, topic) {
+    try {
+      if (!this.isReady()) {
+        throw new Error("Notification service not initialized");
+      }
+
+      await this.messaging.subscribeToTopic([fcmToken], topic);
+      
+      console.log(`Device subscribed to topic: ${topic}`);
+      return { success: true, topic };
+    } catch (error) {
+      console.error(`Failed to subscribe device to topic ${topic}:`, error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Unsubscribe device from topic
+   */
+  async unsubscribeFromTopic(fcmToken, topic) {
+    try {
+      if (!this.isReady()) {
+        throw new Error("Notification service not initialized");
+      }
+
+      await this.messaging.unsubscribeFromTopic([fcmToken], topic);
+      
+      console.log(`Device unsubscribed from topic: ${topic}`);
+      return { success: true, topic };
+    } catch (error) {
+      console.error(`Failed to unsubscribe device from topic ${topic}:`, error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Subscribe device to multiple topics based on user preferences and segments
+   */
+  async manageTopicSubscriptions(fcmToken, userPreferences, userSegment, platform) {
+    try {
+      const subscriptions = [];
+      const errors = [];
+
+      // Get topics based on preferences using centralized logic
+      const topicsToSubscribe = getTopicsForPreferences(userPreferences, userSegment, platform);
+
+      // Subscribe to each topic
+      for (const topic of topicsToSubscribe) {
+        try {
+          await this.subscribeToTopic(fcmToken, topic);
+          subscriptions.push(topic);
+        } catch (error) {
+          errors.push({ topic, error: error.message });
+        }
+      }
+
+      return {
+        success: true,
+        subscriptions,
+        errors: errors.length > 0 ? errors : null,
+        totalSubscribed: subscriptions.length,
+        totalErrors: errors.length
+      };
+
+    } catch (error) {
+      console.error('Error managing topic subscriptions:', error);
+      return {
+        success: false,
+        error: error.message,
+        subscriptions: [],
+        errors: [{ topic: 'general', error: error.message }]
+      };
+    }
+  }
+
+  /**
+   * Unsubscribe device from topics based on updated preferences
+   */
+  async unsubscribeFromTopics(fcmToken, topics) {
+    try {
+      const unsubscriptions = [];
+      const errors = [];
+
+      // Validate topics before unsubscribing
+      for (const topic of topics) {
+        if (!isValidTopic(topic)) {
+          errors.push({ topic, error: 'Invalid topic' });
+          continue;
+        }
+
+        try {
+          await this.unsubscribeFromTopic(fcmToken, topic);
+          unsubscriptions.push(topic);
+        } catch (error) {
+          errors.push({ topic, error: error.message });
+        }
+      }
+
+      return {
+        success: true,
+        unsubscriptions,
+        errors: errors.length > 0 ? errors : null,
+        totalUnsubscribed: unsubscriptions.length,
+        totalErrors: errors.length
+      };
+
+    } catch (error) {
+      console.error('Error unsubscribing from topics:', error);
+      return {
+        success: false,
+        error: error.message,
+        unsubscriptions: [],
+        errors: [{ topic: 'general', error: error.message }]
       };
     }
   }
