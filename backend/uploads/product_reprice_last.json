@@ -7,12 +7,21 @@
     "lastUpdated": "2025-10-15T15:25:01.347Z"
   },
   "inspected": 4,
-  "updated": 3,
-  "unchanged": 0,
+  "updated": 1,
+  "unchanged": 2,
   "skippedNoWeight": 1,
   "skippedNoKarat": 0,
   "dryRun": false,
-  "sampleChanges": [],
+  "sampleChanges": [
+    {
+      "id": "68c9351686c5d737379c6cc4",
+      "title": "Daisy Curve Diamond Ring",
+      "karatage": "18",
+      "grossWeight": "1.329g",
+      "oldPrice": 12902,
+      "newPrice": 12480
+    }
+  ],
   "sampleUnchanged": [
     {
       "id": "68c9347986c5d737379c6cbb",
@@ -21,14 +30,6 @@
       "grossWeight": "13.47g",
       "price": 160630,
       "computed": 160630
-    },
-    {
-      "id": "68c9351686c5d737379c6cc4",
-      "title": "Daisy Curve Diamond Ring",
-      "karatage": "18",
-      "grossWeight": "1.329g",
-      "price": 12480,
-      "computed": 12480
     },
     {
       "id": "68c9359586c5d737379c6ccc",

@@ -43,7 +43,7 @@ const userDeviceSchema = new mongoose.Schema({
     // Global notification toggle
     enabled: { type: Boolean, default: true },
     
-    // Category-wise preferences
+    // Category-wise preferences (also used as Firebase topics)
     promotional: { type: Boolean, default: true },
     userSpecific: { type: Boolean, default: true },
     transactional: { type: Boolean, default: true },

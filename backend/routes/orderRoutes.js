@@ -4,7 +4,7 @@ const Order = require('../models/Order');
 const Payment = require('../models/Payment');
 const Invoice = require('../models/Invoice');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
-const AutomatedNotificationService = require('../services/AutomatedNotificationService');
+const NotificationManager = require('../services/NotificationManager');
 
 // --- Admin Routes ---
 
@@ -38,18 +38,37 @@ router.put('/:id', async (req, res) => {
     }
     await order.save();
 
-    // Trigger notifications for status changes
-    try {
-      if (prevStatus?.toLowerCase() === 'pending' && newStatus?.toLowerCase() === 'processing') {
-        console.log(`Order ${order._id} status changed from Pending to Processing - sending notification`);
-        await AutomatedNotificationService.triggerOrderNotification(order._id, 'confirmed');
-      } else if (prevStatus?.toLowerCase() === 'processing' && newStatus?.toLowerCase() === 'shipped') {
-        console.log(`Order ${order._id} status changed from Processing to Shipped - sending notification`);
-        await AutomatedNotificationService.triggerOrderNotification(order._id, 'shipped');
-      }
-    } catch (notificationError) {
-      console.error('Error sending order status notification:', notificationError);
-      // Don't fail the order update if notification fails
+    // Trigger notification for status changes (enterprise single-call pattern)
+    if (prevStatus !== newStatus) {
+      // Single call to NotificationManager - handles everything internally
+      setImmediate(async () => {
+        try {
+          const result = await NotificationManager.sendNotification(
+            'order', 
+            order._id, 
+            newStatus.toLowerCase(), 
+            'admin_action',
+            {
+              additionalData: { 
+                previousStatus: prevStatus,
+                updatedBy: 'admin',
+                updatedAt: new Date()
+              }
+            }
+          );
+          
+          if (result.success) {
+            console.log(`✅ Order notification queued: ${order._id} (${prevStatus} → ${newStatus}) - Queue ID: ${result.queueId}`);
+          } else {
+            console.warn(`⚠️ Order notification failed: ${order._id} - ${result.error}`);
+          }
+        } catch (error) {
+          console.error(`❌ Error sending order notification for ${order._id}:`, error.message);
+          // Non-blocking - notification failure doesn't affect order update
+        }
+      });
+      
+      console.log(`Order ${order._id} status: ${prevStatus} → ${newStatus} (notification processing)`);
     }
 
     res.json(order);

@@ -2,6 +2,7 @@ const express = require('express');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
 const Order = require('../models/Order');
 const { getPhonePeConfig } = require('../config/phonepe');
+const NotificationManager = require('../services/NotificationManager');
 
 const router = express.Router();
 
@@ -306,10 +307,10 @@ router.get('/order-status/:orderId',
 
             console.log(`Updated order ${order._id} status to Processing (payment completed)`);
 
-            // Trigger order confirmation notification
+            // Trigger order confirmation notification - Enterprise system (non-blocking)
             try {
               console.log(`Payment completed for order ${order._id} - sending confirmation notification`);
-              await AutomatedNotificationService.triggerOrderNotification(order._id, 'confirmed');
+              NotificationManager.sendNotification('order', order._id, 'processing', 'payment_completion');
             } catch (notificationError) {
               console.error('Error sending order confirmation notification:', notificationError);
               // Don't fail the status update if notification fails
