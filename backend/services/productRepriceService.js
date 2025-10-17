@@ -53,9 +53,10 @@ function rateForKarat(karat, pricePerGram24kInr, pricePerGram22kInr) {
 function computePrice(grossWeightGrams, karat, rates) {
     const { pricePerGram24kInr, pricePerGram22kInr } = rates;
     const perGram = rateForKarat(karat, pricePerGram24kInr, pricePerGram22kInr);
-    const price = grossWeightGrams * perGram;
+    const base = grossWeightGrams * perGram;
+    const total = base * 1.06; // add 6% to total
     // Round to nearest rupee
-    return Math.round(price);
+    return Math.round(total);
 }
 
 function writeSnapshot(summary) {
@@ -114,10 +115,32 @@ async function repriceAllProducts({ dryRun = false, allowFetch = false } = {}) {
 
         if (dryRun || p.price !== newPrice) {
             if (!dryRun) {
+                const perGramApplied = rateForKarat(karat, pricePerGram24kInr, pricePerGram22kInr);
+                const goldValue = Math.round(weight * perGramApplied);
+                const makingValue = Math.max(0, newPrice - goldValue);
+                const priceBreakup = {
+                    total: newPrice,
+                    weightGrams: weight,
+                    goldRatePerGramInr: perGramApplied,
+                    goldValue,
+                    makingCharge: {
+                        type: "fixed",
+                        value: makingValue,
+                        valueDiscounted: makingValue,
+                        waived: false,
+                    },
+                    goldRates: {
+                        source,
+                        lastUpdated,
+                        pricePerGram22kInr,
+                        pricePerGram24kInr,
+                    },
+                };
+
                 bulkOps.push({
                     updateOne: {
                         filter: { _id: p._id },
-                        update: { $set: { price: newPrice } },
+                        update: { $set: { price: newPrice, priceBreakup } },
                     },
                 });
             }

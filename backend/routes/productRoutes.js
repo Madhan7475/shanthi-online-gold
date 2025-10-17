@@ -90,7 +90,7 @@ const computeLiveTotalForProduct = (doc, rates) => {
         const karat = parseKarat(doc?.karatage) ?? 22;
         const perGram = rateForKarat(karat, rates?.pricePerGram24kInr, rates?.pricePerGram22kInr, rates?.pricePerGram18kInr);
         if (weightGrams != null && perGram != null && isFinite(weightGrams) && isFinite(perGram)) {
-            return Math.round(weightGrams * perGram);
+            return Math.round(weightGrams * perGram * 1.06);
         }
     } catch { /* noop */ }
     return null;
@@ -630,16 +630,14 @@ router.get("/:id", async (req, res, next) => {
             const mcRatePerGram = mcType === "variable" ? Number(mc?.amount || 0) : null;
             const mcFixed = mcType === "fixed" ? Number(mc?.amount || 0) : null;
 
-            let mcValueRaw = null;
-            if (mcType === "variable" && weightGrams != null) mcValueRaw = weightGrams * (mcRatePerGram || 0);
-            if (mcType === "fixed") mcValueRaw = mcFixed || 0;
+            let mcValueRaw = goldValueRaw != null ? goldValueRaw * 0.06 : null;
 
             // Only compute totals when inputs are available; otherwise leave null so UI can fall back to persisted DB price
             const goldValue = goldValueRaw != null ? Math.round(goldValueRaw) : null;
             const mcValue = mcValueRaw != null ? Math.round(mcValueRaw) : null;
-            const mcDiscountPercent = 100;
-            const mcWaived = true;
-            const mcValueDiscounted = mcWaived ? 0 : (mcValue != null ? Math.round(mcValue * (1 - Math.max(0, Math.min(100, mcDiscountPercent)) / 100)) : null);
+            const mcDiscountPercent = 0;
+            const mcWaived = false;
+            const mcValueDiscounted = mcValue != null ? mcValue : null;
             const total = goldValue != null ? (goldValue + (mcValueDiscounted ?? 0)) : null;
 
             base.priceBreakup = {
