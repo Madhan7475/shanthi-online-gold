@@ -1,0 +1,36 @@
+[
+  {
+    "rowIndex": 80,
+    "reason": "Missing required fields (title/category/price)",
+    "row": {
+      "_id": "",
+      "title": "Necklace & Earring",
+      "description": "",
+      "category": "Necklace & Earring",
+      "price": "",
+      "karatage": "",
+      "materialColour": "",
+      "grossWeight": "",
+      "metal": "",
+      "size": "",
+      "diamondClarity": "",
+      "diamondColor": "",
+      "numberOfDiamonds": "",
+      "diamondSetting": "",
+      "diamondShape": "",
+      "jewelleryType": "Gold Jewellery",
+      "brand": "SOG",
+      "collection": "",
+      "gender": "",
+      "occasion": "",
+      "images": "",
+      "createdAt": "",
+      "updatedAt": "",
+      "__v": "",
+      "categoryId": "",
+      "categorySlug": "",
+      "makingCharge": "",
+      "stocks": ""
+    }
+  }
+]
