@@ -3,133 +3,121 @@
 // This keeps server.js clean and provides a single place to manage notification startup
 
 /**
- * Initialize all notification services safely
+ * Initialize enterprise notification system safely
  * This function is designed to be non-blocking and allow the app to start
  * even if notification services fail to initialize
  */
 async function initializeNotificationServices() {
   try {
-    console.log("Initializing notification services...");
+    console.log("🚀 Initializing enterprise notification system...");
     
-    // Import services here to avoid loading them if not needed
-    const AutomatedNotificationService = require("./AutomatedNotificationService");
-    const NotificationService = require("./NotificationService");
+    // Import the unified NotificationManager (enterprise single entry point)
+    const NotificationManager = require("./NotificationManager");
     
-    // Initialize base notification service first
+    // Initialize the enterprise notification system
     try {
-      const baseInitResult = await NotificationService.initialize();
-      if (baseInitResult.success) {
-        console.log("Base notification service ready");
+      const initResult = await NotificationManager.initialize();
+      if (initResult.success) {
+        console.log("✅ Enterprise NotificationManager ready");
+        console.log("   📋 Template engine initialized");
+        console.log("   🔄 Notification queue started");
+        console.log("   🏢 Enterprise-grade system active");
       } else {
-        console.warn("Base notification service initialization had issues:", baseInitResult.error);
+        console.warn("⚠️ NotificationManager initialization had issues:", initResult.error);
       }
-    } catch (baseError) {
-      console.warn("Base notification service failed to initialize:", baseError.message);
-      console.warn("   Device registration may still work, but push notifications will be disabled");
+    } catch (managerError) {
+      console.warn("❌ NotificationManager failed to initialize:", managerError.message);
+      console.warn("   📱 Push notifications will be disabled");
+      console.warn("   🛠️ System will continue without notification capabilities");
     }
     
-    // Initialize automated notification service
-    try {
-      await AutomatedNotificationService.initialize();
-      console.log("Automated notification service ready");
-    } catch (autoError) {
-      console.warn("Automated notification service failed to initialize:", autoError.message);
-      console.warn("   Scheduled notifications will be disabled");
-    }
-    
-    console.log("Notification services initialization completed");
+    console.log("🎯 Enterprise notification system initialization completed");
     
   } catch (error) {
-    console.error("Critical error during notification services initialization:", error.message);
-    console.warn("   Application will continue running without notification services");
-    console.warn("   Notifications will be disabled until services are manually restarted");
+    console.error("💥 Critical error during notification system initialization:", error.message);
+    console.warn("   🚀 Application will continue running without notification services");
+    console.warn("   🔧 Notifications will be disabled until services are manually restarted");
   }
 }
 
 /**
- * Get the status of all notification services
+ * Get the status of the enterprise notification system
  * Useful for health checks and debugging
  */
 async function getNotificationServicesStatus() {
   const status = {
     timestamp: new Date().toISOString(),
+    system: 'enterprise',
     services: {}
   };
   
   try {
-    // Check base notification service
-    const NotificationService = require("./NotificationService");
-    status.services.base = {
-      initialized: NotificationService.isInitialized || false,
-      ready: NotificationService.isReady ? NotificationService.isReady() : false
+    // Check NotificationManager status
+    const NotificationManager = require("./NotificationManager");
+    status.services.manager = {
+      initialized: NotificationManager.isInitialized || false,
+      ready: NotificationManager.isReady ? NotificationManager.isReady() : false
     };
     
-    // Add connection validation if service is ready
-    if (status.services.base.ready) {
+    // Get queue health if available
+    if (status.services.manager.ready && NotificationManager.getQueueHealth) {
       try {
-        const connectionStatus = await NotificationService.validateConnection();
-        status.services.base.connection = connectionStatus;
+        const queueHealth = await NotificationManager.getQueueHealth();
+        status.services.queue = queueHealth;
       } catch (error) {
-        status.services.base.connection = { success: false, error: error.message };
+        status.services.queue = { error: "Queue health check failed", details: error.message };
+      }
+    }
+    
+    // Get template cache status if available
+    if (status.services.manager.ready && NotificationManager.getTemplateStatus) {
+      try {
+        const templateStatus = await NotificationManager.getTemplateStatus();
+        status.services.templates = templateStatus;
+      } catch (error) {
+        status.services.templates = { error: "Template status check failed", details: error.message };
       }
     }
     
   } catch (error) {
-    status.services.base = { error: "Service not available", details: error.message };
-  }
-  
-  try {
-    // Check automated notification service
-    const AutomatedNotificationService = require("./AutomatedNotificationService");
-    status.services.automated = {
-      initialized: AutomatedNotificationService.isInitialized || false,
-      scheduledJobs: AutomatedNotificationService.scheduledJobs ? 
-        AutomatedNotificationService.scheduledJobs.size : 0
-    };
-    
-  } catch (error) {
-    status.services.automated = { error: "Service not available", details: error.message };
+    status.services.manager = { error: "NotificationManager not available", details: error.message };
   }
   
   return status;
 }
 
 /**
- * Restart notification services
+ * Restart enterprise notification system
  * Useful for manual recovery or configuration updates
  */
 async function restartNotificationServices() {
-  console.log("🔄 Restarting notification services...");
+  console.log("🔄 Restarting enterprise notification system...");
   
   try {
-    // Stop any existing scheduled jobs
-    const AutomatedNotificationService = require("./AutomatedNotificationService");
-    if (AutomatedNotificationService.scheduledJobs) {
-      AutomatedNotificationService.scheduledJobs.forEach((job, name) => {
-        try {
-          job.stop();
-          console.log(`Stopped scheduled job: ${name}`);
-        } catch (error) {
-          console.warn(`Failed to stop job ${name}:`, error.message);
-        }
-      });
-      AutomatedNotificationService.scheduledJobs.clear();
+    // Import NotificationManager
+    const NotificationManager = require("./NotificationManager");
+    
+    // Gracefully shutdown if available
+    if (NotificationManager.shutdown) {
+      try {
+        await NotificationManager.shutdown();
+        console.log("📴 NotificationManager gracefully shutdown");
+      } catch (shutdownError) {
+        console.warn("⚠️ Shutdown had issues:", shutdownError.message);
+      }
     }
     
     // Reset initialization flags
-    AutomatedNotificationService.isInitialized = false;
+    NotificationManager.isInitialized = false;
     
-    const NotificationService = require("./NotificationService");
-    NotificationService.isInitialized = false;
-    
-    // Reinitialize
+    // Reinitialize the enterprise system
     await initializeNotificationServices();
     
-    console.log("Notification services restarted successfully");
-    return { success: true, message: "Services restarted successfully" };
+    console.log("✅ Enterprise notification system restarted successfully");
+    return { success: true, message: "Enterprise notification system restarted successfully" };
     
   } catch (error) {
-    console.error("Failed to restart notification services:", error.message);
+    console.error("❌ Failed to restart notification system:", error.message);
     return { success: false, error: error.message };
   }
 }

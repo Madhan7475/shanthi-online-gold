@@ -1,5 +1,5 @@
 // backend/services/AutomatedNotificationService.js
-const NotificationService = require("./NotificationService");
+const NotificationManager = require("./NotificationManager");
 const NotificationTemplate = require("../models/NotificationTemplate");
 const UserDevice = require("../models/UserDevice");
 const Product = require("../models/Product");
@@ -32,13 +32,13 @@ class AutomatedNotificationService {
       // Stop any existing jobs first (safety measure)
       this.stop();
 
-      // Initialize base notification service (but don't fail if it can't initialize)
+      // Initialize enterprise notification manager (but don't fail if it can't initialize)
       try {
-        await NotificationService.initialize();
-        console.log("Base notification service ready");
+        await NotificationManager.initialize();
+        console.log("Enterprise notification manager ready");
       } catch (error) {
         console.warn(
-          "Base notification service initialization failed, continuing without notifications:",
+          "Enterprise notification manager initialization failed, continuing without notifications:",
           error.message
         );
       }
@@ -69,13 +69,12 @@ class AutomatedNotificationService {
     try {
       return (
         this.isInitialized &&
-        NotificationService &&
-        typeof NotificationService.isReady === "function" &&
-        NotificationService.isReady()
+        NotificationManager &&
+        NotificationManager.isInitialized
       );
     } catch (error) {
       console.warn(
-        "Error checking notification service readiness:",
+        "Error checking notification manager readiness:",
         error.message
       );
       return false;
@@ -94,12 +93,12 @@ class AutomatedNotificationService {
         return { success: false, error: "Service not ready" };
       }
 
-      if (typeof NotificationService.sendNotification !== "function") {
-        console.error("NotificationService.sendNotification is not available");
+      if (typeof NotificationManager.sendNotification !== "function") {
+        console.error("NotificationManager.sendNotification is not available");
         return { success: false, error: "Send method not available" };
       }
 
-      return await NotificationService.sendNotification(notificationData);
+      return await NotificationManager.sendNotification(notificationData);
     } catch (error) {
       console.error("Error in safe notification send:", error.message);
       return { success: false, error: error.message };
@@ -323,6 +322,30 @@ class AutomatedNotificationService {
         status: "active",
       },
       {
+        templateId: "ORDER_PROCESSING",
+        name: "Payment Successful - Order Processing",
+        description: "Notification when order payment is successful and order moves to processing",
+        type: "transactional",
+        title: "Payment Successful! Order #{{orderNumber}}",
+        body: "Great news! Your payment of ₹{{totalAmount}} has been received successfully. Your order is now being processed and will be shipped soon.",
+        action: {
+          type: "deep_link",
+          value: "/orders/{{orderId}}",
+          buttonText: "Track Order",
+        },
+        variables: [
+          { key: "orderNumber", description: "Order number", required: true },
+          { key: "orderId", description: "Order ID for tracking", required: true },
+          { key: "totalAmount", description: "Order amount", required: true },
+          { key: "itemCount", description: "Number of items", required: false },
+          { key: "estimatedDelivery", description: "Estimated delivery date", required: false },
+        ],
+        targeting: {
+          userSegments: ["all"],
+        },
+        status: "active",
+      },
+      {
         templateId: "ORDER_SHIPPED",
         name: "Order Shipped",
         description: "Order shipping notification",
@@ -331,7 +354,7 @@ class AutomatedNotificationService {
         body: "Order #{{orderNumber}} has been shipped! Track your ₹{{totalAmount}} jewelry order with tracking ID: {{trackingId}}",
         action: {
           type: "deep_link",
-          value: "/orders/{{orderId}}/track",
+          value: "/orders/{{orderId}}",
           buttonText: "Track Package",
         },
         variables: [
@@ -347,6 +370,57 @@ class AutomatedNotificationService {
             required: true,
           },
           { key: "orderId", description: "Order ID", required: true },
+        ],
+        targeting: {
+          userSegments: ["all"],
+        },
+        status: "active",
+      },
+      {
+        templateId: "ORDER_DELIVERED",
+        name: "Order Delivered",
+        description: "Order delivery confirmation notification",
+        type: "transactional",
+        title: "Order Delivered Successfully! 📦✨",
+        body: "Great news! Order #{{orderNumber}} has been delivered to {{deliveredTo}} on {{deliveredAt}}. We hope you love your jewelry!",
+        action: {
+          type: "deep_link",
+          value: "/orders/{{orderId}}",
+          buttonText: "Rate Order",
+        },
+        variables: [
+          { key: "orderNumber", description: "Order number", required: true },
+          { key: "orderId", description: "Order ID", required: true },
+          { key: "deliveredAt", description: "Delivery date", required: true },
+          { key: "deliveredTo", description: "Delivery recipient", required: true },
+          {
+            key: "totalAmount",
+            description: "Total order amount", 
+            required: false,
+          },
+        ],
+        targeting: {
+          userSegments: ["all"],
+        },
+        status: "active",
+      },
+      {
+        templateId: "ORDER_PAYMENT_FAILED",
+        name: "Payment Failed",
+        description: "Notification when order payment fails",
+        type: "transactional",
+        title: "Payment Failed - Order #{{orderNumber}}",
+        body: "We're sorry, but your payment for ₹{{totalAmount}} failed. {{errorMessage}} Please try again or use a different payment method.",
+        action: {
+          type: "deep_link",
+          value: "/orders/{{orderId}}",
+          buttonText: "Try Again",
+        },
+        variables: [
+          { key: "orderNumber", description: "Order number", required: true },
+          { key: "orderId", description: "Order ID for retry", required: true },
+          { key: "totalAmount", description: "Order amount", required: true },
+          { key: "errorMessage", description: "Payment error message", required: true },
         ],
         targeting: {
           userSegments: ["all"],
@@ -420,6 +494,94 @@ class AutomatedNotificationService {
         variables: [],
         targeting: {
           userSegments: ["inactive_users"],
+        },
+        status: "active",
+      },
+      {
+        templateId: "PROMOTIONAL_OFFER",
+        name: "Promotional Offer",
+        description: "Special promotional offers and discounts",
+        type: "promotional",
+        title: "{{offerTitle}} - Don't Miss Out!",
+        body: "Exclusive {{discount}}% off on premium jewelry! Offer valid until {{validUntil}}. Use code {{offerCode}} at checkout.",
+        action: {
+          type: "deep_link",
+          value: "/offers?code={{offerCode}}",
+          buttonText: "Shop Now",
+        },
+        variables: [
+          { key: "offerTitle", description: "Offer title", required: true },
+          { key: "discount", description: "Discount percentage", required: true },
+          { key: "validUntil", description: "Offer validity date", required: true },
+          { key: "offerCode", description: "Discount code", required: true },
+        ],
+        targeting: {
+          userSegments: ["active_users", "premium_customers"],
+        },
+        status: "active",
+      },
+      {
+        templateId: "SEASONAL_CAMPAIGN",
+        name: "Seasonal Campaign",
+        description: "Seasonal jewelry campaigns and collections",
+        type: "seasonal",
+        title: "{{campaignName}} - Limited Time!",
+        body: "Celebrate the season with our {{campaignName}}! Get {{discount}}% off on selected jewelry. Valid until {{validUntil}}.",
+        action: {
+          type: "deep_link",
+          value: "/seasonal-collections",
+          buttonText: "Explore Collection",
+        },
+        variables: [
+          { key: "campaignName", description: "Campaign name", required: true },
+          { key: "discount", description: "Discount percentage", required: true },
+          { key: "validUntil", description: "Campaign validity date", required: true },
+        ],
+        targeting: {
+          userSegments: ["active_users"],
+        },
+        status: "active",
+      },
+      {
+        templateId: "EDUCATIONAL_CONTENT",
+        name: "Educational Content",
+        description: "Educational content about jewelry care and tips",
+        type: "engagement",
+        title: "Jewelry Tip: {{contentTitle}}",
+        body: "Learn something new about your precious jewelry! Discover expert tips and care instructions to keep your pieces sparkling.",
+        action: {
+          type: "deep_link",
+          value: "/tips/{{contentSlug}}",
+          buttonText: "Read More",
+        },
+        variables: [
+          { key: "contentTitle", description: "Content title", required: true },
+          { key: "contentSlug", description: "Content URL slug", required: true },
+        ],
+        targeting: {
+          userSegments: ["active_users"],
+        },
+        status: "active",
+      },
+      {
+        templateId: "GENERAL_ANNOUNCEMENT",
+        name: "General Announcement",
+        description: "Important announcements for all users",
+        type: "admin",
+        title: "{{title}}",
+        body: "{{message}}",
+        action: {
+          type: "deep_link",
+          value: "{{actionUrl}}",
+          buttonText: "Learn More",
+        },
+        variables: [
+          { key: "title", description: "Announcement title", required: true },
+          { key: "message", description: "Announcement message", required: true },
+          { key: "actionUrl", description: "Action URL", required: false },
+        ],
+        targeting: {
+          userSegments: ["all"],
         },
         status: "active",
       },
@@ -576,110 +738,59 @@ class AutomatedNotificationService {
           ? "Prices are up! Good time to sell your gold!"
           : "Prices dropped! Great opportunity to buy gold!";
 
-      // Get users interested in gold price updates
-      const allActiveDevices = await UserDevice.find({
-        "tokenStatus.isActive": true,
-        "preferences.enabled": true,
-        "preferences.promotional": true,
-        isActive: true,
-      });
-
-      // Filter by user segments (virtual property, so we need to filter after fetching)
-      let interestedDevices = allActiveDevices.filter((device) => {
-        const segment = device.userSegment; // This calls the virtual getter
-        return (
-          ["active_user", "loyal_customer", "new_user"].includes(segment) ||
-          device.tags.some((tag) =>
-            ["premium_customer", "gold_interested", "active_user"].includes(tag)
-          )
-        );
-      });
-
-      // Fallback: If no interested devices found, use all active devices for testing
-      if (interestedDevices.length === 0 && allActiveDevices.length > 0) {
-        console.log(
-          "⚠️ No specifically interested devices found, using all active devices for testing"
-        );
-        interestedDevices = allActiveDevices;
-      }
-
-      console.log(
-        `📱 Found ${allActiveDevices.length} active devices, filtered to ${interestedDevices.length} interested in gold notifications`
-      );
+      // Use topic-based notification for gold price updates (much more efficient!)
       console.log(
         `💰 Current price: ₹${currentPrice24k}/gram (24K), ₹${currentPrice22k}/gram (22K)`
       );
 
-      // Debug logging for device segments
-      if (allActiveDevices.length > 0) {
-        const segmentCounts = {};
-        allActiveDevices.forEach((device) => {
-          const segment = device.userSegment;
-          segmentCounts[segment] = (segmentCounts[segment] || 0) + 1;
-        });
-        console.log(`📊 Device segments:`, segmentCounts);
-        console.log(
-          `🏷️ Sample device tags:`,
-          allActiveDevices
-            .slice(0, 3)
-            .map((d) => ({
-              userId: d.userId,
-              tags: d.tags,
-              segment: d.userSegment,
-            }))
-        );
-      }
-
-      let sentCount = 0;
-      let failedCount = 0;
-
-      for (const device of interestedDevices) {
-        try {
-          const result = await this.safeNotificationSend({
-            userId: device.userId,
-            templateId: template._id,
-            variables: {
-              goldPrice: Math.round(currentPrice24k).toString(),
-              priceChange: priceChange,
-              changeAmount: changeAmount,
-              priceMessage: priceMessage,
-            },
-            priority: "normal",
-            source: "automated",
-          });
-
-          if (result.success) {
-            sentCount++;
-          } else {
-            console.warn(
-              `Failed to send gold price update to device ${device._id}:`,
-              result.error
-            );
-            failedCount++;
-          }
-        } catch (error) {
-          console.error(
-            `Error sending gold price update to device ${device._id}:`,
-            error
-          );
-          failedCount++;
+      const result = await this.safeNotificationSend({
+        type: 'gold_price',
+        trigger: 'scheduled',
+        data: {
+          goldPrice: Math.round(currentPrice24k).toString(),
+          priceChange: priceChange,
+          changeAmount: changeAmount,
+          priceMessage: priceMessage,
+          deliveryType: 'topic' // Force topic delivery
+        },
+        recipients: null, // Not needed for topic notifications
+        options: {
+          priority: "normal",
+          source: "automated",
         }
+      });
+
+      if (result.success) {
+        console.log(
+          `✅ Gold price topic notification sent successfully to 'promotional' topic`
+        );
+        return {
+          sent: 1,
+          failed: 0,
+          currentPrice24k,
+          currentPrice22k,
+          priceChange,
+          changeAmount,
+          source: goldPriceData.source,
+          deliveryType: 'topic',
+          topic: 'promotional'
+        };
+      } else {
+        console.error(
+          `❌ Failed to send gold price topic notification:`,
+          result.error
+        );
+        return {
+          sent: 0,
+          failed: 1,
+          currentPrice24k,
+          currentPrice22k,
+          priceChange,
+          changeAmount,
+          source: goldPriceData.source,
+          error: result.error
+        };
       }
-
-      const result = {
-        sent: sentCount,
-        failed: failedCount,
-        currentPrice24k,
-        currentPrice22k,
-        priceChange,
-        changeAmount,
-        source: goldPriceData.source,
-      };
-
-      console.log(
-        `Gold price notifications completed: ${sentCount} sent, ${failedCount} failed`
-      );
-      return result;
     } catch (error) {
       console.error("Error in sendDailyGoldPriceUpdate:", error);
       return { sent: 0, failed: 0, error: error.message };
@@ -748,15 +859,20 @@ class AutomatedNotificationService {
             0
           );
 
-          await NotificationService.sendNotification({
-            userId: cart.userId,
-            templateId: template._id,
-            variables: {
+          await NotificationManager.sendNotification({
+            type: 'cart_event',
+            trigger: 'scheduled',
+            data: {
+              event: 'abandonment',
+              templateId: template._id,
               itemCount: cart.items.length,
               totalValue: totalValue.toFixed(0),
             },
-            priority: "normal",
-            source: "automated",
+            recipients: [cart.userId],
+            options: {
+              priority: "normal",
+              source: "automated",
+            }
           });
           sentCount++;
         } catch (error) {
@@ -804,17 +920,21 @@ class AutomatedNotificationService {
               product.price * (1 - product.discount / 100);
             const savings = product.price - discountedPrice;
 
-            await NotificationService.sendNotification({
-              userId: wishlistEntry.userId,
-              templateId: template._id,
-              variables: {
+            await NotificationManager.sendNotification({
+              type: 'price_alert',
+              trigger: 'scheduled',
+              data: {
+                templateId: template._id,
                 productName: product.title,
                 newPrice: discountedPrice.toFixed(0),
                 savings: savings.toFixed(0),
                 productId: product._id.toString(),
               },
-              priority: "high",
-              source: "automated",
+              recipients: [wishlistEntry.userId],
+              options: {
+                priority: "high",
+                source: "automated",
+              }
             });
             sentCount++;
           }
@@ -861,16 +981,20 @@ class AutomatedNotificationService {
           });
 
           for (const wishlistEntry of wishlistEntries) {
-            await NotificationService.sendNotification({
-              userId: wishlistEntry.userId,
-              templateId: template._id,
-              variables: {
+            await NotificationManager.sendNotification({
+              type: 'stock_alert',
+              trigger: 'stock_change',
+              data: {
+                templateId: template._id,
                 productName: product.title,
                 price: product.price.toFixed(0),
                 productId: product._id.toString(),
               },
-              priority: "high",
-              source: "automated",
+              recipients: [wishlistEntry.userId],
+              options: {
+                priority: "high",
+                source: "automated",
+              }
             });
             sentCount++;
           }
@@ -927,12 +1051,17 @@ class AutomatedNotificationService {
       let sentCount = 0;
       for (const device of inactiveDevices) {
         try {
-          await NotificationService.sendNotification({
-            userId: device.userId,
-            templateId: template._id,
-            variables: {},
-            priority: "normal",
-            source: "automated",
+          await NotificationManager.sendNotification({
+            type: 'reengagement',
+            trigger: 'scheduled',
+            data: {
+              templateId: template._id,
+            },
+            recipients: [device.userId],
+            options: {
+              priority: "normal",
+              source: "automated",
+            }
           });
           sentCount++;
         } catch (error) {
@@ -949,65 +1078,7 @@ class AutomatedNotificationService {
     }
   }
 
-  /**
-   * Trigger order-related notifications
-   */
-  async triggerOrderNotification(orderId, notificationType) {
-    try {
-      const order = await Order.findById(orderId);
-      if (!order) {
-        console.warn(`Order ${orderId} not found`);
-        return;
-      }
 
-      let templateId;
-      let variables = {
-        orderNumber: order._id.toString().slice(-8).toUpperCase(),
-        itemCount: order.items.length,
-        totalAmount: order.total.toFixed(0),
-        orderId: order._id.toString(),
-      };
-
-      switch (notificationType) {
-        case "confirmed":
-          templateId = "ORDER_CONFIRMED";
-          variables.estimatedDelivery = "5-7 business days";
-          break;
-        case "shipped":
-          templateId = "ORDER_SHIPPED";
-          variables.trackingId = `TRK${order._id
-            .toString()
-            .slice(-6)
-            .toUpperCase()}`;
-          break;
-        default:
-          console.warn(`Unknown notification type: ${notificationType}`);
-          return;
-      }
-
-      const template = await NotificationTemplate.findOne({
-        templateId,
-        status: "active",
-      });
-
-      if (!template) {
-        console.warn(`Template ${templateId} not found`);
-        return;
-      }
-
-      await NotificationService.sendNotification({
-        userId: order.userId,
-        templateId: template._id,
-        variables,
-        priority: "high",
-        source: "triggered",
-      });
-
-      console.log(`Sent ${notificationType} notification for order ${orderId}`);
-    } catch (error) {
-      console.error(`Error triggering order notification:`, error);
-    }
-  }
 
   /**
    * Stop all scheduled jobs
