@@ -384,6 +384,9 @@ router.get('/config', requestLogger, async (req, res) => {
       clientVersion: cfg.clientVersion,
       redirectUrl: cfg.redirectUrl,
       clientIdPrefix: cfg.clientId ? String(cfg.clientId).slice(0, 6) + '***' : null,
+      // Debug-only, non-sensitive checks to validate Render env vs Dashboard:
+      clientSecretLength: (process.env.PHONEPE_CLIENT_SECRET || '').length,
+      clientSecretSuffix: process.env.PHONEPE_CLIENT_SECRET ? ('***' + String(process.env.PHONEPE_CLIENT_SECRET).slice(-4)) : null,
     });
   } catch (e) {
     res.status(500).json({ error: 'Failed to load config', message: e?.message || e });

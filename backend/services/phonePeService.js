@@ -1,6 +1,6 @@
 const { CreateSdkOrderRequest, StandardCheckoutPayRequest } = require('pg-sdk-node');
 const { randomUUID } = require('crypto');
-const { getPhonePeClient, getPhonePeConfig } = require('../config/phonepe.js');
+const { getPhonePeClient, getPhonePeConfig, forcePhonePeClientVersion } = require('../config/phonepe.js');
 
 /**
  * PhonePe Payment Service
@@ -130,8 +130,25 @@ class PhonePeService {
         .redirectUrl(redirectUrl)
         .build();
 
-      // Make API call with timeout
-      const response = await this.client.pay(request);
+      // Make API call with timeout + fallback once to v1 if v2 400 in PRODUCTION
+      let response;
+      try {
+        response = await this.client.pay(request);
+      } catch (err) {
+        const isProd = this.config.environment === 'PRODUCTION';
+        const currentVersion = this.config.clientVersion;
+        const httpStatus = err?.httpStatusCode || err?.status || err?.response?.status;
+        if (isProd && currentVersion === 'v2' && httpStatus === 400) {
+          console.warn('[PhonePe] pay() failed with 400 on v2; retrying once with v1 credentials');
+          // Force-reinit client with v1 to match v1 keys
+          forcePhonePeClientVersion('v1');
+          this.client = getPhonePeClient();
+          this.config = { ...this.config, clientVersion: 'v1' };
+          response = await this.client.pay(request);
+        } else {
+          throw err;
+        }
+      }
 
       console.log(`PhonePe Pay order created successfully: ${response.orderId}`);
       return {
@@ -195,8 +212,25 @@ class PhonePeService {
         .redirectUrl(redirectUrl)
         .build();
 
-      // Make API call with timeout
-      const response = await this.client.createSdkOrder(request);
+      // Make API call with timeout + fallback once to v1 if v2 400 in PRODUCTION
+      let response;
+      try {
+        response = await this.client.createSdkOrder(request);
+      } catch (err) {
+        const isProd = this.config.environment === 'PRODUCTION';
+        const currentVersion = this.config.clientVersion;
+        const httpStatus = err?.httpStatusCode || err?.status || err?.response?.status;
+        if (isProd && currentVersion === 'v2' && httpStatus === 400) {
+          console.warn('[PhonePe] createSdkOrder() failed with 400 on v2; retrying once with v1 credentials');
+          // Force-reinit client with v1 to match v1 keys
+          forcePhonePeClientVersion('v1');
+          this.client = getPhonePeClient();
+          this.config = { ...this.config, clientVersion: 'v1' };
+          response = await this.client.createSdkOrder(request);
+        } else {
+          throw err;
+        }
+      }
 
       console.log(`PhonePe SDK order created successfully: ${response.orderId}`);
       return {

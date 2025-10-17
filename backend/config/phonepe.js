@@ -5,8 +5,8 @@ const { StandardCheckoutClient, Env } = require('pg-sdk-node');
  * Initializes the StandardCheckoutClient as a singleton
  */
 
-const clientId = process.env.PHONEPE_CLIENT_ID;
-const clientSecret = process.env.PHONEPE_CLIENT_SECRET;
+const clientId = (process.env.PHONEPE_CLIENT_ID || '').trim();
+const clientSecret = (process.env.PHONEPE_CLIENT_SECRET || '').trim();
 let clientVersion =
   process.env.PHONEPE_CLIENT_VERSION ||
   (process.env.PHONEPE_ENV === 'production' ? 'v2' : 'v1');
@@ -30,6 +30,16 @@ const getPhonePeClient = () => {
       console.log(
         `PhonePe SDK initialized in ${environment === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX'} mode (clientVersion=${clientVersion})`
       );
+      try {
+        const secretLen = (clientSecret || '').length;
+        const secretSuffix = clientSecret ? String(clientSecret).slice(-4) : null;
+        const idPrefix = clientId ? String(clientId).slice(0, 6) + '***' : null;
+        console.log('[PhonePe] Runtime key check:', {
+          clientIdPrefix: idPrefix,
+          clientSecretLength: secretLen,
+          clientSecretSuffix: secretSuffix ? `***${secretSuffix}` : null,
+        });
+      } catch { }
     } catch (error) {
       console.error('Failed to initialize PhonePe SDK:', error.message);
       throw new Error('PhonePe SDK initialization failed');
