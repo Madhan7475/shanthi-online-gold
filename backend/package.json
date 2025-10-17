@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-  "start": "node server.js",
-  "start:staging": "cross-env ENV_FILE=.env.staging node server.js",
-  "dev": "cross-env ENV_FILE=.env.staging nodemon server.js"
+    "start": "node server.js",
+    "start:staging": "cross-env ENV_FILE=.env.staging node server.js",
+    "dev": "cross-env ENV_FILE=.env.staging nodemon server.js",
+    "import:products": "node scripts/importProductsFromExcel.js",
+    "import:products:staging": "cross-env ENV_FILE=.env.staging node scripts/importProductsFromExcel.js",
+    "import:products:prod": "cross-env ENV_FILE=.env.prod node scripts/importProductsFromExcel.js"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +27,9 @@
     "node-cron": "^4.2.1",
     "nodemon": "^3.1.10",
     "pdfkit": "^0.17.2",
+    "slugify": "^1.6.6",
+    "xlsx": "^0.18.5",
+    "yargs": "^17.7.2",
     "pg-sdk-node": "https://phonepe.mycloudrepo.io/public/repositories/phonepe-pg-sdk-node/releases/v2/phonepe-pg-sdk-node.tgz"
   },
   "devDependencies": {
