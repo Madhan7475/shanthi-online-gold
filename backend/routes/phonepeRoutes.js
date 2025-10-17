@@ -1,6 +1,7 @@
 const express = require('express');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
 const Order = require('../models/Order');
+const { getPhonePeConfig } = require('../config/phonepe');
 
 const router = express.Router();
 
@@ -148,10 +149,19 @@ router.post('/initiate-checkout',
         }
       }
 
+      // Resolve redirect URL: in PRODUCTION always use configured URL (ignore client-provided)
+      const cfg = getPhonePeConfig();
+      const effectiveRedirectUrl =
+        process.env.PHONEPE_ENV === 'production'
+          ? cfg.redirectUrl
+          : (redirectUrl || cfg.redirectUrl);
+
+      console.log(`[PhonePe] Effective redirectUrl for initiate-checkout: ${effectiveRedirectUrl}`);
+
       const result = await phonePeService.initiatePayment({
         amount,
         merchantOrderId,
-        redirectUrl
+        redirectUrl: effectiveRedirectUrl,
       });
 
       // If merchantOrderId is provided, find and update the existing order
@@ -213,10 +223,19 @@ router.post('/create-order',
       console.log(`Processing order creation for user: ${userId}`);
 
       // Create order using PhonePe service
+      // Resolve redirect URL: in PRODUCTION always use configured URL (ignore client-provided)
+      const cfg = getPhonePeConfig();
+      const effectiveRedirectUrl =
+        process.env.PHONEPE_ENV === 'production'
+          ? cfg.redirectUrl
+          : (redirectUrl || cfg.redirectUrl);
+
+      console.log(`[PhonePe] Effective redirectUrl for create-order: ${effectiveRedirectUrl}`);
+
       const result = await phonePeService.createSdkOrder({
         amount,
         merchantOrderId,
-        redirectUrl
+        redirectUrl: effectiveRedirectUrl,
       });
 
       // If merchantOrderId is provided, find and update the existing order
