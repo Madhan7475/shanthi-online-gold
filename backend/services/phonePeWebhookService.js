@@ -2,6 +2,7 @@ const { getPhonePeClient } = require("../config/phonepe");
 const Order = require("../models/Order");
 const Payment = require("../models/Payment");
 const { WebhookErrorHandler } = require("../utils/webhookErrorHandler");
+const NotificationManager = require("./NotificationManager");
 
 /**
  * PhonePe Webhook Service
@@ -240,6 +241,15 @@ class PhonePeWebhookService {
 
       console.log(`Order ${order._id} completed: ${previousStatus} → Processing, Payment ${previousPaymentStatus} → Paid`);
 
+      // Send push notification for successful payment (Pending → Processing) - Non-blocking
+      NotificationManager.sendNotification('order', order._id, 'processing', 'webhook', {
+        additionalData: {
+          previousStatus,
+          paymentAmount: callbackData.amountInRupees,
+          transactionId: callbackData.transactionId
+        }
+      });
+
       // TODO: Trigger additional business logic
       await this._triggerPostPaymentActions(order, callbackData, payment);
 
@@ -364,6 +374,16 @@ class PhonePeWebhookService {
         await order.save();
 
         console.log(`Order ${order._id} failed: ${previousStatus} → Payment Failed, Payment ${previousPaymentStatus} → Failed`);
+        
+        // Send push notification for failed payment - Non-blocking
+        NotificationManager.sendNotification('order', order._id, 'failed', 'webhook', {
+          additionalData: {
+            previousStatus,
+            errorCode: callbackData.errorCode,
+            errorMessage: payment.errorMessage,
+            paymentAmount: callbackData.amountInRupees || order.total
+          }
+        });
       } else {
         console.warn(`Order ${order._id} already ${order.status}, not updating to Failed`);
       }
