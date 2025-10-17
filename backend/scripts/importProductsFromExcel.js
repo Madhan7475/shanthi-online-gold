@@ -57,35 +57,62 @@ const toTrimmed = (v) => {
 };
 
 const toImagesArray = (row) => {
-    // Priority: images column (comma-separated) OR image1,image2,image3...
-    const images = [];
+    const toFilename = (val) => {
+        if (val == null) return null;
+        const cleaned = String(val)
+            .replace(/^[\s'"\[\]\(\)]+|[\s'"\[\]\(\)]+$/g, '')
+            .replace(/\\/g, '/');
+        const base = path.basename(cleaned);
+        return base && base !== '.' ? base : null;
+    };
+
+    const parseImagesCell = (cell) => {
+        if (cell == null) return [];
+        let text = String(cell).trim();
+
+        // Try JSON-like arrays (normalize single quotes to double if needed)
+        if ((text.startsWith('[') && text.endsWith(']')) || (text.startsWith('(') && text.endsWith(')'))) {
+            let jsonText = text;
+            if (jsonText.includes("'") && !jsonText.includes('"')) {
+                jsonText = jsonText.replace(/'/g, '"');
+            }
+            try {
+                const arr = JSON.parse(jsonText.replace(/^\(|\)$/g, ''));
+                if (Array.isArray(arr)) {
+                    return arr.map(toFilename).filter(Boolean);
+                }
+            } catch {
+                // fall through to delimiter parsing
+            }
+        }
+
+        // Delimiter-based parse: comma, semicolon, pipe, newline
+        return text
+            .split(/[\n,;|]+/)
+            .map(toFilename)
+            .filter(Boolean);
+    };
+
+    // Priority: images column OR image1,image2,...
+    let images = [];
     if (row.images) {
-        String(row.images)
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .forEach((u) => {
-                const fn = path.basename(String(u).replace(/\\/g, '/'));
-                images.push(fn);
-            });
+        images = parseImagesCell(row.images);
     } else {
-        // Collect any columns named image1, image2, image3...
-        Object.keys(row)
+        const keys = Object.keys(row)
             .filter((k) => /^image\d+$/i.test(k))
             .sort((a, b) => {
                 const ai = Number(a.replace(/^\D+/g, '')) || 0;
                 const bi = Number(b.replace(/^\D+/g, '')) || 0;
                 return ai - bi;
-            })
-            .forEach((k) => {
-                const v = toTrimmed(row[k]);
-                if (v) {
-                    const fn = path.basename(String(v).replace(/\\/g, '/'));
-                    images.push(fn);
-                }
             });
+
+        images = keys
+            .map((k) => toFilename(row[k]))
+            .filter(Boolean);
     }
-    return images;
+
+    // If nothing valid parsed, return undefined so we don't overwrite with []
+    return images.length ? images : undefined;
 };
 
 const toSlug = (s) => {
@@ -263,7 +290,15 @@ const argv = yargs(hideBin(process.argv))
             Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
 
             if (argv.dryRun) {
-                console.log(`DRY-RUN row#${rowIndex}:`, { title: payload.title, category: payload.category, price: payload.price, imagesCount: payload.images?.length || 0 });
+                const imagesPreview = Array.isArray(payload.images) ? payload.images.slice(0, 3) : null;
+                console.log(`DRY-RUN row#${rowIndex}:`, {
+                    title: payload.title,
+                    category: payload.category,
+                    price: payload.price,
+                    imagesCount: Array.isArray(payload.images) ? payload.images.length : 0,
+                    imagesPreview,
+                    rawImagesCell: row.images ?? null,
+                });
                 continue;
             }
 
