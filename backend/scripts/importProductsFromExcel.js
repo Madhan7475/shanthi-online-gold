@@ -44,7 +44,9 @@ let Category = null;
 // Helpers
 const toNumber = (v) => {
     if (v === null || v === undefined || v === '') return undefined;
-    const n = Number(String(v).toString().replace(/[, ]+/g, ''));
+    // Strip currency symbols, INR, commas, spaces and any non-numeric chars except dot/minus
+    const cleaned = String(v).toString().replace(/[^\d.\-]/g, '');
+    const n = Number(cleaned);
     return Number.isFinite(n) ? n : undefined;
 };
 
@@ -62,7 +64,10 @@ const toImagesArray = (row) => {
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean)
-            .forEach((u) => images.push(u));
+            .forEach((u) => {
+                const fn = path.basename(String(u).replace(/\\/g, '/'));
+                images.push(fn);
+            });
     } else {
         // Collect any columns named image1, image2, image3...
         Object.keys(row)
@@ -74,7 +79,10 @@ const toImagesArray = (row) => {
             })
             .forEach((k) => {
                 const v = toTrimmed(row[k]);
-                if (v) images.push(v);
+                if (v) {
+                    const fn = path.basename(String(v).replace(/\\/g, '/'));
+                    images.push(fn);
+                }
             });
     }
     return images;
@@ -159,11 +167,45 @@ const argv = yargs(hideBin(process.argv))
     for (const rawRow of rows) {
         rowIndex += 1;
         try {
-            // Normalize keys to camelCase-like expected names
+            // Normalize headers to canonical keys (case/space/underscore insensitive) + alias map
             const row = {};
+            const keyMap = {
+                title: 'title', productname: 'title', name: 'title',
+                category: 'category', categoryname: 'category',
+                price: 'price', mrp: 'price', amount: 'price', sellingprice: 'price',
+                stocks: 'stocks', stock: 'stocks', quantity: 'stocks',
+                karatage: 'karatage', karat: 'karatage',
+                materialcolour: 'materialColour', materialcolor: 'materialColour',
+                grossweight: 'grossWeight',
+                metal: 'metal',
+                size: 'size',
+                diamondclarity: 'diamondClarity',
+                diamondcolor: 'diamondColor',
+                numberofdiamonds: 'numberOfDiamonds',
+                diamondsetting: 'diamondSetting',
+                diamondshape: 'diamondShape',
+                jewellerytype: 'jewelleryType',
+                brand: 'brand',
+                collection: 'collection',
+                gender: 'gender',
+                images: 'images',
+                categoryslug: 'categorySlug',
+                categoryid: 'categoryId',
+                makingchargeid: 'makingChargeId',
+                makingchargename: 'makingChargeName',
+                description: 'description',
+            };
             Object.keys(rawRow).forEach((k) => {
-                const nk = String(k).trim();
-                row[nk] = rawRow[k];
+                const norm = String(k).toLowerCase().replace(/[\s_-]+/g, '');
+                const imageMatch = norm.match(/^image(\d+)$/i);
+                let canonical = keyMap[norm] || (imageMatch ? `image${imageMatch[1]}` : null);
+                const value = rawRow[k];
+                if (canonical) {
+                    row[canonical] = value;
+                } else {
+                    // Fallback: preserve original trimmed key for any unrecognized columns
+                    row[String(k).trim()] = value;
+                }
             });
 
             // Mandatory fields
