@@ -7,7 +7,9 @@ const { StandardCheckoutClient, Env } = require('pg-sdk-node');
 
 const clientId = process.env.PHONEPE_CLIENT_ID;
 const clientSecret = process.env.PHONEPE_CLIENT_SECRET;
-const clientVersion = process.env.PHONEPE_CLIENT_VERSION || 'v1';
+let clientVersion =
+  process.env.PHONEPE_CLIENT_VERSION ||
+  (process.env.PHONEPE_ENV === 'production' ? 'v2' : 'v1');
 const environment = process.env.PHONEPE_ENV === 'production' ? Env.PRODUCTION : Env.SANDBOX;
 
 // Validate required environment variables
@@ -25,7 +27,9 @@ const getPhonePeClient = () => {
   if (!client) {
     try {
       client = StandardCheckoutClient.getInstance(clientId, clientSecret, clientVersion, environment);
-      console.log(`PhonePe SDK initialized in ${environment === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX'} mode`);
+      console.log(
+        `PhonePe SDK initialized in ${environment === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX'} mode (clientVersion=${clientVersion})`
+      );
     } catch (error) {
       console.error('Failed to initialize PhonePe SDK:', error.message);
       throw new Error('PhonePe SDK initialization failed');
@@ -38,11 +42,22 @@ const getPhonePeClient = () => {
  * Get PhonePe configuration details
  * @returns {Object} Configuration details
  */
-const getPhonePeConfig = () => ({
-  clientId,
-  environment: environment === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX',
-  clientVersion,
-  redirectUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
-});
+const getPhonePeConfig = () => {
+  const frontend = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+  const redirectUrl = process.env.PHONEPE_REDIRECT_URL || `${frontend}/payments/phonepe/return`;
+  return {
+    clientId,
+    environment: environment === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX',
+    clientVersion,
+    redirectUrl,
+  };
+};
 
-module.exports = { getPhonePeClient, getPhonePeConfig };
+const forcePhonePeClientVersion = (version) => {
+  if (version && version !== clientVersion) {
+    clientVersion = version;
+    client = null; // force re-init on next getPhonePeClient()
+  }
+};
+
+module.exports = { getPhonePeClient, getPhonePeConfig, forcePhonePeClientVersion };
