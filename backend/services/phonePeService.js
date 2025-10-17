@@ -30,7 +30,7 @@ class PhonePeService {
    */
   validateOrderRequest(orderData) {
     const errors = [];
-    
+
     // Validate amount
     if (!orderData.amount || typeof orderData.amount !== 'number') {
       errors.push('Amount is required and must be a number');
@@ -69,7 +69,7 @@ class PhonePeService {
    */
   validateOrderId(orderId) {
     const errors = [];
-    
+
     if (!orderId) {
       errors.push('Order ID is required');
     } else if (typeof orderId !== 'string') {
@@ -120,6 +120,7 @@ class PhonePeService {
       const amountInPaisa = Math.round(orderData.amount * 100); // Convert to paisa
       const redirectUrl = orderData.redirectUrl || this.config.redirectUrl;
 
+      console.log(`[PhonePe] Using env=${this.config.environment} clientVersion=${this.config.clientVersion} redirectUrl=${redirectUrl}`);
       console.log(`Creating Pay order: ${merchantOrderId} for ₹${orderData.amount}`);
 
       // Create SDK order request
@@ -141,8 +142,22 @@ class PhonePeService {
       };
 
     } catch (error) {
-      console.error('PhonePe Pay order creation failed:', error.message);
-      throw new Error(`PhonePe Pay order creation failed: ${error.message}`);
+      const details = {
+        name: error?.name,
+        message: error?.message,
+        code: error?.code,
+        httpStatus: error?.httpStatusCode || error?.status || error?.response?.status,
+        data: error?.data || error?.response?.data,
+        stack: error?.stack,
+        environment: this.config?.environment,
+        clientVersion: this.config?.clientVersion,
+      };
+      try {
+        console.error('PhonePe Pay order creation failed:', JSON.stringify(details, null, 2));
+      } catch {
+        console.error('PhonePe Pay order creation failed:', details);
+      }
+      throw new Error(`PhonePe Pay order creation failed: ${error?.message || 'unknown error'}`);
     }
   }
 
@@ -170,6 +185,7 @@ class PhonePeService {
       const amountInPaisa = Math.round(orderData.amount * 100); // Convert to paisa
       const redirectUrl = orderData.redirectUrl || this.config.redirectUrl;
 
+      console.log(`[PhonePe] Using env=${this.config.environment} clientVersion=${this.config.clientVersion} redirectUrl=${redirectUrl}`);
       console.log(`Creating PhonePe SDK order: ${merchantOrderId} for ₹${orderData.amount}`);
 
       // Create SDK order request
@@ -191,8 +207,22 @@ class PhonePeService {
       };
 
     } catch (error) {
-      console.error('PhonePe SDK order creation failed:', error.message);
-      throw new Error(`PhonePe SDK order creation failed: ${error.message}`);
+      const details = {
+        name: error?.name,
+        message: error?.message,
+        code: error?.code,
+        httpStatus: error?.httpStatusCode || error?.status || error?.response?.status,
+        data: error?.data || error?.response?.data,
+        stack: error?.stack,
+        environment: this.config?.environment,
+        clientVersion: this.config?.clientVersion,
+      };
+      try {
+        console.error('PhonePe SDK order creation failed:', JSON.stringify(details, null, 2));
+      } catch {
+        console.error('PhonePe SDK order creation failed:', details);
+      }
+      throw new Error(`PhonePe SDK order creation failed: ${error?.message || 'unknown error'}`);
     }
   }
 
@@ -277,7 +307,7 @@ class PhonePeService {
     try {
       const response = await this.checkOrderStatus(orderId);
       const mappedState = this.mapOrderState(response.state);
-      
+
       return {
         ...response,
         mappedStatus: mappedState,

@@ -353,6 +353,25 @@ router.get('/order-status/:orderId',
 );
 
 /**
+ * Debug: expose non-sensitive PhonePe config
+ * NOTE: No secrets are returned.
+ */
+router.get('/config', requestLogger, async (req, res) => {
+  try {
+    const { getPhonePeConfig } = require('../config/phonepe');
+    const cfg = getPhonePeConfig();
+    res.json({
+      environment: cfg.environment,
+      clientVersion: cfg.clientVersion,
+      redirectUrl: cfg.redirectUrl,
+      clientIdPrefix: cfg.clientId ? String(cfg.clientId).slice(0, 6) + '***' : null,
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to load config', message: e?.message || e });
+  }
+});
+
+/**
  * Error handling middleware specific to payment routes
  */
 router.use((error, req, res, next) => {

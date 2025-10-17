@@ -61,6 +61,24 @@ app.get("/env", (req, res) => {
   });
 });
 
+/**
+ * PhonePe config debug (non-sensitive)
+ * Helps verify env on Render: does NOT log secrets
+ */
+try {
+  const { getPhonePeConfig } = require("./config/phonepe");
+  const pc = getPhonePeConfig();
+  const idPrefix = (pc.clientId || "").toString().slice(0, 6);
+  console.log("[PhonePe] Config:", {
+    environment: pc.environment,
+    clientVersion: pc.clientVersion,
+    redirectUrl: pc.redirectUrl,
+    clientIdPrefix: idPrefix ? `${idPrefix}***` : null,
+  });
+} catch (e) {
+  console.warn("[PhonePe] Config error:", e?.message || e);
+}
+
 // Import and mount routes
 const paymentRoutes = require("./routes/paymentRoutes");
 const productRoutes = require("./routes/productRoutes");
