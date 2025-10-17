@@ -232,8 +232,8 @@ const ProductDetails = () => {
             })()}
           </div>
 
-          {/* Price Breakup */}
-          <div className="mt-6 text-sm text-gray-700">
+          {/* Price Breakup (hidden as requested) */}
+          <div className="mt-6 text-sm text-gray-700 hidden">
             <h4 className="font-semibold text-gray-800 mb-2">Price Breakup</h4>
             <div className="overflow-x-auto rounded-lg border border-gray-200">
               <table className="w-full">

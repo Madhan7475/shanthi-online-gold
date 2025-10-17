@@ -630,7 +630,7 @@ router.get("/:id", async (req, res, next) => {
             const mcRatePerGram = mcType === "variable" ? Number(mc?.amount || 0) : null;
             const mcFixed = mcType === "fixed" ? Number(mc?.amount || 0) : null;
 
-            let mcValueRaw = goldValueRaw != null ? goldValueRaw * 0.06 : null;
+            let mcValueRaw = 0;
 
             // Only compute totals when inputs are available; otherwise leave null so UI can fall back to persisted DB price
             const goldValue = goldValueRaw != null ? Math.round(goldValueRaw) : null;
@@ -638,7 +638,7 @@ router.get("/:id", async (req, res, next) => {
             const mcDiscountPercent = 0;
             const mcWaived = false;
             const mcValueDiscounted = mcValue != null ? mcValue : null;
-            const total = goldValue != null ? (goldValue + (mcValueDiscounted ?? 0)) : null;
+            const total = goldValueRaw != null ? Math.round(goldValueRaw * 1.06) : null;
 
             base.priceBreakup = {
                 weightGrams,
