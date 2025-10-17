@@ -387,9 +387,181 @@ router.get('/config', requestLogger, async (req, res) => {
       // Debug-only, non-sensitive checks to validate Render env vs Dashboard:
       clientSecretLength: (process.env.PHONEPE_CLIENT_SECRET || '').length,
       clientSecretSuffix: process.env.PHONEPE_CLIENT_SECRET ? ('***' + String(process.env.PHONEPE_CLIENT_SECRET).slice(-4)) : null,
+      // Non-sensitive merchant configuration
+      merchantId: process.env.PHONEPE_MERCHANT_ID || null,
+      keyIndex: process.env.PHONEPE_KEY_INDEX || null,
     });
   } catch (e) {
     res.status(500).json({ error: 'Failed to load config', message: e?.message || e });
+  }
+});
+
+/**
+ * Debug: fetch backend's outbound IP (for IP whitelisting checks)
+ * Calls a public IP service from the server to reveal egress IP.
+ */
+router.get('/outbound-ip', requestLogger, async (req, res) => {
+  const https = require('https');
+
+  const get = (url) =>
+    new Promise((resolve, reject) => {
+      https
+        .get(url, { headers: { 'User-Agent': 'node' } }, (r) => {
+          let data = '';
+          r.on('data', (c) => (data += c));
+          r.on('end', () => resolve({ status: r.statusCode, data: data.trim() }));
+        })
+        .on('error', reject);
+    });
+
+  try {
+    const a = await get('https://api.ipify.org?format=json');
+    let ip = null;
+    try {
+      ip = JSON.parse(a.data).ip || null;
+    } catch {
+      ip = null;
+    }
+    // Fallback secondary service (plain text)
+    const b = await get('https://ifconfig.me/ip').catch(() => ({ status: null, data: null }));
+    const ip2 = b && b.data ? b.data : null;
+
+    res.json({
+      ip,
+      ip2,
+      sources: {
+        api_ipify_org: a,
+        ifconfig_me: b,
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch outbound IP', message: e?.message || String(e) });
+  }
+});
+
+/**
+ * Webhook endpoints (for going LIVE)
+ * Note:
+ * - Do NOT put your redirect URL here. This is for server-to-server callbacks.
+ * - Protect with a simple token header to prevent abuse.
+ * - Set env PHONEPE_WEBHOOK_TOKEN in Render and configure the same in PhonePe Dashboard.
+ */
+router.get('/webhook/ping', requestLogger, async (req, res) => {
+  return res.json({ ok: true, time: new Date().toISOString() });
+});
+
+router.post('/webhook', requestLogger, async (req, res) => {
+  try {
+    // Accept either a shared header token or HTTP Basic Auth (username/password)
+    const expectedToken = process.env.PHONEPE_WEBHOOK_TOKEN || null;
+    const basicUser = process.env.PHONEPE_WEBHOOK_BASIC_USER || null;
+    const basicPass = process.env.PHONEPE_WEBHOOK_BASIC_PASS || null;
+
+    // Extract header/query token
+    const headerToken = req.get('X-Webhook-Token') || req.query.token || null;
+
+    // Parse Basic Authorization header
+    const authHeader = req.get('authorization') || req.get('Authorization');
+    let basicOk = false;
+    if (authHeader && authHeader.startsWith('Basic ') && basicUser && basicPass) {
+      try {
+        const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
+        const [u, p] = decoded.split(':');
+        if (u === basicUser && p === basicPass) basicOk = true;
+      } catch { }
+    }
+
+    // Enforce auth only if any method is configured
+    if ((expectedToken && headerToken !== expectedToken) && !(basicUser && basicPass && basicOk)) {
+      return res.status(401).json({ ok: false, error: 'Unauthorized webhook' });
+    }
+
+    const payload = req.body || {};
+    // Common fields (PhonePe payloads can vary by product/version)
+    const phonepeOrderId =
+      payload.orderId ||
+      payload.data?.orderId ||
+      payload.transactionId ||
+      payload.data?.transactionId ||
+      null;
+
+    const merchantOrderId =
+      payload.merchantOrderId ||
+      payload.data?.merchantOrderId ||
+      payload.orderIdMerchant ||
+      null;
+
+    const state =
+      payload.state ||
+      payload.data?.state ||
+      payload.status ||
+      payload.data?.status ||
+      null;
+
+    console.log('[PhonePe Webhook] Received:', {
+      hasBody: !!req.body,
+      phonepeOrderId,
+      merchantOrderId,
+      state,
+      keys: Object.keys(payload || {}),
+    });
+
+    // Try update by merchantOrderId first (your local Order _id)
+    let matchedBy = 'none';
+    if (merchantOrderId) {
+      try {
+        const order = await Order.findById(merchantOrderId);
+        if (order) {
+          if (phonepeOrderId && !order.transactionId) {
+            order.transactionId = phonepeOrderId;
+          }
+          if (state === 'COMPLETED') {
+            const prev = order.status;
+            order.status = 'Processing';
+            if (prev !== order.status) order.statusUpdatedAt = new Date();
+          } else if (state === 'FAILED' || state === 'CANCELLED') {
+            order.status = 'Cancelled';
+            order.statusUpdatedAt = new Date();
+          }
+          await order.save();
+          matchedBy = 'merchantOrderId';
+        }
+      } catch (e) {
+        console.warn('[PhonePe Webhook] Update by merchantOrderId failed:', e?.message || e);
+      }
+    }
+
+    // Fallback: try update by PhonePe order/transaction id
+    if (matchedBy === 'none' && phonepeOrderId) {
+      try {
+        const order = await Order.findOne({ transactionId: phonepeOrderId });
+        if (order) {
+          if (state === 'COMPLETED') {
+            const prev = order.status;
+            order.status = 'Processing';
+            if (prev !== order.status) order.statusUpdatedAt = new Date();
+          } else if (state === 'FAILED' || state === 'CANCELLED') {
+            order.status = 'Cancelled';
+            order.statusUpdatedAt = new Date();
+          }
+          await order.save();
+          matchedBy = 'transactionId';
+        }
+      } catch (e) {
+        console.warn('[PhonePe Webhook] Update by transactionId failed:', e?.message || e);
+      }
+    }
+
+    return res.status(200).json({
+      ok: true,
+      matchedBy,
+      state,
+      merchantOrderId,
+      phonepeOrderId,
+    });
+  } catch (e) {
+    console.error('[PhonePe Webhook] Handler error:', e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
