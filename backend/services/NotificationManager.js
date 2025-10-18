@@ -302,8 +302,21 @@ class NotificationManager extends EventEmitter {
       errors.push("Data is required");
     }
 
+    // For order-related notifications, recipients can be resolved from order data
+    // For topic-based notifications (promotional, etc.), recipients are not required
+    const topicBasedTypes = ['promotional', 'seasonal', 'engagement', 'gold_price', 'general_announcement'];
+    const orderBasedTypes = ['order_status', 'cart_event'];
+    
     if (!request.recipients) {
-      errors.push("Recipients are required");
+      if (orderBasedTypes.includes(request.type)) {
+        // For order notifications, recipients can be resolved from orderId or userId in data
+        if (!request.data.orderId && !request.data.userId) {
+          errors.push("Recipients are required, or orderId/userId must be provided in data for order notifications");
+        }
+      } else if (!topicBasedTypes.includes(request.type)) {
+        // For non-topic, non-order notifications, recipients are required
+        errors.push("Recipients are required");
+      }
     }
 
     return {
