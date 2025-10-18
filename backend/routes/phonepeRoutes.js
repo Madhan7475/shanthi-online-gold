@@ -310,7 +310,20 @@ router.get('/order-status/:orderId',
             // Trigger order confirmation notification - Enterprise system (non-blocking)
             try {
               console.log(`Payment completed for order ${order._id} - sending confirmation notification`);
-              NotificationManager.sendNotification('order', order._id, 'processing', 'payment_completion');
+              NotificationManager.sendNotification({
+                type: 'order_status',
+                trigger: 'payment_completion',
+                data: {
+                  orderId: order._id,
+                  status: 'processing',
+                  previousStatus: prevStatus,
+                  paymentCompleted: true
+                },
+                recipients: order.userId, // Provide the user ID from the order
+                options: {
+                  priority: 'high'
+                }
+              });
             } catch (notificationError) {
               console.error('Error sending order confirmation notification:', notificationError);
               // Don't fail the status update if notification fails
