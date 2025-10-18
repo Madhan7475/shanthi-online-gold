@@ -242,11 +242,19 @@ class PhonePeWebhookService {
       console.log(`Order ${order._id} completed: ${previousStatus} → Processing, Payment ${previousPaymentStatus} → Paid`);
 
       // Send push notification for successful payment (Pending → Processing) - Non-blocking
-      NotificationManager.sendNotification('order', order._id, 'processing', 'webhook', {
-        additionalData: {
-          previousStatus,
+      NotificationManager.sendNotification({
+        type: 'order_status',
+        trigger: 'webhook',
+        data: {
+          orderId: order._id,
+          status: 'processing',
+          previousStatus: previousStatus,
           paymentAmount: callbackData.amountInRupees,
           transactionId: callbackData.transactionId
+        },
+        recipients: order.userId, // Provide the user ID from the order
+        options: {
+          priority: 'high'
         }
       });
 
@@ -376,12 +384,20 @@ class PhonePeWebhookService {
         console.log(`Order ${order._id} failed: ${previousStatus} → Payment Failed, Payment ${previousPaymentStatus} → Failed`);
         
         // Send push notification for failed payment - Non-blocking
-        NotificationManager.sendNotification('order', order._id, 'failed', 'webhook', {
-          additionalData: {
-            previousStatus,
+        NotificationManager.sendNotification({
+          type: 'order_status',
+          trigger: 'webhook',
+          data: {
+            orderId: order._id,
+            status: 'failed',
+            previousStatus: previousStatus,
             errorCode: callbackData.errorCode,
             errorMessage: payment.errorMessage,
             paymentAmount: callbackData.amountInRupees || order.total
+          },
+          recipients: order.userId, // Provide the user ID from the order
+          options: {
+            priority: 'high'
           }
         });
       } else {
