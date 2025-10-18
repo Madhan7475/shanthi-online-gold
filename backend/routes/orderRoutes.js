@@ -43,19 +43,21 @@ router.put('/:id', async (req, res) => {
       // Single call to NotificationManager - handles everything internally
       setImmediate(async () => {
         try {
-          const result = await NotificationManager.sendNotification(
-            'order', 
-            order._id, 
-            newStatus.toLowerCase(), 
-            'admin_action',
-            {
-              additionalData: { 
-                previousStatus: prevStatus,
-                updatedBy: 'admin',
-                updatedAt: new Date()
-              }
+          const result = await NotificationManager.sendNotification({
+            type: 'order_status',
+            trigger: 'admin_action',
+            data: {
+              orderId: order._id,
+              status: newStatus.toLowerCase(),
+              previousStatus: prevStatus,
+              updatedBy: 'admin',
+              updatedAt: new Date()
+            },
+            recipients: order.userId, // Provide the user ID from the order
+            options: {
+              priority: 'high'
             }
-          );
+          });
           
           if (result.success) {
             console.log(`✅ Order notification queued: ${order._id} (${prevStatus} → ${newStatus}) - Queue ID: ${result.queueId}`);
