@@ -68,7 +68,6 @@ class NotificationManager extends EventEmitter {
     try {
       // Parse arguments into unified request format
       const request = this._parseArguments(args);
-      console.log("Parsed notification request:", request);
       // Input validation
       const validation = this._validateRequest(request);
       console.log("Notification request validation:", validation);
@@ -94,7 +93,6 @@ class NotificationManager extends EventEmitter {
         ...request,
         requestId,
       });
-
       if (!buildResult.success) {
         return {
           success: false,
@@ -117,7 +115,6 @@ class NotificationManager extends EventEmitter {
           queuedAt: new Date(),
         },
       });
-
       if (!queueResult.success) {
         return {
           success: false,
@@ -304,14 +301,22 @@ class NotificationManager extends EventEmitter {
 
     // For order-related notifications, recipients can be resolved from order data
     // For topic-based notifications (promotional, etc.), recipients are not required
-    const topicBasedTypes = ['promotional', 'seasonal', 'engagement', 'gold_price', 'general_announcement'];
-    const orderBasedTypes = ['order_status', 'cart_event'];
-    
+    const topicBasedTypes = [
+      "promotional",
+      "seasonal",
+      "engagement",
+      "gold_price",
+      "general_announcement",
+    ];
+    const orderBasedTypes = ["order_status", "cart_event"];
+
     if (!request.recipients) {
       if (orderBasedTypes.includes(request.type)) {
         // For order notifications, recipients can be resolved from orderId or userId in data
         if (!request.data.orderId && !request.data.userId) {
-          errors.push("Recipients are required, or orderId/userId must be provided in data for order notifications");
+          errors.push(
+            "Recipients are required, or orderId/userId must be provided in data for order notifications"
+          );
         }
       } else if (!topicBasedTypes.includes(request.type)) {
         // For non-topic, non-order notifications, recipients are required

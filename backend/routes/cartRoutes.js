@@ -437,7 +437,7 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
       customerName: customer.name,
       items: orderItems,
       total: orderTotal,
-      status: 'Pending',
+      status: 'pending',
       deliveryAddress: customer.deliveryAddress,
       paymentMethod: paymentMethod,
       transactionId: 'TEMP_' + Date.now(), // Placeholder, to be updated after payment confirmation

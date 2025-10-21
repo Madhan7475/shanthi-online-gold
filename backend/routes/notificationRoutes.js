@@ -10,18 +10,8 @@ const NotificationLog = require("../models/NotificationLog");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 const adminAuth = require("../middleware/adminAuth");
 
-// Initialize notification systems (safe initialization)
-(async () => {
-  try {
-    await NotificationManager.initialize();
-    await NotificationService.initialize(); // For device management
-  } catch (error) {
-    console.warn(
-      "Notification system initialization failed in routes:",
-      error.message
-    );
-  }
-})();
+// NOTE: All notification services are initialized centrally in server.js via notificationInit.js
+// No duplicate initialization here to avoid conflicts and multiple cron jobs
 
 // Helper function to safely call notification service methods
 const safeNotificationCall = async (serviceFn, fallbackResponse = null) => {
