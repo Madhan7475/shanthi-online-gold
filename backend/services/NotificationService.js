@@ -6,10 +6,10 @@ const NotificationLog = require("../models/NotificationLog");
 const TopicNotificationLog = require("../models/TopicNotificationLog");
 const NotificationCampaign = require("../models/NotificationCampaign");
 const { v4: uuidv4 } = require("uuid");
-const { 
+const {
   NOTIFICATION_TOPICS,
   getTopicsForPreferences,
-  isValidTopic
+  isValidTopic,
 } = require("../constants/notificationTopics");
 
 class NotificationService {
@@ -21,7 +21,7 @@ class NotificationService {
       this.messaging = null;
     }
     this.isInitialized = false;
-    
+
     // Use centralized topic definitions
     this.topics = NOTIFICATION_TOPICS;
   }
@@ -271,15 +271,20 @@ class NotificationService {
       try {
         const userSegment = device.userSegment;
         const topicSubscriptionResult = await this.manageTopicSubscriptions(
-          fcmToken, 
-          device.preferences, 
-          userSegment, 
+          fcmToken,
+          device.preferences,
+          userSegment,
           platform
         );
-        
-        console.log(`Topic subscriptions for device ${deviceId}: ${topicSubscriptionResult.totalSubscribed} successful, ${topicSubscriptionResult.totalErrors} errors`);
+
+        console.log(
+          `Topic subscriptions for device ${deviceId}: ${topicSubscriptionResult.totalSubscribed} successful, ${topicSubscriptionResult.totalErrors} errors`
+        );
       } catch (topicError) {
-        console.warn(`Failed to manage topic subscriptions for device ${deviceId}:`, topicError.message);
+        console.warn(
+          `Failed to manage topic subscriptions for device ${deviceId}:`,
+          topicError.message
+        );
         // Don't fail device registration due to topic subscription errors
       }
 
@@ -461,7 +466,11 @@ class NotificationService {
 
       // Validate topic using centralized validation
       if (!isValidTopic(topic)) {
-        throw new Error(`Invalid topic: ${topic}. Must be one of: ${Object.values(NOTIFICATION_TOPICS).join(', ')}`);
+        throw new Error(
+          `Invalid topic: ${topic}. Must be one of: ${Object.values(
+            NOTIFICATION_TOPICS
+          ).join(", ")}`
+        );
       }
 
       // Get notification template
@@ -474,7 +483,9 @@ class NotificationService {
       const validation = template.validateVariables(variables);
       if (!validation.isValid) {
         throw new Error(
-          `Missing required variables: ${validation.missingVariables.join(", ")}`
+          `Missing required variables: ${validation.missingVariables.join(
+            ", "
+          )}`
         );
       }
 
@@ -496,9 +507,9 @@ class NotificationService {
           actionType: renderedAction?.type || "none",
           actionValue: renderedAction?.value || "",
           buttonText: renderedAction?.buttonText || "",
-          notificationType: 'topic',
+          notificationType: "topic",
           source: source,
-          variables: JSON.stringify(variables)
+          variables: JSON.stringify(variables),
         },
         android: {
           priority: priority === "high" ? "high" : "normal",
@@ -549,26 +560,31 @@ class NotificationService {
               title: content.title,
               body: content.body,
               imageUrl: template.imageUrl,
-              variables: variables
+              variables: variables,
             },
             delivery: {
-              status: 'sent',
+              status: "sent",
               sentAt: new Date(),
-              fcmMessageId: response
+              fcmMessageId: response,
             },
             source: source,
             priority: priority,
             performance: {
-              processingTime: processingTime
-            }
+              processingTime: processingTime,
+            },
           });
         } catch (logError) {
-          console.warn('Failed to create topic notification log:', logError.message);
+          console.warn(
+            "Failed to create topic notification log:",
+            logError.message
+          );
           // Don't fail the notification if logging fails
         }
       }
 
-      console.log(`📢 Topic notification sent successfully to "${topic}" (Template: ${template.templateId})`);
+      console.log(
+        `📢 Topic notification sent successfully to "${topic}" (Template: ${template.templateId})`
+      );
 
       return {
         success: true,
@@ -576,14 +592,16 @@ class NotificationService {
         messageId: response,
         processingTime,
         topic: topic,
-        deliveryType: 'topic',
+        deliveryType: "topic",
         templateId: template.templateId,
-        subscriberEstimate: 'Unknown (topic-based)', // Firebase doesn't provide subscriber counts
-        logged: logDelivery
+        subscriberEstimate: "Unknown (topic-based)", // Firebase doesn't provide subscriber counts
+        logged: logDelivery,
       };
-
     } catch (error) {
-      console.error(`❌ Failed to send topic notification to "${topic}":`, error);
+      console.error(
+        `❌ Failed to send topic notification to "${topic}":`,
+        error
+      );
 
       // Update template failure stats
       try {
@@ -594,7 +612,7 @@ class NotificationService {
           await template.save();
         }
       } catch (statsError) {
-        console.error('Failed to update template failure stats:', statsError);
+        console.error("Failed to update template failure stats:", statsError);
       }
 
       // Optional lightweight failure logging for topic notifications
@@ -606,21 +624,24 @@ class NotificationService {
             templateId: templateId,
             topic: topic,
             content: {
-              title: 'Failed to render',
-              body: 'Notification failed before sending',
-              variables: variables
+              title: "Failed to render",
+              body: "Notification failed before sending",
+              variables: variables,
             },
             delivery: {
-              status: 'failed',
+              status: "failed",
               failedAt: new Date(),
               failureReason: error.message,
-              errorCode: error.code
+              errorCode: error.code,
             },
             source: source,
-            priority: priority
+            priority: priority,
           });
         } catch (logError) {
-          console.warn('Failed to create topic notification failure log:', logError.message);
+          console.warn(
+            "Failed to create topic notification failure log:",
+            logError.message
+          );
         }
       }
 
@@ -629,8 +650,8 @@ class NotificationService {
         error: error.message,
         notificationId,
         topic: topic,
-        deliveryType: 'topic',
-        logged: logDelivery
+        deliveryType: "topic",
+        logged: logDelivery,
       };
     }
   }
@@ -645,7 +666,7 @@ class NotificationService {
       }
 
       await this.messaging.subscribeToTopic([fcmToken], topic);
-      
+
       console.log(`Device subscribed to topic: ${topic}`);
       return { success: true, topic };
     } catch (error) {
@@ -664,7 +685,7 @@ class NotificationService {
       }
 
       await this.messaging.unsubscribeFromTopic([fcmToken], topic);
-      
+
       console.log(`Device unsubscribed from topic: ${topic}`);
       return { success: true, topic };
     } catch (error) {
@@ -676,13 +697,22 @@ class NotificationService {
   /**
    * Subscribe device to multiple topics based on user preferences and segments
    */
-  async manageTopicSubscriptions(fcmToken, userPreferences, userSegment, platform) {
+  async manageTopicSubscriptions(
+    fcmToken,
+    userPreferences,
+    userSegment,
+    platform
+  ) {
     try {
       const subscriptions = [];
       const errors = [];
 
       // Get topics based on preferences using centralized logic
-      const topicsToSubscribe = getTopicsForPreferences(userPreferences, userSegment, platform);
+      const topicsToSubscribe = getTopicsForPreferences(
+        userPreferences,
+        userSegment,
+        platform
+      );
 
       // Subscribe to each topic
       for (const topic of topicsToSubscribe) {
@@ -699,16 +729,15 @@ class NotificationService {
         subscriptions,
         errors: errors.length > 0 ? errors : null,
         totalSubscribed: subscriptions.length,
-        totalErrors: errors.length
+        totalErrors: errors.length,
       };
-
     } catch (error) {
-      console.error('Error managing topic subscriptions:', error);
+      console.error("Error managing topic subscriptions:", error);
       return {
         success: false,
         error: error.message,
         subscriptions: [],
-        errors: [{ topic: 'general', error: error.message }]
+        errors: [{ topic: "general", error: error.message }],
       };
     }
   }
@@ -724,7 +753,7 @@ class NotificationService {
       // Validate topics before unsubscribing
       for (const topic of topics) {
         if (!isValidTopic(topic)) {
-          errors.push({ topic, error: 'Invalid topic' });
+          errors.push({ topic, error: "Invalid topic" });
           continue;
         }
 
@@ -741,16 +770,15 @@ class NotificationService {
         unsubscriptions,
         errors: errors.length > 0 ? errors : null,
         totalUnsubscribed: unsubscriptions.length,
-        totalErrors: errors.length
+        totalErrors: errors.length,
       };
-
     } catch (error) {
-      console.error('Error unsubscribing from topics:', error);
+      console.error("Error unsubscribing from topics:", error);
       return {
         success: false,
         error: error.message,
         unsubscriptions: [],
-        errors: [{ topic: 'general', error: error.message }]
+        errors: [{ topic: "general", error: error.message }],
       };
     }
   }
@@ -949,6 +977,9 @@ class NotificationService {
           actionType: renderedAction?.type || "none",
           actionValue: renderedAction?.value || "",
           buttonText: renderedAction?.buttonText || "",
+          templateName: template.name,
+          templateType: template.type,
+          templateSlug: template.templateId,
         },
         android: {
           priority: priority === "high" ? "high" : "normal",

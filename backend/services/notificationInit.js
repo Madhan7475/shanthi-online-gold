@@ -11,10 +11,23 @@ async function initializeNotificationServices() {
   try {
     console.log("🚀 Initializing enterprise notification system...");
     
-    // Import the unified NotificationManager (enterprise single entry point)
+    // Import all notification services
     const NotificationManager = require("./NotificationManager");
+    const NotificationService = require("./NotificationService");
+    const AutomatedNotificationService = require("./AutomatedNotificationService");
     
-    // Initialize the enterprise notification system
+    // Initialize base NotificationService first (required for device management)
+    try {
+      await NotificationService.initialize();
+      console.log("✅ Base NotificationService ready");
+      console.log("   📱 Firebase messaging initialized");
+      console.log("   📲 Device management available");
+    } catch (serviceError) {
+      console.warn("❌ Base NotificationService failed to initialize:", serviceError.message);
+      console.warn("   📱 Device registration will be disabled");
+    }
+    
+    // Initialize the enterprise NotificationManager (depends on NotificationService)
     try {
       const initResult = await NotificationManager.initialize();
       if (initResult.success) {
@@ -28,7 +41,18 @@ async function initializeNotificationServices() {
     } catch (managerError) {
       console.warn("❌ NotificationManager failed to initialize:", managerError.message);
       console.warn("   📱 Push notifications will be disabled");
-      console.warn("   🛠️ System will continue without notification capabilities");
+    }
+    
+    // Initialize AutomatedNotificationService (depends on NotificationManager)
+    try {
+      await AutomatedNotificationService.initialize();
+      console.log("✅ AutomatedNotificationService ready");
+      console.log("   ⏰ Scheduled notifications active");
+      console.log("   🛒 Cart abandonment tracking enabled");
+      console.log("   💰 Gold price alerts enabled");
+    } catch (automatedError) {
+      console.warn("❌ AutomatedNotificationService failed to initialize:", automatedError.message);
+      console.warn("   ⏰ Scheduled notifications will be disabled");
     }
     
     console.log("🎯 Enterprise notification system initialization completed");
@@ -52,6 +76,23 @@ async function getNotificationServicesStatus() {
   };
   
   try {
+    // Check base NotificationService status
+    const NotificationService = require("./NotificationService");
+    status.services.base = {
+      initialized: NotificationService.isInitialized || false,
+      ready: NotificationService.isReady ? NotificationService.isReady() : false
+    };
+    
+    // Test connection if ready
+    if (status.services.base.ready) {
+      try {
+        const connectionTest = await NotificationService.validateConnection();
+        status.services.base.connection = connectionTest;
+      } catch (error) {
+        status.services.base.connection = { success: false, error: error.message };
+      }
+    }
+    
     // Check NotificationManager status
     const NotificationManager = require("./NotificationManager");
     status.services.manager = {
@@ -79,8 +120,16 @@ async function getNotificationServicesStatus() {
       }
     }
     
+    // Check AutomatedNotificationService status
+    const AutomatedNotificationService = require("./AutomatedNotificationService");
+    status.services.automated = {
+      initialized: AutomatedNotificationService.isInitialized || false,
+      canSendNotifications: AutomatedNotificationService.canSendNotifications ? AutomatedNotificationService.canSendNotifications() : false,
+      scheduledJobs: AutomatedNotificationService.scheduledJobs ? AutomatedNotificationService.scheduledJobs.size : 0
+    };
+    
   } catch (error) {
-    status.services.manager = { error: "NotificationManager not available", details: error.message };
+    status.services.error = { message: "Service status check failed", details: error.message };
   }
   
   return status;
@@ -94,23 +143,39 @@ async function restartNotificationServices() {
   console.log("🔄 Restarting enterprise notification system...");
   
   try {
-    // Import NotificationManager
+    // Import all services
     const NotificationManager = require("./NotificationManager");
+    const NotificationService = require("./NotificationService");
+    const AutomatedNotificationService = require("./AutomatedNotificationService");
     
-    // Gracefully shutdown if available
+    // Gracefully shutdown services in reverse order
+    
+    // 1. Stop AutomatedNotificationService first (stops cron jobs)
+    if (AutomatedNotificationService.stop) {
+      try {
+        AutomatedNotificationService.stop();
+        console.log("📴 AutomatedNotificationService stopped");
+      } catch (shutdownError) {
+        console.warn("⚠️ AutomatedNotificationService shutdown had issues:", shutdownError.message);
+      }
+    }
+    AutomatedNotificationService.isInitialized = false;
+    
+    // 2. Stop NotificationManager
     if (NotificationManager.shutdown) {
       try {
         await NotificationManager.shutdown();
         console.log("📴 NotificationManager gracefully shutdown");
       } catch (shutdownError) {
-        console.warn("⚠️ Shutdown had issues:", shutdownError.message);
+        console.warn("⚠️ NotificationManager shutdown had issues:", shutdownError.message);
       }
     }
-    
-    // Reset initialization flags
     NotificationManager.isInitialized = false;
     
-    // Reinitialize the enterprise system
+    // 3. Reset NotificationService
+    NotificationService.isInitialized = false;
+    
+    // Reinitialize the entire enterprise system
     await initializeNotificationServices();
     
     console.log("✅ Enterprise notification system restarted successfully");

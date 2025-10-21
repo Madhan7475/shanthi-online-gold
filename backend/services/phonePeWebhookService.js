@@ -232,8 +232,8 @@ class PhonePeWebhookService {
       const previousStatus = order.status;
       const previousPaymentStatus = order.paymentStatus;
 
-      order.status = "Processing";
-      order.paymentStatus = "Paid";
+      order.status = "processing";
+      order.paymentStatus = "paid";
       order.transactionId = callbackData.transactionId;
       order.phonepeOrderId = callbackData.orderId;
 
@@ -267,9 +267,9 @@ class PhonePeWebhookService {
         orderId: order._id,
         paymentId: payment._id,
         previousStatus,
-        newStatus: "Processing",
+        newStatus: "processing",
         previousPaymentStatus,
-        newPaymentStatus: "Paid",
+        newPaymentStatus: "paid",
       };
     } catch (error) {
       console.error("Error handling completed order:", error.message);
@@ -345,8 +345,8 @@ class PhonePeWebhookService {
       } else {
         // Update existing payment record
         // Only update if not already in a final state (avoid overwriting completed payments)
-        if (payment.status === "Pending" || payment.status === "Failed") {
-          payment.status = "Failed";
+        if (payment.status?.toLowerCase() === "pending" || payment.status?.toLowerCase() === "failed") {
+          payment.status = "failed";
           payment.failedAt = new Date();
           payment.errorCode = callbackData.errorCode || "PAYMENT_FAILED";
           payment.detailedErrorCode =
@@ -373,9 +373,9 @@ class PhonePeWebhookService {
       const previousPaymentStatus = order.paymentStatus;
 
       // Don't overwrite orders that are already successfully processing
-      if (!["Processing", "Shipped", "Delivered"].includes(order.status)) {
-        order.status = "Payment Failed";
-        order.paymentStatus = "Failed";
+      if (!["processing", "shipped", "delivered"].includes(order.status?.toLowerCase())) {
+        order.status = "payment_failed";
+        order.paymentStatus = "failed";
         order.transactionId = callbackData.transactionId || order.transactionId;
         order.phonepeOrderId = callbackData.orderId;
 
@@ -389,7 +389,7 @@ class PhonePeWebhookService {
           trigger: 'webhook',
           data: {
             orderId: order._id,
-            status: 'failed',
+            status: 'payment_failed',
             previousStatus: previousStatus,
             errorCode: callbackData.errorCode,
             errorMessage: payment.errorMessage,
@@ -413,9 +413,9 @@ class PhonePeWebhookService {
         orderId: order._id,
         paymentId: payment._id,
         previousStatus,
-        newStatus: "Payment Failed",
+        newStatus: "payment_failed",
         previousPaymentStatus,
-        newPaymentStatus: "Failed",
+        newPaymentStatus: "failed",
       };
     } catch (error) {
       console.error("Error handling failed order:", error.message);

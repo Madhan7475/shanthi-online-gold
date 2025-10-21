@@ -32,14 +32,10 @@ class AutomatedNotificationService {
       // Stop any existing jobs first (safety measure)
       this.stop();
 
-      // Initialize enterprise notification manager (but don't fail if it can't initialize)
-      try {
-        await NotificationManager.initialize();
-        console.log("Enterprise notification manager ready");
-      } catch (error) {
+      // Check if NotificationManager is ready (it should be initialized by notificationInit.js)
+      if (!NotificationManager.isInitialized) {
         console.warn(
-          "Enterprise notification manager initialization failed, continuing without notifications:",
-          error.message
+          "NotificationManager not initialized yet, automated notifications may not work properly"
         );
       }
 
@@ -324,7 +320,8 @@ class AutomatedNotificationService {
       {
         templateId: "ORDER_PROCESSING",
         name: "Payment Successful - Order Processing",
-        description: "Notification when order payment is successful and order moves to processing",
+        description:
+          "Notification when order payment is successful and order moves to processing",
         type: "transactional",
         title: "Payment Successful! Order #{{orderNumber}}",
         body: "Great news! Your payment of ₹{{totalAmount}} has been received successfully. Your order is now being processed and will be shipped soon.",
@@ -335,10 +332,18 @@ class AutomatedNotificationService {
         },
         variables: [
           { key: "orderNumber", description: "Order number", required: true },
-          { key: "orderId", description: "Order ID for tracking", required: true },
+          {
+            key: "orderId",
+            description: "Order ID for tracking",
+            required: true,
+          },
           { key: "totalAmount", description: "Order amount", required: true },
           { key: "itemCount", description: "Number of items", required: false },
-          { key: "estimatedDelivery", description: "Estimated delivery date", required: false },
+          {
+            key: "estimatedDelivery",
+            description: "Estimated delivery date",
+            required: false,
+          },
         ],
         targeting: {
           userSegments: ["all"],
@@ -392,10 +397,14 @@ class AutomatedNotificationService {
           { key: "orderNumber", description: "Order number", required: true },
           { key: "orderId", description: "Order ID", required: true },
           { key: "deliveredAt", description: "Delivery date", required: true },
-          { key: "deliveredTo", description: "Delivery recipient", required: true },
+          {
+            key: "deliveredTo",
+            description: "Delivery recipient",
+            required: true,
+          },
           {
             key: "totalAmount",
-            description: "Total order amount", 
+            description: "Total order amount",
             required: false,
           },
         ],
@@ -420,7 +429,11 @@ class AutomatedNotificationService {
           { key: "orderNumber", description: "Order number", required: true },
           { key: "orderId", description: "Order ID for retry", required: true },
           { key: "totalAmount", description: "Order amount", required: true },
-          { key: "errorMessage", description: "Payment error message", required: true },
+          {
+            key: "errorMessage",
+            description: "Payment error message",
+            required: true,
+          },
         ],
         targeting: {
           userSegments: ["all"],
@@ -511,8 +524,16 @@ class AutomatedNotificationService {
         },
         variables: [
           { key: "offerTitle", description: "Offer title", required: true },
-          { key: "discount", description: "Discount percentage", required: true },
-          { key: "validUntil", description: "Offer validity date", required: true },
+          {
+            key: "discount",
+            description: "Discount percentage",
+            required: true,
+          },
+          {
+            key: "validUntil",
+            description: "Offer validity date",
+            required: true,
+          },
           { key: "offerCode", description: "Discount code", required: true },
         ],
         targeting: {
@@ -534,8 +555,16 @@ class AutomatedNotificationService {
         },
         variables: [
           { key: "campaignName", description: "Campaign name", required: true },
-          { key: "discount", description: "Discount percentage", required: true },
-          { key: "validUntil", description: "Campaign validity date", required: true },
+          {
+            key: "discount",
+            description: "Discount percentage",
+            required: true,
+          },
+          {
+            key: "validUntil",
+            description: "Campaign validity date",
+            required: true,
+          },
         ],
         targeting: {
           userSegments: ["active_users"],
@@ -556,7 +585,11 @@ class AutomatedNotificationService {
         },
         variables: [
           { key: "contentTitle", description: "Content title", required: true },
-          { key: "contentSlug", description: "Content URL slug", required: true },
+          {
+            key: "contentSlug",
+            description: "Content URL slug",
+            required: true,
+          },
         ],
         targeting: {
           userSegments: ["active_users"],
@@ -577,7 +610,11 @@ class AutomatedNotificationService {
         },
         variables: [
           { key: "title", description: "Announcement title", required: true },
-          { key: "message", description: "Announcement message", required: true },
+          {
+            key: "message",
+            description: "Announcement message",
+            required: true,
+          },
           { key: "actionUrl", description: "Action URL", required: false },
         ],
         targeting: {
@@ -640,31 +677,31 @@ class AutomatedNotificationService {
     });
     this.scheduledJobs.set("cart_abandonment", cartAbandonmentJob);
 
-    // Price drop alerts (twice daily at 10 AM and 6 PM)
-    const priceDropJob = cron.schedule(
-      "0 10,18 * * *",
-      async () => {
-        try {
-          await this.checkWishlistPriceDrops();
-        } catch (error) {
-          console.error("Error in price drop job:", error);
-        }
-      },
-      {
-        timezone: "Asia/Kolkata",
-      }
-    );
-    this.scheduledJobs.set("price_drops", priceDropJob);
+    // // Price drop alerts (twice daily at 10 AM and 6 PM)
+    // const priceDropJob = cron.schedule(
+    //   "0 10,18 * * *",
+    //   async () => {
+    //     try {
+    //       await this.checkWishlistPriceDrops();
+    //     } catch (error) {
+    //       console.error("Error in price drop job:", error);
+    //     }
+    //   },
+    //   {
+    //     timezone: "Asia/Kolkata",
+    //   }
+    // );
+    // this.scheduledJobs.set("price_drops", priceDropJob);
 
-    // Back in stock alerts (every 4 hours)
-    const backInStockJob = cron.schedule("0 */4 * * *", async () => {
-      try {
-        await this.checkBackInStock();
-      } catch (error) {
-        console.error("Error in back in stock job:", error);
-      }
-    });
-    this.scheduledJobs.set("back_in_stock", backInStockJob);
+    // // Back in stock alerts (every 4 hours)
+    // const backInStockJob = cron.schedule("0 */4 * * *", async () => {
+    //   try {
+    //     await this.checkBackInStock();
+    //   } catch (error) {
+    //     console.error("Error in back in stock job:", error);
+    //   }
+    // });
+    // this.scheduledJobs.set("back_in_stock", backInStockJob);
 
     // Re-engagement campaign (daily at 11 AM)
     const reEngagementJob = cron.schedule(
@@ -688,7 +725,7 @@ class AutomatedNotificationService {
   /**
    * Send daily gold price update notifications
    */
-  async sendDailyGoldPriceUpdate() {
+  async sendDailyGoldPriceUpdate(_goldPriceData) {
     try {
       console.log("Sending daily gold price updates...");
 
@@ -704,11 +741,18 @@ class AutomatedNotificationService {
       const { getLatestGoldPrice } = require("./goldPriceService");
 
       let goldPriceData;
-      try {
-        goldPriceData = await getLatestGoldPrice({ allowFetch: false });
-      } catch (error) {
-        console.warn("No gold price data available:", error.message);
-        return { sent: 0, failed: 0, error: "No price data available" };
+      if (!_goldPriceData) {
+        try {
+          goldPriceData = await getLatestGoldPrice({
+            allowFetch: true,
+            forceRefresh: true,
+          });
+        } catch (error) {
+          console.warn("No gold price data available:", error.message);
+          return { sent: 0, failed: 0, error: "No price data available" };
+        }
+      } else {
+        goldPriceData = _goldPriceData;
       }
 
       const template = await NotificationTemplate.findOne({
@@ -744,20 +788,20 @@ class AutomatedNotificationService {
       );
 
       const result = await this.safeNotificationSend({
-        type: 'gold_price',
-        trigger: 'scheduled',
+        type: "gold_price",
+        trigger: "scheduled",
         data: {
           goldPrice: Math.round(currentPrice24k).toString(),
           priceChange: priceChange,
           changeAmount: changeAmount,
           priceMessage: priceMessage,
-          deliveryType: 'topic' // Force topic delivery
+          deliveryType: "topic", // Force topic delivery
         },
         recipients: null, // Not needed for topic notifications
         options: {
           priority: "normal",
           source: "automated",
-        }
+        },
       });
 
       if (result.success) {
@@ -772,8 +816,8 @@ class AutomatedNotificationService {
           priceChange,
           changeAmount,
           source: goldPriceData.source,
-          deliveryType: 'topic',
-          topic: 'promotional'
+          deliveryType: "topic",
+          topic: "promotional",
         };
       } else {
         console.error(
@@ -788,7 +832,7 @@ class AutomatedNotificationService {
           priceChange,
           changeAmount,
           source: goldPriceData.source,
-          error: result.error
+          error: result.error,
         };
       }
     } catch (error) {
@@ -860,10 +904,10 @@ class AutomatedNotificationService {
           );
 
           await NotificationManager.sendNotification({
-            type: 'cart_event',
-            trigger: 'scheduled',
+            type: "cart_event",
+            trigger: "scheduled",
             data: {
-              event: 'abandonment',
+              event: "abandonment",
               templateId: template._id,
               itemCount: cart.items.length,
               totalValue: totalValue.toFixed(0),
@@ -872,7 +916,7 @@ class AutomatedNotificationService {
             options: {
               priority: "normal",
               source: "automated",
-            }
+            },
           });
           sentCount++;
         } catch (error) {
@@ -921,8 +965,8 @@ class AutomatedNotificationService {
             const savings = product.price - discountedPrice;
 
             await NotificationManager.sendNotification({
-              type: 'price_alert',
-              trigger: 'scheduled',
+              type: "price_alert",
+              trigger: "scheduled",
               data: {
                 templateId: template._id,
                 productName: product.title,
@@ -934,7 +978,7 @@ class AutomatedNotificationService {
               options: {
                 priority: "high",
                 source: "automated",
-              }
+              },
             });
             sentCount++;
           }
@@ -982,8 +1026,8 @@ class AutomatedNotificationService {
 
           for (const wishlistEntry of wishlistEntries) {
             await NotificationManager.sendNotification({
-              type: 'stock_alert',
-              trigger: 'stock_change',
+              type: "stock_alert",
+              trigger: "stock_change",
               data: {
                 templateId: template._id,
                 productName: product.title,
@@ -994,7 +1038,7 @@ class AutomatedNotificationService {
               options: {
                 priority: "high",
                 source: "automated",
-              }
+              },
             });
             sentCount++;
           }
@@ -1052,8 +1096,8 @@ class AutomatedNotificationService {
       for (const device of inactiveDevices) {
         try {
           await NotificationManager.sendNotification({
-            type: 'reengagement',
-            trigger: 'scheduled',
+            type: "reengagement",
+            trigger: "scheduled",
             data: {
               templateId: template._id,
             },
@@ -1061,7 +1105,7 @@ class AutomatedNotificationService {
             options: {
               priority: "normal",
               source: "automated",
-            }
+            },
           });
           sentCount++;
         } catch (error) {
@@ -1077,8 +1121,6 @@ class AutomatedNotificationService {
       console.error("Error in sendReEngagementNotifications:", error);
     }
   }
-
-
 
   /**
    * Stop all scheduled jobs
