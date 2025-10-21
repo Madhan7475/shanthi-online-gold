@@ -1,14 +1,19 @@
 // backend/services/NotificationBuilder.js
-const NotificationTemplate = require('../models/NotificationTemplate');
-const Order = require('../models/Order');
-const User = require('../models/User');
-const UserDevice = require('../models/UserDevice');
-const Cart = require('../models/Cart');
-const { NOTIFICATION_TOPICS, isValidTopic, getTopicForCategory } = require('../constants/notificationTopics');
+const mongoose = require("mongoose");
+const NotificationTemplate = require("../models/NotificationTemplate");
+const Order = require("../models/Order");
+const User = require("../models/User");
+const UserDevice = require("../models/UserDevice");
+const Cart = require("../models/Cart");
+const {
+  NOTIFICATION_TOPICS,
+  isValidTopic,
+  getTopicForCategory,
+} = require("../constants/notificationTopics");
 
 /**
  * NotificationBuilder - Handles template resolution, variable interpolation, and user targeting
- * 
+ *
  * This service is responsible for:
  * 1. Resolving the correct notification template based on request type
  * 2. Interpolating variables into template content
@@ -29,17 +34,17 @@ class NotificationBuilder {
     if (this.isInitialized) return { success: true };
 
     try {
-      console.log('🔧 Initializing Notification Builder...');
-      
+      console.log("🔧 Initializing Notification Builder...");
+
       // Pre-load critical templates
       await this._preloadTemplates();
-      
+
       this.isInitialized = true;
-      console.log('✅ Notification Builder initialized');
-      
+      console.log("✅ Notification Builder initialized");
+
       return { success: true };
     } catch (error) {
-      console.error('❌ Failed to initialize Notification Builder:', error);
+      console.error("❌ Failed to initialize Notification Builder:", error);
       return { success: false, error: error.message };
     }
   }
@@ -54,48 +59,62 @@ class NotificationBuilder {
       // Step 1: Resolve template
       const template = await this._resolveTemplate(type, trigger, data);
       if (!template) {
+        console.warn(
+          `No template found for type: ${type}, trigger: ${trigger}`
+        );
         return {
           success: false,
-          error: `No template found for type: ${type}, trigger: ${trigger}`
+          error: `No template found for type: ${type}, trigger: ${trigger}`,
         };
       }
 
       // Step 2: Check if this should use topic-based delivery
       if (this._shouldUseTopicDelivery(type, trigger, data)) {
-        return await this._buildTopicNotification(type, data, template, request);
+        return await this._buildTopicNotification(
+          type,
+          data,
+          template,
+          request
+        );
       }
-
+      console.log("Building individual notification for type:", type);
       // Step 3: Resolve target users (for individual notifications)
       const targetUsers = await this._resolveTargetUsers(recipients, data);
       if (!targetUsers || targetUsers.length === 0) {
         return {
           success: false,
-          error: 'No target users found'
+          error: "No target users found",
         };
       }
-
       // Step 4: Build variables for each user
       const notifications = [];
       for (const user of targetUsers) {
         try {
-          const variables = await this._buildVariables(type, data, user, template);
+          const variables = await this._buildVariables(
+            type,
+            data,
+            user,
+            template
+          );
           const content = this._interpolateTemplate(template, variables);
 
           notifications.push({
-            userId: user._id,
+            userId: user.firebaseUid,
             templateId: template._id,
             content,
             variables,
-            priority: request.options?.priority || 'normal',
+            priority: request.options?.priority || "normal",
             userDevices: user.devices || [],
-            deliveryType: 'individual'
+            deliveryType: "individual",
           });
         } catch (userError) {
-          console.warn(`Failed to build notification for user ${user._id}:`, userError.message);
+          console.warn(
+            `Failed to build notification for user ${user._id}:`,
+            userError.message
+          );
           // Continue with other users
         }
       }
-
       return {
         success: true,
         notifications,
@@ -105,15 +124,14 @@ class NotificationBuilder {
           targetUserCount: targetUsers.length,
           successfulBuilds: notifications.length,
           buildErrors: targetUsers.length - notifications.length,
-          deliveryType: 'individual'
-        }
+          deliveryType: "individual",
+        },
       };
-
     } catch (error) {
-      console.error('Error in buildNotification:', error);
+      console.error("Error in buildNotification:", error);
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -126,7 +144,7 @@ class NotificationBuilder {
     try {
       // Resolve the Firebase topic
       const topic = this._resolveNotificationTopic(type, data);
-      
+
       // Build variables (no user-specific data)
       const variables = await this._buildTopicVariables(type, data, template);
       const content = this._interpolateTemplate(template, variables);
@@ -135,9 +153,9 @@ class NotificationBuilder {
         templateId: template._id,
         content,
         variables,
-        priority: request.options?.priority || 'normal',
-        deliveryType: 'topic',
-        topic: topic
+        priority: request.options?.priority || "normal",
+        deliveryType: "topic",
+        topic: topic,
       };
 
       return {
@@ -146,19 +164,18 @@ class NotificationBuilder {
         metadata: {
           templateId: template._id,
           templateName: template.name,
-          deliveryType: 'topic',
+          deliveryType: "topic",
           topic: topic,
-          targetUserCount: 'broadcast',
+          targetUserCount: "broadcast",
           successfulBuilds: 1,
-          buildErrors: 0
-        }
+          buildErrors: 0,
+        },
       };
-
     } catch (error) {
-      console.error('Error building topic notification:', error);
+      console.error("Error building topic notification:", error);
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -169,44 +186,44 @@ class NotificationBuilder {
    */
   async _buildTopicVariables(type, data, template) {
     const baseVariables = {
-      customerName: 'Valued Customer', // Generic greeting for broadcasts
+      customerName: "Valued Customer", // Generic greeting for broadcasts
     };
 
     switch (type) {
-      case 'gold_price':
+      case "gold_price":
         return {
           ...baseVariables,
-          goldPrice: data.goldPrice || '0',
-          priceChange: data.priceChange || 'unchanged',
-          changeAmount: data.changeAmount || '0',
-          priceMessage: data.priceMessage || 'Check latest gold prices'
+          goldPrice: data.goldPrice || "0",
+          priceChange: data.priceChange || "unchanged",
+          changeAmount: data.changeAmount || "0",
+          priceMessage: data.priceMessage || "Check latest gold prices",
         };
 
-      case 'new_collection':
+      case "new_collection":
         return {
           ...baseVariables,
-          collectionName: data.collectionName || 'New Collection',
-          itemCount: data.itemCount || '0',
-          startingPrice: data.startingPrice || '0',
-          collectionSlug: data.collectionSlug || 'new-collection'
+          collectionName: data.collectionName || "New Collection",
+          itemCount: data.itemCount || "0",
+          startingPrice: data.startingPrice || "0",
+          collectionSlug: data.collectionSlug || "new-collection",
         };
 
-      case 'festival_wishes':
-      case 'seasonal':
+      case "festival_wishes":
+      case "seasonal":
         return {
           ...baseVariables,
-          festivalName: data.festivalName || 'Festival',
-          discount: data.discount || '10',
-          festivalSlug: data.festivalSlug || 'festival-sale'
+          festivalName: data.festivalName || "Festival",
+          discount: data.discount || "10",
+          festivalSlug: data.festivalSlug || "festival-sale",
         };
 
-      case 'promotional':
+      case "promotional":
         return { ...baseVariables, ...data.variables };
 
-      case 'engagement':
+      case "engagement":
         return {
           ...baseVariables,
-          ...data.variables
+          ...data.variables,
         };
 
       default:
@@ -220,17 +237,17 @@ class NotificationBuilder {
   _shouldUseTopicDelivery(type, trigger, data) {
     // Topic-based types map to our category preferences
     const topicBasedTypes = [
-      'gold_price',        // → promotional topic
-      'promotional',       // → promotional topic
-      'new_collection',    // → promotional topic  
-      'festival_wishes',   // → seasonal topic
-      'seasonal',          // → seasonal topic
-      'engagement',        // → engagement topic
-      'general_announcement' // → all_users topic
+      "gold_price", // → promotional topic
+      "promotional", // → promotional topic
+      "new_collection", // → promotional topic
+      "festival_wishes", // → seasonal topic
+      "seasonal", // → seasonal topic
+      "engagement", // → engagement topic
+      "general_announcement", // → all_users topic
     ];
 
     // Also check if explicitly specified as topic delivery
-    if (data.deliveryType === 'topic') {
+    if (data.deliveryType === "topic") {
       return true;
     }
 
@@ -242,13 +259,13 @@ class NotificationBuilder {
    */
   _resolveNotificationTopic(type, data) {
     const topicMap = {
-      'gold_price': NOTIFICATION_TOPICS.PROMOTIONAL, // Gold price updates are promotional in nature
-      'promotional': NOTIFICATION_TOPICS.PROMOTIONAL,
-      'new_collection': NOTIFICATION_TOPICS.PROMOTIONAL, // New collections are promotional
-      'festival_wishes': NOTIFICATION_TOPICS.SEASONAL,
-      'seasonal': NOTIFICATION_TOPICS.SEASONAL,
-      'general_announcement': NOTIFICATION_TOPICS.ALL_USERS,
-      'engagement': NOTIFICATION_TOPICS.ENGAGEMENT
+      gold_price: NOTIFICATION_TOPICS.PROMOTIONAL, // Gold price updates are promotional in nature
+      promotional: NOTIFICATION_TOPICS.PROMOTIONAL,
+      new_collection: NOTIFICATION_TOPICS.PROMOTIONAL, // New collections are promotional
+      festival_wishes: NOTIFICATION_TOPICS.SEASONAL,
+      seasonal: NOTIFICATION_TOPICS.SEASONAL,
+      general_announcement: NOTIFICATION_TOPICS.ALL_USERS,
+      engagement: NOTIFICATION_TOPICS.ENGAGEMENT,
     };
 
     // Allow override from data if valid
@@ -257,10 +274,12 @@ class NotificationBuilder {
     }
 
     const resolvedTopic = topicMap[type] || NOTIFICATION_TOPICS.ALL_USERS;
-    
+
     // Validate resolved topic
     if (!isValidTopic(resolvedTopic)) {
-      console.warn(`Invalid topic resolved: ${resolvedTopic}, falling back to ALL_USERS`);
+      console.warn(
+        `Invalid topic resolved: ${resolvedTopic}, falling back to ALL_USERS`
+      );
       return NOTIFICATION_TOPICS.ALL_USERS;
     }
 
@@ -276,46 +295,46 @@ class NotificationBuilder {
       let templateId;
 
       switch (type) {
-        case 'order_status':
+        case "order_status":
           templateId = this._getOrderStatusTemplate(data.status);
           break;
-          
-        case 'cart_event':
+
+        case "cart_event":
           templateId = this._getCartEventTemplate(data.event);
           break;
-          
-        case 'promotional':
+
+        case "promotional":
           templateId = data.templateId;
           break;
-          
-        case 'price_alert':
-          templateId = 'WISHLIST_PRICE_DROP';
-          break;
-          
-        case 'stock_alert':
-          templateId = 'BACK_IN_STOCK';
-          break;
-          
-        case 'gold_price':
-          templateId = 'DAILY_GOLD_PRICE';
+
+        case "price_alert":
+          templateId = "WISHLIST_PRICE_DROP";
           break;
 
-        case 'new_collection':
-          templateId = 'NEW_COLLECTION_LAUNCH';
+        case "stock_alert":
+          templateId = "BACK_IN_STOCK";
           break;
 
-        case 'festival_wishes':
-        case 'seasonal':
-          templateId = 'FESTIVAL_WISHES';
+        case "gold_price":
+          templateId = "DAILY_GOLD_PRICE";
           break;
-          
+
+        case "new_collection":
+          templateId = "NEW_COLLECTION_LAUNCH";
+          break;
+
+        case "festival_wishes":
+        case "seasonal":
+          templateId = "FESTIVAL_WISHES";
+          break;
+
         default:
           throw new Error(`Unknown notification type: ${type}`);
       }
 
       return await this._getTemplate(templateId);
     } catch (error) {
-      console.error('Error resolving template:', error);
+      console.error("Error resolving template:", error);
       return null;
     }
   }
@@ -326,15 +345,15 @@ class NotificationBuilder {
    */
   _getOrderStatusTemplate(status) {
     const statusMap = {
-      'processing': 'ORDER_PROCESSING',
-      'confirmed': 'ORDER_PROCESSING',
-      'shipped': 'ORDER_SHIPPED',
-      'delivered': 'ORDER_DELIVERED',
-      'payment_failed': 'ORDER_PAYMENT_FAILED',
-      'cancelled': 'ORDER_CANCELLED'
+      processing: "ORDER_PROCESSING",
+      confirmed: "ORDER_PROCESSING",
+      shipped: "ORDER_SHIPPED",
+      delivered: "ORDER_DELIVERED",
+      payment_failed: "ORDER_PAYMENT_FAILED",
+      cancelled: "ORDER_CANCELLED",
     };
 
-    return statusMap[status.toLowerCase()] || 'ORDER_STATUS_UPDATE';
+    return statusMap[status.toLowerCase()] || "ORDER_STATUS_UPDATE";
   }
 
   /**
@@ -343,12 +362,12 @@ class NotificationBuilder {
    */
   _getCartEventTemplate(event) {
     const eventMap = {
-      'abandonment_1h': 'CART_ABANDONMENT_1H',
-      'abandonment_24h': 'CART_ABANDONMENT_24H',
-      'checkout_reminder': 'CART_CHECKOUT_REMINDER'
+      abandonment_1h: "CART_ABANDONMENT_1H",
+      abandonment_24h: "CART_ABANDONMENT_24H",
+      checkout_reminder: "CART_CHECKOUT_REMINDER",
     };
 
-    return eventMap[event] || 'CART_ABANDONMENT_1H';
+    return eventMap[event] || "CART_ABANDONMENT_1H";
   }
 
   /**
@@ -358,20 +377,20 @@ class NotificationBuilder {
   async _getTemplate(templateId) {
     // Check cache first
     const cached = this.templateCache.get(templateId);
-    if (cached && (Date.now() - cached.timestamp) < this.cacheExpiry) {
+    if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
       return cached.template;
     }
 
     // Fetch from database
     const template = await NotificationTemplate.findOne({
       templateId,
-      status: 'active'
+      status: "active",
     });
 
     if (template) {
       this.templateCache.set(templateId, {
         template,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
 
@@ -386,13 +405,13 @@ class NotificationBuilder {
     try {
       let userIds = [];
 
-      if (typeof recipients === 'string') {
+      if (typeof recipients === "string") {
         // Single user ID
         userIds = [recipients];
       } else if (Array.isArray(recipients)) {
         // Array of user IDs
         userIds = recipients;
-      } else if (typeof recipients === 'object') {
+      } else if (typeof recipients === "object") {
         // Targeting criteria object
         userIds = await this._resolveUsersByTargeting(recipients);
       } else if (data.orderId) {
@@ -407,36 +426,78 @@ class NotificationBuilder {
       }
 
       if (userIds.length === 0) {
+        console.log("No user IDs resolved");
         return [];
       }
 
-      // Get users with their active devices
-      const users = await User.aggregate([
-        { $match: { _id: { $in: userIds.map(id => typeof id === 'string' ? id : id.toString()) } } },
-        {
-          $lookup: {
-            from: 'userdevices',
-            let: { userId: '$_id' },
-            pipeline: [
-              {
-                $match: {
-                  $expr: { $eq: ['$userId', '$$userId'] },
-                  'tokenStatus.isActive': true,
-                  'preferences.enabled': true
-                }
-              }
-            ],
-            as: 'devices'
-          }
-        },
-        {
-          $match: { 'devices.0': { $exists: true } } // Only users with active devices
-        }
-      ]);
 
+      // Now find the corresponding users
+      // We need to handle both ObjectId and Firebase UID cases
+      const users = [];
+
+      for (const userId of userIds) {
+        let user = null;
+
+        // Try to find user by ObjectId first (if userId looks like ObjectId)
+        if (mongoose.Types.ObjectId.isValid(userId)) {
+          try {
+            user = await User.findById(userId).lean();
+          } catch (error) {
+            console.log(
+              `Failed to find user by ObjectId ${userId}:`,
+              error.message
+            );
+          }
+        }
+
+        // If not found, try to find by Firebase UID
+        if (!user) {
+          try {
+            user = await User.findOne({ firebaseUid: userId }).lean();
+          } catch (error) {
+            console.log(
+              `Failed to find user by Firebase UID ${userId}:`,
+              error.message
+            );
+          }
+        }
+
+        // If still not found, try to find by any string field that might match
+        if (!user) {
+          try {
+            user = await User.findOne({
+              $or: [
+                { _id: userId },
+                { firebaseUid: userId },
+                // Add other potential matching fields if needed
+              ],
+            }).lean();
+          } catch (error) {
+            console.log(
+              `Failed to find user with fallback search for ${userId}:`,
+              error.message
+            );
+          }
+        }
+
+        if (user) {
+          // Add devices to user object
+          // user.devices = devicesByUserId[userId];
+          users.push(user);
+          console.log(
+            `Found user ${user._id}`
+          );
+        } else {
+          console.warn(
+            `No user found for userId: ${userId}, but devices exist`
+          );
+        }
+      }
+
+      console.log(`Resolved ${users.length} target users with devices`);
       return users;
     } catch (error) {
-      console.error('Error resolving target users:', error);
+      console.error("Error resolving target users:", error);
       return [];
     }
   }
@@ -448,7 +509,7 @@ class NotificationBuilder {
   async _resolveUsersByTargeting(targeting) {
     // This would implement complex targeting logic
     // For now, return empty array
-    console.warn('Complex targeting not implemented yet');
+    console.warn("Complex targeting not implemented yet");
     return [];
   }
 
@@ -458,20 +519,20 @@ class NotificationBuilder {
    */
   async _buildVariables(type, data, user, template) {
     const baseVariables = {
-      customerName: user.name || user.displayName || 'Valued Customer',
-      userId: user._id.toString()
+      customerName: user.name || user.displayName || "Valued Customer",
+      userId: user._id.toString(),
     };
 
     switch (type) {
-      case 'order_status':
+      case "order_status":
         return await this._buildOrderVariables(data, user, baseVariables);
-        
-      case 'cart_event':
+
+      case "cart_event":
         return await this._buildCartVariables(data, user, baseVariables);
-        
-      case 'promotional':
+
+      case "promotional":
         return { ...baseVariables, ...data.variables };
-        
+
       default:
         return baseVariables;
     }
@@ -489,16 +550,22 @@ class NotificationBuilder {
 
     return {
       ...baseVariables,
-      orderNumber: order.orderNumber || order._id.toString().slice(-8).toUpperCase(),
+      orderNumber:
+        order.orderNumber || order._id.toString().slice(-8).toUpperCase(),
       orderId: order._id.toString(),
-      orderTotal: order.total || order.totalAmount || 0,
-      currency: '₹',
+      totalAmount: order.total || order.totalAmount || 0,
+      currency: "₹",
       itemCount: order.items?.length || 0,
-      estimatedDelivery: order.estimatedDelivery || '5-7 business days',
-      trackingNumber: order.trackingNumber || `TRK${order._id.toString().slice(-6).toUpperCase()}`,
-      deliveredAt: order.deliveredAt ? order.deliveredAt.toLocaleDateString() : new Date().toLocaleDateString(),
-      deliveredTo: order.deliveryAddress?.name || user.name || 'Customer',
-      errorMessage: data.errorMessage || 'Payment processing failed. Please try again.'
+      estimatedDelivery: order.estimatedDelivery || "5-7 business days",
+      trackingId:
+        order.trackingNumber ||
+        `TRK${order._id.toString().slice(-6).toUpperCase()}`,
+      deliveredAt: order.deliveredAt
+        ? order.deliveredAt.toLocaleDateString()
+        : new Date().toLocaleDateString(),
+      deliveredTo: order.deliveryAddress?.name || user.name || "Customer",
+      errorMessage:
+        data.errorMessage || "Payment processing failed. Please try again.",
     };
   }
 
@@ -508,12 +575,16 @@ class NotificationBuilder {
    */
   async _buildCartVariables(data, user, baseVariables) {
     const cart = await Cart.findOne({ userId: user._id });
-    
+
     return {
       ...baseVariables,
       itemCount: cart?.items?.length || 0,
-      totalValue: cart?.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0,
-      currency: '₹'
+      totalValue:
+        cart?.items?.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        ) || 0,
+      currency: "₹",
     };
   }
 
@@ -526,8 +597,8 @@ class NotificationBuilder {
     let body = template.body;
 
     // Simple variable interpolation
-    Object.keys(variables).forEach(key => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
+    Object.keys(variables).forEach((key) => {
+      const regex = new RegExp(`{{${key}}}`, "g");
       title = title.replace(regex, variables[key]);
       body = body.replace(regex, variables[key]);
     });
@@ -537,7 +608,7 @@ class NotificationBuilder {
     if (template.action) {
       action = {
         ...template.action,
-        value: this._interpolateString(template.action.value, variables)
+        value: this._interpolateString(template.action.value, variables),
       };
     }
 
@@ -546,7 +617,7 @@ class NotificationBuilder {
       body,
       action,
       imageUrl: template.imageUrl,
-      iconUrl: template.iconUrl
+      iconUrl: template.iconUrl,
     };
   }
 
@@ -556,12 +627,12 @@ class NotificationBuilder {
    */
   _interpolateString(str, variables) {
     if (!str) return str;
-    
-    Object.keys(variables).forEach(key => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
+
+    Object.keys(variables).forEach((key) => {
+      const regex = new RegExp(`{{${key}}}`, "g");
       str = str.replace(regex, variables[key]);
     });
-    
+
     return str;
   }
 
@@ -571,18 +642,21 @@ class NotificationBuilder {
    */
   async _preloadTemplates() {
     const criticalTemplates = [
-      'ORDER_PROCESSING',
-      'ORDER_SHIPPED', 
-      'ORDER_DELIVERED',
-      'ORDER_PAYMENT_FAILED',
-      'CART_ABANDONMENT_1H'
+      "ORDER_PROCESSING",
+      "ORDER_SHIPPED",
+      "ORDER_DELIVERED",
+      "ORDER_PAYMENT_FAILED",
+      "CART_ABANDONMENT_1H",
     ];
 
     for (const templateId of criticalTemplates) {
       try {
         await this._getTemplate(templateId);
       } catch (error) {
-        console.warn(`Failed to preload template ${templateId}:`, error.message);
+        console.warn(
+          `Failed to preload template ${templateId}:`,
+          error.message
+        );
       }
     }
   }
@@ -594,7 +668,7 @@ class NotificationBuilder {
     return {
       isInitialized: this.isInitialized,
       cacheSize: this.templateCache.size,
-      cacheExpiry: this.cacheExpiry
+      cacheExpiry: this.cacheExpiry,
     };
   }
 
@@ -603,7 +677,7 @@ class NotificationBuilder {
    */
   clearCache() {
     this.templateCache.clear();
-    console.log('📝 Template cache cleared');
+    console.log("📝 Template cache cleared");
   }
 }
 

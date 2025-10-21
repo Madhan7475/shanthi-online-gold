@@ -73,7 +73,9 @@ const OrderDetailPage = () => {
             attempts++;
             setRetryCount(attempts);
 
-            console.log(`Payment status check attempt ${attempts}/${maxRetries}`);
+            console.log(
+              `Payment status check attempt ${attempts}/${maxRetries}`
+            );
 
             const result = await checkPaymentStatus(data);
 
@@ -122,7 +124,10 @@ const OrderDetailPage = () => {
 
       setPaymentStatus(response);
 
-      if (response.state === "COMPLETED" && order.status?.toLowerCase() === "pending") {
+      if (
+        response.state === "COMPLETED" &&
+        order.status?.toLowerCase() === "pending"
+      ) {
         setOrder((prev) => ({ ...prev, status: "Processing" }));
         toast.success("Payment completed! Order status updated.");
       } else if (response.state === "FAILED") {
@@ -160,10 +165,14 @@ const OrderDetailPage = () => {
         const base = import.meta.env.VITE_API_BASE_URL || "";
         const token = localStorage.getItem("token");
         const url = token
-          ? `${base}/api/invoices/${order._id}/pdf?auth=${encodeURIComponent(token)}`
+          ? `${base}/api/invoices/${order._id}/pdf?auth=${encodeURIComponent(
+              token
+            )}`
           : `${base}/api/invoices/${order._id}/pdf`;
         window.open(url, "_blank");
-      } catch { }
+      } catch {
+        // Ignore
+      }
       toast.error("Could not download invoice.");
     } finally {
       setInvoiceLoading(false);
@@ -218,7 +227,9 @@ const OrderDetailPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h2 className="text-2xl md:text-3xl font-semibold text-[#3e2f1c] mb-6 tracking-tight">Order Details</h2>
+      <h2 className="text-2xl md:text-3xl font-semibold text-[#3e2f1c] mb-6 tracking-tight">
+        Order Details
+      </h2>
 
       {/* Top summary */}
       <div className="bg-white border border-[#f4e0b9] rounded-lg p-5 mb-6 shadow-sm">
@@ -243,17 +254,24 @@ const OrderDetailPage = () => {
               {order.status}
             </span>
             <div className="text-xs text-gray-500 mt-1">
-              Updated: {formatDateTime(order.statusUpdatedAt || order.updatedAt || order.date)}
+              Updated:{" "}
+              {formatDateTime(
+                order.statusUpdatedAt || order.updatedAt || order.date
+              )}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-500">Payment</div>
-            <div className="text-sm capitalize">{order.paymentMethod || "N/A"}</div>
+            <div className="text-sm capitalize">
+              {order.paymentMethod || "N/A"}
+            </div>
           </div>
           {order.transactionId ? (
             <div className="min-w-0">
               <div className="text-sm text-gray-500">Transaction ID</div>
-              <div className="text-xs font-mono break-all">{order.transactionId}</div>
+              <div className="text-xs font-mono break-all">
+                {order.transactionId}
+              </div>
             </div>
           ) : null}
         </div>
@@ -275,7 +293,9 @@ const OrderDetailPage = () => {
           <p className="text-sm">{order.customerName}</p>
         </div>
         <div className="bg-white border border-[#f4e0b9] rounded-lg p-4 shadow-sm">
-          <h3 className="font-semibold text-[#3e2f1c] mb-2">Delivery Address</h3>
+          <h3 className="font-semibold text-[#3e2f1c] mb-2">
+            Delivery Address
+          </h3>
           <p className="text-sm whitespace-pre-wrap">{order.deliveryAddress}</p>
         </div>
       </div>
@@ -295,10 +315,14 @@ const OrderDetailPage = () => {
         <div className="mt-2 text-sm">
           <div>State: {paymentStatus?.state || "N/A"}</div>
           {typeof retryCount === "number" ? (
-            <div className="text-xs text-gray-500">Auto-check attempts: {retryCount}</div>
+            <div className="text-xs text-gray-500">
+              Auto-check attempts: {retryCount}
+            </div>
           ) : null}
           {paymentStatus?.message ? (
-            <div className="text-xs text-gray-500">Message: {paymentStatus.message}</div>
+            <div className="text-xs text-gray-500">
+              Message: {paymentStatus.message}
+            </div>
           ) : null}
         </div>
       </div>
@@ -319,7 +343,9 @@ const OrderDetailPage = () => {
             <div className="flex-grow">
               <p className="font-semibold text-[#3e2f1c]">{item.title}</p>
               <p className="text-gray-500">Qty: {item.quantity}</p>
-              <p className="text-gray-500">Unit: {formatCurrency(item.price)}</p>
+              <p className="text-gray-500">
+                Unit: {formatCurrency(item.price)}
+              </p>
               {item.karatage ? (
                 <p className="text-gray-500">Karat: {item.karatage}</p>
               ) : null}
@@ -356,9 +382,9 @@ const OrderDetailPage = () => {
             {formatCurrency(
               Array.isArray(order.items)
                 ? order.items.reduce(
-                  (sum, i) => sum + (i.price || 0) * (i.quantity || 1),
-                  0
-                )
+                    (sum, i) => sum + (i.price || 0) * (i.quantity || 1),
+                    0
+                  )
                 : 0
             )}
           </p>
@@ -380,11 +406,21 @@ const OrderDetailPage = () => {
               fill="currentColor"
             >
               <path d="M12 2.25l8.485 3.03c.3.107.515.39.515.707V12c0 5.25-3.25 9.75-9 11.25C6.25 21.75 3 17.25 3 12V6c0-.317.215-.6.515-.707L12 2.25z" />
-              <path d="M10.25 12.5l1.75 1.75 3.75-3.75" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M10.25 12.5l1.75 1.75 3.75-3.75"
+                stroke="white"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             <div>
-              <div className="text-lg font-semibold text-[#3e2f1c]">Purity Guaranteed</div>
-              <div className="text-sm text-gray-600">on every online purchases</div>
+              <div className="text-lg font-semibold text-[#3e2f1c]">
+                Purity Guaranteed
+              </div>
+              <div className="text-sm text-gray-600">
+                on every online purchases
+              </div>
             </div>
           </div>
 
@@ -402,8 +438,12 @@ const OrderDetailPage = () => {
               <circle cx="17" cy="17.75" r="2.25" />
             </svg>
             <div>
-              <div className="text-lg font-semibold text-[#3e2f1c]">Secure Delivery</div>
-              <div className="text-sm text-gray-600">by our trusted partners</div>
+              <div className="text-lg font-semibold text-[#3e2f1c]">
+                Secure Delivery
+              </div>
+              <div className="text-sm text-gray-600">
+                by our trusted partners
+              </div>
             </div>
           </div>
 
@@ -429,8 +469,12 @@ const OrderDetailPage = () => {
               </text>
             </svg>
             <div>
-              <div className="text-lg font-semibold text-[#3e2f1c]">Easy & Secure Payments</div>
-              <div className="text-sm text-gray-600">backed by the trust of PhonePe</div>
+              <div className="text-lg font-semibold text-[#3e2f1c]">
+                Easy & Secure Payments
+              </div>
+              <div className="text-sm text-gray-600">
+                backed by the trust of PhonePe
+              </div>
             </div>
           </div>
         </div>

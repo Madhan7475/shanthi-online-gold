@@ -54,7 +54,7 @@ const getPhonePeClient = () => {
  */
 const getPhonePeConfig = () => {
   const frontend = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
-  const redirectUrl = process.env.PHONEPE_REDIRECT_URL || `${frontend}/payments/phonepe/return`;
+  const redirectUrl = process.env.PHONEPE_REDIRECT_URL || `${frontend}/payment-success`;
   return {
     clientId,
     environment: environment === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX',

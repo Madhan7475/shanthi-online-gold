@@ -249,7 +249,7 @@ class NotificationQueue extends EventEmitter {
       const results = [];
       for (const notification of queueItem.notifications) {
         try {
-          const result = await this._sendNotification(notification);
+          const result = await this._sendNotification(notification, queueItem);
           results.push(result);
 
           if (result.success) {
@@ -318,10 +318,26 @@ class NotificationQueue extends EventEmitter {
    * Send individual notification
    * @private
    */
-  async _sendNotification(notification) {
+  async _sendNotification(notification, queueItem) {
     if (!NotificationService.isReady()) {
       throw new Error("NotificationService not ready");
     }
+
+    // Map trigger to valid source values for NotificationLog
+    const sourceMap = {
+      'manual': 'manual',
+      'admin_action': 'manual',
+      'payment_completion': 'triggered',
+      'webhook': 'triggered',
+      'scheduled': 'scheduled',
+      'automated': 'automated',
+      'campaign': 'automated',
+      'system': 'automated'
+    };
+
+    // Get the original trigger/source from queue item
+    const originalTrigger = queueItem?.trigger || 'automated';
+    const mappedSource = sourceMap[originalTrigger] || 'automated';
 
     // Check if this is a topic-based notification
     if (notification.deliveryType === 'topic' && notification.topic) {
@@ -335,7 +351,7 @@ class NotificationQueue extends EventEmitter {
         templateId: notification.templateId,
         variables: notification.variables,
         priority: notification.priority,
-        source: "queue",
+        source: mappedSource,
       });
     }
 
@@ -345,7 +361,7 @@ class NotificationQueue extends EventEmitter {
       templateId: notification.templateId,
       variables: notification.variables,
       priority: notification.priority,
-      source: "queue",
+      source: mappedSource,
     });
   }
 

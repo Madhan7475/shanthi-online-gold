@@ -8,7 +8,10 @@ const NotificationTemplate = require("../models/NotificationTemplate");
 const UserDevice = require("../models/UserDevice");
 const User = require("../models/User");
 const adminAuth = require("../middleware/adminAuth");
-const { NOTIFICATION_TOPICS, isValidTopic } = require("../constants/notificationTopics");
+const {
+  NOTIFICATION_TOPICS,
+  isValidTopic,
+} = require("../constants/notificationTopics");
 
 // Services are initialized in server.js via notificationInit.js
 // No need to initialize again here to avoid duplicate cron jobs
@@ -248,7 +251,8 @@ router.post("/send/:type", async (req, res) => {
           orderNumber: `ORD${Date.now().toString().slice(-6)}`,
           orderId: `60f${Math.random().toString(36).substr(2, 21)}`,
           totalAmount: "45000",
-          errorMessage: "Payment was declined by your bank. Please try with a different card.",
+          errorMessage:
+            "Payment was declined by your bank. Please try with a different card.",
         },
       },
 
@@ -317,7 +321,7 @@ router.post("/send/:type", async (req, res) => {
       },
       promotional_offer: {
         templateId: "PROMOTIONAL_OFFER",
-        deliveryType: "topic", 
+        deliveryType: "topic",
         topic: NOTIFICATION_TOPICS.PROMOTIONAL,
         variables: {
           offerTitle: "Diwali Gold Sale",
@@ -395,7 +399,9 @@ router.post("/send/:type", async (req, res) => {
     // Merge custom variables
     const finalVariables = { ...config.variables, ...customVariables };
 
-    console.log(`🧪 Testing ${type} notification (${config.deliveryType} delivery)`);
+    console.log(
+      `🧪 Testing ${type} notification (${config.deliveryType} delivery)`
+    );
 
     // Check if notification service is ready
     if (!NotificationService.isReady()) {
@@ -437,17 +443,17 @@ router.post("/send/:type", async (req, res) => {
       // Use NotificationManager for unified experience (includes queue processing)
       result = await NotificationManager.sendNotification({
         type: type.toLowerCase(),
-        trigger: 'manual',
+        trigger: "manual",
         data: {
           ...finalVariables,
-          deliveryType: 'topic',
+          deliveryType: "topic",
           topic: config.topic,
         },
         recipients: null, // Not needed for topics
         options: {
-          priority: 'normal',
-          source: 'test'
-        }
+          priority: "normal",
+          source: "test",
+        },
       });
 
       // Count estimated recipients for testing feedback
@@ -455,9 +461,17 @@ router.post("/send/:type", async (req, res) => {
         isActive: true,
         "tokenStatus.isActive": true,
         "preferences.enabled": true,
-        [`preferences.${type.includes('gold_price') || type.includes('collection') || type.includes('promotional') ? 'promotional' : 
-          type.includes('festival') || type.includes('seasonal') ? 'seasonal' : 
-          type.includes('engagement') || type.includes('educational') ? 'engagement' : 'promotional'}`]: true,
+        [`preferences.${
+          type.includes("gold_price") ||
+          type.includes("collection") ||
+          type.includes("promotional")
+            ? "promotional"
+            : type.includes("festival") || type.includes("seasonal")
+            ? "seasonal"
+            : type.includes("engagement") || type.includes("educational")
+            ? "engagement"
+            : "promotional"
+        }`]: true,
       });
 
       return res.json({
@@ -474,7 +488,6 @@ router.post("/send/:type", async (req, res) => {
         result: result,
         timestamp: new Date().toISOString(),
       });
-
     } else {
       // INDIVIDUAL DELIVERY for transactional, user-specific
       if (!userId) {
@@ -585,22 +598,22 @@ router.post("/send-all", adminAuth, async (req, res) => {
 
     const testTypes = [
       // Topic-based notifications (broadcast)
-      "daily_gold_price",        // → promotional topic
-      "new_collection_launch",   // → promotional topic  
-      "promotional_offer",       // → promotional topic
-      "festival_wishes",         // → seasonal topic
-      "seasonal_campaign",       // → seasonal topic
-      "re_engagement",          // → engagement topic
-      "educational_content",     // → engagement topic
-      "general_announcement",   // → all_users topic
-      
+      "daily_gold_price", // → promotional topic
+      "new_collection_launch", // → promotional topic
+      "promotional_offer", // → promotional topic
+      "festival_wishes", // → seasonal topic
+      "seasonal_campaign", // → seasonal topic
+      "re_engagement", // → engagement topic
+      "educational_content", // → engagement topic
+      "general_announcement", // → all_users topic
+
       // Individual notifications (personal)
-      "cart_abandonment_1h",    // → individual delivery
-      "cart_abandonment_24h",   // → individual delivery
-      "order_confirmed",        // → individual delivery
-      "order_shipped",          // → individual delivery
-      "wishlist_price_drop",    // → individual delivery
-      "back_in_stock",          // → individual delivery
+      "cart_abandonment_1h", // → individual delivery
+      "cart_abandonment_24h", // → individual delivery
+      "order_confirmed", // → individual delivery
+      "order_shipped", // → individual delivery
+      "wishlist_price_drop", // → individual delivery
+      "back_in_stock", // → individual delivery
     ];
 
     const results = [];
@@ -691,7 +704,7 @@ router.post("/send-all", adminAuth, async (req, res) => {
  * @desc    Test gold price notifications with real or simulated data
  * @access  Admin
  */
-router.post("/gold-price", adminAuth, async (req, res) => {
+router.post("/gold-price", async (req, res) => {
   try {
     const {
       userId,
@@ -705,7 +718,6 @@ router.post("/gold-price", adminAuth, async (req, res) => {
       `Testing gold price notifications (useRealData: ${_useRealData})`
     );
 
-    let goldPriceData;
     let variables;
 
     if (_useRealData) {
@@ -783,19 +795,19 @@ router.post("/gold-price", adminAuth, async (req, res) => {
     } else {
       // TOPIC BROADCAST - Use new topic-based delivery
       console.log("Broadcasting gold price update using topic delivery");
-      
+
       const result = await NotificationManager.sendNotification({
-        type: 'gold_price',
-        trigger: 'manual',
+        type: "gold_price",
+        trigger: "manual",
         data: {
           ...variables,
-          deliveryType: 'topic'
+          deliveryType: "topic",
         },
         recipients: null, // Not needed for topics
         options: {
-          priority: 'normal',
-          source: 'test'
-        }
+          priority: "normal",
+          source: "test",
+        },
       });
 
       // Get estimated recipients for feedback
@@ -819,8 +831,14 @@ router.post("/gold-price", adminAuth, async (req, res) => {
         performance: {
           method: "topic_broadcast",
           improvement: `1 FCM call instead of ${estimatedRecipients} individual calls`,
-          efficiency: estimatedRecipients > 0 ? `${(((estimatedRecipients - 1) / estimatedRecipients) * 100).toFixed(1)}% reduction` : "N/A"
-        }
+          efficiency:
+            estimatedRecipients > 0
+              ? `${(
+                  ((estimatedRecipients - 1) / estimatedRecipients) *
+                  100
+                ).toFixed(1)}% reduction`
+              : "N/A",
+        },
       });
     }
   } catch (error) {
@@ -1048,7 +1066,7 @@ router.post("/topic/:topic", async (req, res) => {
         success: false,
         message: `Invalid topic: ${topic}`,
         validTopics: Object.values(NOTIFICATION_TOPICS),
-        hint: "Use one of the predefined topics"
+        hint: "Use one of the predefined topics",
       });
     }
 
@@ -1078,7 +1096,7 @@ router.post("/topic/:topic", async (req, res) => {
 
     // Get estimated recipients for the topic
     let estimatedRecipients = 0;
-    
+
     if (topic === NOTIFICATION_TOPICS.ALL_USERS) {
       estimatedRecipients = await UserDevice.countDocuments({
         isActive: true,
@@ -1127,7 +1145,13 @@ router.post("/topic/:topic", async (req, res) => {
       performance: {
         fcmCalls: 1,
         alternativeIndividualCalls: estimatedRecipients,
-        efficiency: estimatedRecipients > 0 ? `${(((estimatedRecipients - 1) / estimatedRecipients) * 100).toFixed(1)}% reduction in API calls` : "N/A"
+        efficiency:
+          estimatedRecipients > 0
+            ? `${(
+                ((estimatedRecipients - 1) / estimatedRecipients) *
+                100
+              ).toFixed(1)}% reduction in API calls`
+            : "N/A",
       },
       result: result,
       timestamp: new Date().toISOString(),
@@ -1172,7 +1196,8 @@ router.get("/topics", async (req, res) => {
             "preferences.enabled": true,
             "preferences.promotional": true,
           });
-          description = "Users who enabled promotional notifications (gold prices, offers)";
+          description =
+            "Users who enabled promotional notifications (gold prices, offers)";
           break;
 
         case NOTIFICATION_TOPICS.SEASONAL:
@@ -1182,7 +1207,8 @@ router.get("/topics", async (req, res) => {
             "preferences.enabled": true,
             "preferences.seasonal": true,
           });
-          description = "Users who enabled seasonal notifications (festivals, occasions)";
+          description =
+            "Users who enabled seasonal notifications (festivals, occasions)";
           break;
 
         case NOTIFICATION_TOPICS.ENGAGEMENT:
@@ -1192,7 +1218,8 @@ router.get("/topics", async (req, res) => {
             "preferences.enabled": true,
             "preferences.engagement": true,
           });
-          description = "Users who enabled engagement notifications (tips, education)";
+          description =
+            "Users who enabled engagement notifications (tips, education)";
           break;
 
         case NOTIFICATION_TOPICS.IOS_USERS:
@@ -1230,7 +1257,12 @@ router.get("/topics", async (req, res) => {
         subscriberCount,
         description,
         testEndpoint: `/api/test-notifications/topic/${topic}`,
-        efficiency: subscriberCount > 1 ? `${(((subscriberCount - 1) / subscriberCount) * 100).toFixed(1)}% reduction vs individual` : "N/A"
+        efficiency:
+          subscriberCount > 1
+            ? `${(((subscriberCount - 1) / subscriberCount) * 100).toFixed(
+                1
+              )}% reduction vs individual`
+            : "N/A",
       });
     }
 
@@ -1240,13 +1272,20 @@ router.get("/topics", async (req, res) => {
       topics: topics,
       summary: {
         totalTopics: topics.length,
-        totalPotentialSubscribers: topics.reduce((sum, t) => sum + t.subscriberCount, 0),
-        mostPopularTopic: topics.reduce((max, t) => t.subscriberCount > max.subscriberCount ? t : max, topics[0]),
+        totalPotentialSubscribers: topics.reduce(
+          (sum, t) => sum + t.subscriberCount,
+          0
+        ),
+        mostPopularTopic: topics.reduce(
+          (max, t) => (t.subscriberCount > max.subscriberCount ? t : max),
+          topics[0]
+        ),
       },
       usage: {
         directTopicTest: "POST /api/test-notifications/topic/:topic",
-        automaticRouting: "POST /api/test-notifications/send/:type (uses topics automatically)",
-      }
+        automaticRouting:
+          "POST /api/test-notifications/send/:type (uses topics automatically)",
+      },
     });
   } catch (error) {
     console.error("Error getting topic information:", error);

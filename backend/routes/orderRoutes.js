@@ -29,10 +29,12 @@ router.put('/:id', async (req, res) => {
     if (!order) {
       return res.status(404).json({ msg: 'Order not found' });
     }
-    const prevStatus = order.status;
-    const newStatus = req.body.status;
+    const prevStatus = order.status?.toLowerCase();
+    const newStatus = req.body.status?.toLowerCase();
     
-    order.status = newStatus;
+    order.status = newStatus?.toLowerCase();
+    order.paymentStatus = order.paymentStatus?.toLowerCase(); // Keep existing payment status unless specified otherwise
+    console.log(`Updating order ${order._id} status from ${prevStatus} to ${newStatus}`);
     if (prevStatus !== order.status) {
       order.statusUpdatedAt = new Date();
     }
@@ -227,7 +229,7 @@ router.post('/cod', verifyAuthFlexible, async (req, res) => {
       customerName: customer.name,
       items: items,
       total: total,
-      status: 'Pending',
+      status: 'pending',
       deliveryAddress: customer.deliveryAddress,
       paymentMethod: customer.paymentMethod,
     });
@@ -236,7 +238,7 @@ router.post('/cod', verifyAuthFlexible, async (req, res) => {
     const newInvoice = new Invoice({
       customerName: customer.name,
       amount: total,
-      status: 'Pending',
+      status: 'pending',
       orderId: newOrder._id,
     });
     await newInvoice.save();
@@ -274,12 +276,12 @@ router.put('/:id/cancel', verifyAuthFlexible, async (req, res) => {
     if (!ids.includes(order.userId.toString())) {
       return res.status(401).json({ msg: 'User not authorized' });
     }
-    if (order.status !== 'Pending') {
+    if (order.status?.toLowerCase() !== 'pending') {
       return res.status(400).json({ msg: 'Order cannot be cancelled.' });
     }
 
     const prevStatus = order.status;
-    order.status = 'Cancelled';
+    order.status = 'cancelled';
     if (prevStatus !== order.status) {
       order.statusUpdatedAt = new Date();
     }

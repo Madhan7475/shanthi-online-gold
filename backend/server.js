@@ -84,7 +84,7 @@ try {
 }
 
 // Import and mount routes
-const paymentRoutes = require("./routes/paymentRoutes");
+// const paymentRoutes = require("./routes/paymentRoutes");
 const productRoutes = require("./routes/productRoutes");
 const userRoutes = require("./routes/userRoutes");
 const orderRoutes = require("./routes/orderRoutes");
@@ -105,7 +105,7 @@ const paymentDetailRoutes = require("./routes/paymentDetailRoutes");
 app.use("/api/phonepe", phonepeRoutes);
 app.use("/api/phonepe", phonepeWebhookRoutes);
 app.use("/api/market", marketRoutes);
-app.use("/api/payment", paymentRoutes);
+// app.use("/api/payment", paymentRoutes);
 app.use("/api/payments", paymentDetailRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);

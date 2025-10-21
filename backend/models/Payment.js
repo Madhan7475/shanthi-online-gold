@@ -61,8 +61,8 @@ const refundDetailSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Accepted', 'Completed', 'Failed', 'Pending'],
-    default: 'Pending'
+    enum: ['accepted', 'completed', 'failed', 'pending'],
+    default: 'pending'
   },
   errorCode: {
     type: String,
