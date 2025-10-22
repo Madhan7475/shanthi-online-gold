@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 const User = require("../models/User");
 
 // ✅ For Firebase-authenticated users (Google or OTP via Firebase)
@@ -95,6 +96,37 @@ router.post("/otp-login", async (req, res) => {
   } catch (err) {
     console.error("❌ OTP login error:", err.message);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+/**
+ * GET /api/auth/whoami
+ * Returns the authenticated principal (from token) and the matched DB user (including role).
+ * Helps diagnose 401/403 issues.
+ */
+router.get("/whoami", verifyAuthFlexible, async (req, res) => {
+  try {
+    let dbUser = null;
+    if (req.auth?.type === "firebase") {
+      dbUser = await User.findOne({ firebaseUid: req.user.uid }).lean();
+    } else if (req.auth?.type === "jwt") {
+      dbUser = await User.findById(req.user.userId).lean();
+    }
+    return res.json({
+      auth: req.auth || null,
+      userFromToken: req.user || null,
+      dbUser: dbUser
+        ? {
+          id: String(dbUser._id),
+          email: dbUser.email || null,
+          phone: dbUser.phone || null,
+          firebaseUid: dbUser.firebaseUid || null,
+          role: dbUser.role || null,
+        }
+        : null,
+    });
+  } catch (e) {
+    return res.status(500).json({ error: "whoami failed", details: e?.message || String(e) });
   }
 });
 
