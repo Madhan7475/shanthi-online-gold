@@ -75,22 +75,48 @@ const computeLivePriceFrom = (weight, purity, rates) => {
   const karat = parseKarat(purity) ?? 22;
   const perGram = rateForKarat(karat, rates?.pricePerGram24kInr, rates?.pricePerGram22kInr);
   if (grams != null && perGram != null && isFinite(grams) && isFinite(perGram)) {
-    return Math.round(grams * perGram);
+    // Apply the same rule used on listings/detail: +6% on total (making charges waived)
+    return Math.round(grams * perGram * 1.06);
   }
   return null;
 };
-const mapCartWithLive = (req, cart, rates) => {
+
+// Compute live price for a cart item, with robust fallbacks for legacy items
+const computeLivePriceForItem = async (item, rates) => {
+  // 1) Try from item snapshot (weight/purity were saved on add for new carts)
+  let price = computeLivePriceFrom(item.weight, item.purity, rates);
+  if (price != null) return price;
+
+  // 2) Fallback to product document (legacy carts may not have weight/purity saved)
+  try {
+    if (item.productId) {
+      const prod = await Product.findById(item.productId).lean();
+      if (prod) {
+        const weight = prod.grossWeight ?? item.weight;
+        const purity = prod.karatage ?? item.purity;
+        price = computeLivePriceFrom(weight, purity, rates);
+        if (price != null) return price;
+
+        // 3) As a last resort, use current DB price (may already reflect latest repricing)
+        if (Number.isFinite(Number(prod.price))) return Number(prod.price);
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 4) Final fallback to item price saved in cart (may be stale)
+  return Number.isFinite(Number(item.price)) ? Number(item.price) : 0;
+};
+const mapCartWithLive = async (req, cart, rates) => {
   const c = cart.toObject ? cart.toObject() : cart;
-  const items = (c.items || []).map((it) => {
+  const items = await Promise.all((c.items || []).map(async (it) => {
     const base = mapItem(req, it);
-    const livePrice = computeLivePriceFrom(base.weight, base.purity, rates);
-    const price = (livePrice != null ? livePrice : base.price);
+    const price = await computeLivePriceForItem(base, rates);
     return {
       ...base,
       originalPrice: base.price,
       price,
     };
-  });
+  }));
   const totalAmount = items.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
   const totalItems = items.reduce((sum, it) => sum + Number(it.quantity || 0), 0);
   return { items, totalAmount, totalItems };
@@ -115,7 +141,7 @@ router.get('/', verifyAuthFlexible, async (req, res) => {
 
     let rates = null;
     try { rates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
-    const mappedCart = mapCartWithLive(req, cart, rates);
+    const mappedCart = await mapCartWithLive(req, cart, rates);
     res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
@@ -173,7 +199,11 @@ router.post('/', verifyAuthFlexible, async (req, res) => {
 
     if (existingItemIndex > -1) {
       // Do not increment quantity; return conflict indicating already in cart
-      const mappedCart = mapCart(req, cart);
+      // Respond with live prices so UI reflects the latest gold rate even for existing items
+      let confRates = null;
+      try { confRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
+      const mappedCart = await mapCartWithLive(req, cart, confRates);
+      res.set('Cache-Control', 'no-store');
       return res.status(409).json({
         success: false,
         message: 'Item already in cart',
@@ -206,7 +236,7 @@ router.post('/', verifyAuthFlexible, async (req, res) => {
 
     let addRates = null;
     try { addRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
-    const mappedCart = mapCartWithLive(req, cart, addRates);
+    const mappedCart = await mapCartWithLive(req, cart, addRates);
     res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
@@ -274,7 +304,7 @@ router.put('/:itemId', verifyAuthFlexible, async (req, res) => {
     }
     await cart.save();
 
-    const mappedCart = mapCartWithLive(req, cart, updRates);
+    const mappedCart = await mapCartWithLive(req, cart, updRates);
     res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
@@ -327,7 +357,7 @@ router.delete('/:itemId', verifyAuthFlexible, async (req, res) => {
 
     let delRates = null;
     try { delRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
-    const mappedCart = mapCartWithLive(req, cart, delRates);
+    const mappedCart = await mapCartWithLive(req, cart, delRates);
     res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
@@ -367,7 +397,7 @@ router.delete('/', verifyAuthFlexible, async (req, res) => {
 
     let clrRates = null;
     try { clrRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
-    const mappedCart = mapCartWithLive(req, cart, clrRates);
+    const mappedCart = await mapCartWithLive(req, cart, clrRates);
     res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
@@ -415,9 +445,8 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
     // Create order from cart items using live prices
     let coRates = null;
     try { coRates = await getLatestGoldPrice({ allowFetch: true }); } catch { }
-    const orderItems = cart.items.map(item => {
-      const lp = computeLivePriceFrom(item.weight, item.purity, coRates);
-      const price = (lp != null ? lp : item.price);
+    const orderItems = await Promise.all(cart.items.map(async (item) => {
+      const price = await computeLivePriceForItem(item, coRates);
       return {
         productId: item.productId,
         name: item.name,
@@ -429,8 +458,8 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
         weight: item.weight,
         purity: item.purity,
       };
-    });
-    const orderTotal = orderItems.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+    }));
+    const orderTotal = orderItems.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
 
     const newOrder = new Order({
       userId: userId,
