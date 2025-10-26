@@ -193,10 +193,8 @@ class NotificationBuilder {
       case "gold_price":
         return {
           ...baseVariables,
-          goldPrice: data.goldPrice || "0",
-          priceChange: data.priceChange || "unchanged",
-          changeAmount: data.changeAmount || "0",
-          priceMessage: data.priceMessage || "Check latest gold prices",
+          goldPrice22k: data.goldPrice22k || "0",
+          goldPrice24k: data.goldPrice24k || "0",
         };
 
       case "new_collection":
