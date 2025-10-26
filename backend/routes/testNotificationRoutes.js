@@ -299,13 +299,8 @@ router.post("/send/:type", async (req, res) => {
         deliveryType: "topic",
         topic: NOTIFICATION_TOPICS.PROMOTIONAL,
         variables: {
-          goldPrice: "6850",
-          priceChange: Math.random() > 0.5 ? "increased" : "decreased",
-          changeAmount: Math.floor(Math.random() * 100 + 10).toString(),
-          priceMessage:
-            Math.random() > 0.5
-              ? "Great time to sell your gold!"
-              : "Perfect opportunity to buy gold!",
+          currentPrice24k: 12562,
+          currentPrice22k: 11515,
         },
       },
       new_collection_launch: {
@@ -709,9 +704,8 @@ router.post("/gold-price", async (req, res) => {
     const {
       userId,
       useRealData = false,
-      simulatedPrice = 6850,
-      simulatedChange = "increased",
-      simulatedAmount = "75",
+      simulated24kPrice = 12562,
+      simulated22kPrice = 11515,
     } = req.body;
     let _useRealData = useRealData;
     console.log(
@@ -749,13 +743,8 @@ router.post("/gold-price", async (req, res) => {
       // Use simulated data for testing
       console.log("no gold price data, using simulated values");
       variables = {
-        goldPrice: simulatedPrice.toString(),
-        priceChange: simulatedChange,
-        changeAmount: simulatedAmount.toString(),
-        priceMessage:
-          simulatedChange === "increased"
-            ? "Great time to sell your gold!"
-            : "Perfect opportunity to buy gold!",
+        goldPrice22k: simulated22kPrice.toString(),
+        goldPrice24k: simulated24kPrice.toString(),
       };
     }
 

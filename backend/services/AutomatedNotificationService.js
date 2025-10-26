@@ -201,8 +201,8 @@ class AutomatedNotificationService {
         name: "Daily Gold Price Update",
         description: "Daily gold price notification for engaged users",
         type: "promotional",
-        title: "Today's Gold Rate: ₹{{goldPrice}}/gram",
-        body: "Gold {{priceChange}} by ₹{{changeAmount}}/gram today. {{priceMessage}}",
+        title: "Your daily gold whisper ✨",
+        body: "22K: ₹{{goldPrice22k}}/g | 24K: ₹{{goldPrice24k}}/g. Will you sparkle today or wait for tomorrow?",
         action: {
           type: "deep_link",
           value: "/gold-prices",
@@ -210,19 +210,13 @@ class AutomatedNotificationService {
         },
         variables: [
           {
-            key: "goldPrice",
-            description: "Current gold price per gram",
+            key: "goldPrice22k",
+            description: "Current 22K gold price per gram",
             required: true,
           },
           {
-            key: "priceChange",
-            description: "increased/decreased",
-            required: true,
-          },
-          { key: "changeAmount", description: "Change amount", required: true },
-          {
-            key: "priceMessage",
-            description: "Contextual message about price",
+            key: "goldPrice24k",
+            description: "Current 24K gold price per gram",
             required: true,
           },
         ],
@@ -237,8 +231,9 @@ class AutomatedNotificationService {
             "thursday",
             "friday",
             "saturday",
+            "sunday",
           ],
-          allowedTimeSlots: [{ start: "09:00", end: "10:00" }],
+          allowedTimeSlots: [{ start: "07:00", end: "23:00" }],
         },
         status: "active",
       },
@@ -768,20 +763,7 @@ class AutomatedNotificationService {
       // Calculate price change - you might want to implement proper historical tracking
       const currentPrice24k = goldPriceData.pricePerGram24kInr;
       const currentPrice22k = goldPriceData.pricePerGram22kInr;
-
-      // Simple price change simulation (implement proper historical tracking for production)
-      const estimatedChange =
-        Math.random() > 0.5
-          ? Math.round(Math.random() * 50 + 10)
-          : -Math.round(Math.random() * 50 + 10);
-
-      const priceChange = estimatedChange > 0 ? "increased" : "decreased";
-      const changeAmount = Math.abs(estimatedChange).toString();
-      const priceMessage =
-        estimatedChange > 0
-          ? "Prices are up! Good time to sell your gold!"
-          : "Prices dropped! Great opportunity to buy gold!";
-
+     
       // Use topic-based notification for gold price updates (much more efficient!)
       console.log(
         `💰 Current price: ₹${currentPrice24k}/gram (24K), ₹${currentPrice22k}/gram (22K)`
@@ -791,10 +773,8 @@ class AutomatedNotificationService {
         type: "gold_price",
         trigger: "scheduled",
         data: {
-          goldPrice: Math.round(currentPrice24k).toString(),
-          priceChange: priceChange,
-          changeAmount: changeAmount,
-          priceMessage: priceMessage,
+          goldPrice22k: Math.round(currentPrice22k).toString(),
+          goldPrice24k: Math.round(currentPrice24k).toString(),
           deliveryType: "topic", // Force topic delivery
         },
         recipients: null, // Not needed for topic notifications
@@ -813,8 +793,6 @@ class AutomatedNotificationService {
           failed: 0,
           currentPrice24k,
           currentPrice22k,
-          priceChange,
-          changeAmount,
           source: goldPriceData.source,
           deliveryType: "topic",
           topic: "promotional",
@@ -829,8 +807,6 @@ class AutomatedNotificationService {
           failed: 1,
           currentPrice24k,
           currentPrice22k,
-          priceChange,
-          changeAmount,
           source: goldPriceData.source,
           error: result.error,
         };
