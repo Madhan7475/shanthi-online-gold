@@ -6,6 +6,13 @@ const User = require("../models/User");
 const router = express.Router();
 const API_KEY = "ce6557bd-598a-11f0-a562-0200cd936042"; // your 2Factor API key
 
+// Demo account configuration for app review
+// Phone: 9979994465 (with country code: 919979994465)
+// Static OTP: 123456 (for Google Play Store and App Store review)
+const DEMO_PHONE = "919979994465";
+const DEMO_OTP = "123456";
+const DEMO_SESSION_PREFIX = "DEMO_";
+
 // In-memory OTP store keyed by provider sessionId
 // Structure: { phone, createdAt, attempts, verified }
 const otpStore = new Map();
@@ -23,6 +30,34 @@ router.post("/send-otp", async (req, res) => {
   const { phone } = req.body;
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) return res.status(400).json({ message: "Valid phone is required" });
+
+  // Check if this is the demo account
+  if (normalizedPhone === DEMO_PHONE) {
+    try {
+      const now = Date.now();
+      const demoSessionId = `${DEMO_SESSION_PREFIX}${now}`;
+      
+      // Remove any previous sessions for this phone
+      for (const [sid, info] of otpStore.entries()) {
+        if (info.phone === normalizedPhone) otpStore.delete(sid);
+      }
+      
+      // Create demo session
+      otpStore.set(demoSessionId, { 
+        phone: normalizedPhone, 
+        createdAt: now, 
+        attempts: 0, 
+        verified: false,
+        isDemo: true 
+      });
+      
+      console.log(`📱 Demo OTP sent for ${normalizedPhone} - Use OTP: ${DEMO_OTP}`);
+      return res.status(200).json({ sessionId: demoSessionId });
+    } catch (err) {
+      console.error("❌ Demo OTP failed:", err.message);
+      return res.status(500).json({ message: "Failed to send demo OTP" });
+    }
+  }
 
   try {
     const { data } = await axios.get(
@@ -98,12 +133,21 @@ router.post("/verify-otp", async (req, res) => {
         return res.status(429).json({ message: "Too many attempts. Please resend OTP." });
       }
 
-      const { data } = await axios.get(
-        `https://2factor.in/API/V1/${API_KEY}/SMS/VERIFY/${sessId}/${otp}`
-      );
+      // Handle demo account verification
+      if (sess.isDemo && sess.phone === DEMO_PHONE) {
+        if (otp !== DEMO_OTP) {
+          return res.status(401).json({ message: "Invalid OTP" });
+        }
+        console.log(`✅ Demo OTP verified for ${DEMO_PHONE}`);
+      } else {
+        // Regular OTP verification via 2Factor API
+        const { data } = await axios.get(
+          `https://2factor.in/API/V1/${API_KEY}/SMS/VERIFY/${sessId}/${otp}`
+        );
 
-      if (data.Status !== "Success") {
-        return res.status(401).json({ message: "Invalid OTP" });
+        if (data.Status !== "Success") {
+          return res.status(401).json({ message: "Invalid OTP" });
+        }
       }
 
       // Mark as verified; allow completing registration in a subsequent request if needed

@@ -863,6 +863,8 @@ class AutomatedNotificationService {
         },
       }).populate("userId");
 
+      console.log(`Found ${abandonedCarts.length} abandoned carts to process`);
+
       const templates = await NotificationTemplate.find({
         templateId: { $in: ["CART_ABANDONMENT_1H", "CART_ABANDONMENT_24H"] },
         status: "active",
@@ -875,6 +877,8 @@ class AutomatedNotificationService {
         (t) => t.templateId === "CART_ABANDONMENT_24H"
       );
 
+      console.log(`Found ${templates.length} notification templates`);
+
       let sentCount = 0;
       for (const cart of abandonedCarts) {
         try {
@@ -886,7 +890,11 @@ class AutomatedNotificationService {
             userId: cart.userId,
             createdAt: { $gte: cart.updatedAt },
           });
-
+          console.log(
+            `Processing cart for user ${
+              cart.userId
+            }: updated ${hoursAgo.toFixed(2)} hours ago`
+          );
           if (recentOrder) continue; // User has ordered, skip notification
 
           let template;

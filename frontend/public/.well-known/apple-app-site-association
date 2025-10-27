@@ -1,0 +1,22 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "4B5TXS9LPH.com.shanthi.onlinegold",
+        "paths": [
+          "/product/*",
+          "/products",
+          "/order/*",
+          "/my-orders",
+          "/cart",
+          "/saved-items",
+          "/search"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["4B5TXS9LPH.com.shanthi.onlinegold"]
+  }
+}
