@@ -26,6 +26,14 @@ const userSchema = new mongoose.Schema({
     enum: ['customer', 'admin'],
     default: 'customer',
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  deletedAt: {
+    type: Date,
+    default: null,
+  },
   // Server-persisted wishlist and cart
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
   cart: [

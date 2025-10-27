@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 
 // Helper: resolve user via flexible auth
@@ -20,9 +19,9 @@ async function resolveUser(req) {
 
 // GET /api/users/me
 // Returns user profile based on Firebase uid
-router.get("/me", verifyFirebaseToken, async (req, res) => {
+router.get("/me", verifyAuthFlexible, async (req, res) => {
   try {
-    const firebaseUid = req.user.uid;
+    const firebaseUid = req.user.firebaseUid;
     const user = await User.findOne({ firebaseUid });
 
     if (!user) {

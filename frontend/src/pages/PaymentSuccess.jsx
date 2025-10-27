@@ -41,7 +41,7 @@ export default function PaymentSuccess() {
           Could not fetch order details.
         </h2>
         <button
-          onClick={() => navigate("/orders")}
+          onClick={() => navigate("/my-orders")}
           className="px-6 py-2 bg-yellow-600 text-white rounded-lg shadow hover:bg-yellow-700"
         >
           View My Orders
