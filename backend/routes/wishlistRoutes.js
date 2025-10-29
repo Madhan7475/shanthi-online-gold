@@ -173,10 +173,16 @@ router.post('/move-to-cart', async (req, res) => {
 
     // Get user details
     const user = req.auth && req.auth.type === 'firebase'
-      ? await User.findOne({ firebaseUid: uid })
-      : await User.findById(uid);
+      ? await User.findOne({ 
+          firebaseUid: uid,
+          isDeleted: { $ne: true }
+        })
+      : await User.findOne({ 
+          _id: uid,
+          isDeleted: { $ne: true }
+        });
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found or account deleted' });
     }
 
     // Create order (cart item)

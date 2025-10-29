@@ -55,14 +55,27 @@ const adminAuth = async (req, res, next) => {
       // Get user based on auth type
       if (req.auth.type === 'firebase') {
         // Find user by Firebase UID
-        user = await User.findOne({ firebaseUid: req.user.uid });
+        user = await User.findOne({ 
+          firebaseUid: req.user.uid,
+          isDeleted: { $ne: true }
+        });
       } else if (req.auth.type === 'jwt') {
         // User is already fetched in verifyAuthFlexible for JWT
-        user = await User.findById(req.user.userId);
+        user = await User.findOne({ 
+          _id: req.user.userId,
+          isDeleted: { $ne: true }
+        });
       }
 
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
+      }
+
+      if (user.isDeleted) {
+        return res.status(403).json({ 
+          message: 'Account has been deleted. Admin access revoked.',
+          code: 'ACCOUNT_DELETED'
+        });
       }
 
       if (user.role !== 'admin') {

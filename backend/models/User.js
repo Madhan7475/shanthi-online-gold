@@ -34,6 +34,14 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  deletionReason: {
+    type: String,
+    default: null,
+  },
+  deletedByIP: {
+    type: String,
+    default: null,
+  },
   // Server-persisted wishlist and cart
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
   cart: [

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiSearch, FiHeart } from "react-icons/fi";
+import { FiSearch, FiHeart, FiSettings } from "react-icons/fi";
 import { BsCart3 } from "react-icons/bs";
 import { MdLogin, MdLogout } from "react-icons/md";
 import { FaBoxOpen } from "react-icons/fa"; // ✅ My Orders icon
@@ -93,6 +93,12 @@ const Topbar = () => {
                 >
                   My Orders
                 </Link>
+                <Link
+                  to="/account/settings"
+                  className="text-sm hover:text-white transition whitespace-nowrap"
+                >
+                  Settings
+                </Link>
                 <div className="flex items-center space-x-2">
                   <span
                     className="text-xs bg-white/10 px-2 py-1 rounded-full truncate max-w-[80px]"
@@ -182,6 +188,17 @@ const Topbar = () => {
           >
             <FaBoxOpen className="h-6 w-6" />
             <span>Orders</span>
+          </Link>
+        )}
+
+        {isAuthenticated && (
+          <Link
+            to="/account/settings"
+            title="Settings"
+            className="hover:text-white transition flex flex-col items-center text-xs"
+          >
+            <FiSettings className="h-6 w-6" />
+            <span>Settings</span>
           </Link>
         )}
 

@@ -90,9 +90,20 @@ router.put('/users/:id/role', adminAuth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
     
+    // Prevent operations on deleted users
+    if (user.isDeleted) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Cannot modify deleted user account' 
+      });
+    }
+    
     // Prevent removing the last admin
     if (user.role === 'admin' && role === 'customer') {
-      const adminCount = await User.countDocuments({ role: 'admin' });
+      const adminCount = await User.countDocuments({ 
+        role: 'admin',
+        isDeleted: { $ne: true }
+      });
       if (adminCount <= 1) {
         return res.status(400).json({ 
           success: false, 

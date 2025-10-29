@@ -112,7 +112,7 @@ const SigninPage = () => {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       handleSuccessfulLogin();
-    } catch (err) {
+    } catch {
       setMessage("❌ Failed to complete registration.");
     }
   };

@@ -1,43 +1,98 @@
 {
-  "timestamp": "2025-10-16T12:15:14.481Z",
-  "source": "Manual-Override",
+  "timestamp": "2025-10-29T17:52:42.167Z",
+  "source": "GoldAPI.io",
   "goldRates": {
-    "pricePerGram24kInr": 12521,
-    "pricePerGram22kInr": 11925,
-    "lastUpdated": "2025-10-15T15:25:01.347Z"
+    "pricePerGram24kInr": 11743.19,
+    "pricePerGram22kInr": 10764.59,
+    "lastUpdated": "2025-10-29T13:12:57.857Z"
   },
-  "inspected": 4,
-  "updated": 1,
-  "unchanged": 2,
-  "skippedNoWeight": 1,
+  "inspected": 392,
+  "updated": 0,
+  "unchanged": 392,
+  "skippedNoWeight": 0,
   "skippedNoKarat": 0,
   "dryRun": false,
-  "sampleChanges": [
-    {
-      "id": "68c9351686c5d737379c6cc4",
-      "title": "Daisy Curve Diamond Ring",
-      "karatage": "18",
-      "grossWeight": "1.329g",
-      "oldPrice": 12902,
-      "newPrice": 12480
-    }
-  ],
+  "sampleChanges": [],
   "sampleUnchanged": [
     {
-      "id": "68c9347986c5d737379c6cbb",
-      "title": "Alluring Dazzling Gold Mangalsutra",
+      "id": "68f288e1a790321214204943",
+      "title": "Necklace & Earring",
       "karatage": "22",
-      "grossWeight": "13.47g",
-      "price": 160630,
-      "computed": 160630
+      "grossWeight": "21.49",
+      "price": 245211,
+      "computed": 245211
     },
     {
-      "id": "68c9359586c5d737379c6ccc",
-      "title": "Dawn Gold Necklace Set",
+      "id": "68f288e1a79032121420494c",
+      "title": "Necklace & Earring",
       "karatage": "22",
-      "grossWeight": "50.59g",
-      "price": 603286,
-      "computed": 603286
+      "grossWeight": "23.6",
+      "price": 269287,
+      "computed": 269287
+    },
+    {
+      "id": "68f288e1a790321214204950",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "25.66",
+      "price": 292793,
+      "computed": 292793
+    },
+    {
+      "id": "68f288e1a790321214204953",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "25.56",
+      "price": 291651,
+      "computed": 291651
+    },
+    {
+      "id": "68f288e1a790321214204957",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "22.8",
+      "price": 260159,
+      "computed": 260159
+    },
+    {
+      "id": "68f288e1a79032121420495a",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "19.38",
+      "price": 221135,
+      "computed": 221135
+    },
+    {
+      "id": "68f288e1a79032121420495e",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "22.38",
+      "price": 255366,
+      "computed": 255366
+    },
+    {
+      "id": "68f288e1a790321214204961",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "24.92",
+      "price": 284349,
+      "computed": 284349
+    },
+    {
+      "id": "68f288e1a790321214204965",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "23",
+      "price": 262441,
+      "computed": 262441
+    },
+    {
+      "id": "68f288e1a790321214204969",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "24.3",
+      "price": 277274,
+      "computed": 277274
     }
   ]
 }

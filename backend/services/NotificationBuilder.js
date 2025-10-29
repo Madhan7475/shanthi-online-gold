@@ -99,7 +99,7 @@ class NotificationBuilder {
           const content = this._interpolateTemplate(template, variables);
 
           notifications.push({
-            userId: user.firebaseUid,
+            userId: user._id,
             templateId: template._id,
             content,
             variables,
