@@ -3,6 +3,7 @@ const router = express.Router();
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 const User = require("../models/User");
+const { auth } = require("firebase-admin");
 
 // ✅ For Firebase-authenticated users (Google or OTP via Firebase)
 router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
@@ -18,6 +19,54 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
         phone ? { phone } : null,
       ].filter(Boolean),
     });
+
+    // � Handle deleted users - clean up old deleted records and allow fresh registration
+    if (user && user.isDeleted) {
+      console.log(
+        `🗑️ Found deleted user record: ${user._id}, cleaning up for fresh registration`
+      );
+
+      // Check if there are any old deleted records with prefixed email/phone for this user
+      const deletedUserQuery = {
+        isDeleted: true,
+        $or: [],
+      };
+
+      if (email) {
+        deletedUserQuery.$or.push({
+          email: {
+            $regex: `deleted_.*_${email.replace(
+              /[.*+?^${}()|[\]\\]/g,
+              "\\$&"
+            )}$`,
+          },
+        });
+      }
+      if (phone) {
+        deletedUserQuery.$or.push({
+          phone: {
+            $regex: `deleted_.*_${phone.replace(
+              /[.*+?^${}()|[\]\\]/g,
+              "\\$&"
+            )}$`,
+          },
+        });
+      }
+
+      if (deletedUserQuery.$or.length > 0) {
+        // Remove old deleted records to prevent data accumulation
+        const deletedRecords = await User.find(deletedUserQuery);
+        if (deletedRecords.length > 0) {
+          await User.deleteMany(deletedUserQuery);
+          console.log(
+            `🧹 Cleaned up ${deletedRecords.length} old deleted record(s) for fresh registration`
+          );
+        }
+      }
+
+      // Set user to null so a fresh account can be created below
+      user = null;
+    }
 
     if (user) {
       let updated = false;
@@ -41,11 +90,11 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
 
       if (updated) {
         await user.save();
+        await auth().updateUser(uid, { phoneNumber: phone || null });
         console.log("🔄 Updated user:", user._id);
       } else {
         console.log("📌 Existing user found:", user._id);
       }
-
     } else {
       // 🛡️ Prevent inserting null phone/email
       if (!email && !phone) {
@@ -60,6 +109,7 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
       if (phone) newUserData.phone = phone;
 
       user = await User.create(newUserData);
+      await auth().updateUser(uid, { phoneNumber: phone });
       console.log("✅ Created new user:", user._id);
     }
 
@@ -69,8 +119,6 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-
 
 // ✅ For 2Factor-authenticated users (manual OTP login)
 router.post("/otp-login", async (req, res) => {
@@ -82,6 +130,33 @@ router.post("/otp-login", async (req, res) => {
 
   try {
     let user = await User.findOne({ phone });
+
+    // � Handle deleted users - clean up old deleted records and allow fresh registration
+    if (user && user.isDeleted) {
+      console.log(
+        `🗑️ Found deleted user record via OTP: ${user._id}, cleaning up for fresh registration`
+      );
+
+      // Check if there are any old deleted records with prefixed phone for this user
+      const deletedUserQuery = {
+        isDeleted: true,
+        phone: {
+          $regex: `deleted_.*_${phone.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+        },
+      };
+
+      // Remove old deleted records to prevent data accumulation
+      const deletedRecords = await User.find(deletedUserQuery);
+      if (deletedRecords.length > 0) {
+        await User.deleteMany(deletedUserQuery);
+        console.log(
+          `🧹 Cleaned up ${deletedRecords.length} old deleted record(s) for fresh OTP registration`
+        );
+      }
+
+      // Set user to null so a fresh account can be created below
+      user = null;
+    }
 
     if (!user) {
       user = await User.create({ phone, name });
@@ -108,25 +183,33 @@ router.get("/whoami", verifyAuthFlexible, async (req, res) => {
   try {
     let dbUser = null;
     if (req.auth?.type === "firebase") {
-      dbUser = await User.findOne({ firebaseUid: req.user.uid }).lean();
+      dbUser = await User.findOne({
+        firebaseUid: req.user.uid,
+        isDeleted: { $ne: true },
+      }).lean();
     } else if (req.auth?.type === "jwt") {
-      dbUser = await User.findById(req.user.userId).lean();
+      dbUser = await User.findOne({
+        _id: req.user.userId,
+        isDeleted: { $ne: true },
+      }).lean();
     }
     return res.json({
       auth: req.auth || null,
       userFromToken: req.user || null,
       dbUser: dbUser
         ? {
-          id: String(dbUser._id),
-          email: dbUser.email || null,
-          phone: dbUser.phone || null,
-          firebaseUid: dbUser.firebaseUid || null,
-          role: dbUser.role || null,
-        }
+            id: String(dbUser._id),
+            email: dbUser.email || null,
+            phone: dbUser.phone || null,
+            firebaseUid: dbUser.firebaseUid || null,
+            role: dbUser.role || null,
+          }
         : null,
     });
   } catch (e) {
-    return res.status(500).json({ error: "whoami failed", details: e?.message || String(e) });
+    return res
+      .status(500)
+      .json({ error: "whoami failed", details: e?.message || String(e) });
   }
 });
 

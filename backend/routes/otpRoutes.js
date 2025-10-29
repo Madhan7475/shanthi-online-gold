@@ -173,6 +173,14 @@ router.post("/verify-otp", async (req, res) => {
       ].filter(Boolean),
     });
 
+    // 🚫 Prevent deleted users from OTP verification
+    if (user && user.isDeleted) {
+      return res.status(403).json({ 
+        message: "Account has been deleted. Please contact support if you believe this is an error.",
+        code: "ACCOUNT_DELETED"
+      });
+    }
+
     if (!user && !email) {
       // OTP is valid, but we need email to merge or create
       return res.status(202).json({ message: "OTP verified, email required", needEmail: true });

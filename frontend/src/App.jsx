@@ -26,6 +26,7 @@ import SearchPage from "./pages/SearchPage";
 import ProductDetail from "./pages/ProductDetail";
 import DigiGold from "./pages/DigiGold"; // Correct casing
 import FiltersPage from "./pages/Filters";
+import AccountSettings from "./pages/AccountSettings";
 
 
 
@@ -124,6 +125,15 @@ const App = () => {
             element={
               <RequireAuthPage>
                 <OrderDetailPage />
+              </RequireAuthPage>
+            }
+          />
+          {/* ✅ Account Settings Page */}
+          <Route
+            path="account/settings"
+            element={
+              <RequireAuthPage>
+                <AccountSettings />
               </RequireAuthPage>
             }
           />
