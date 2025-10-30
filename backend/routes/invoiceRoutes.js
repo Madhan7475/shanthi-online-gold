@@ -29,14 +29,11 @@ router.get("/:orderId/pdf", verifyAuthFlexible, async (req, res) => {
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     // Authorize: allow only the order owner (supports firebase/jwt via verifyAuthFlexible)
-    const ids = [];
-    if (req.auth?.type === "firebase") {
-      ids.push(req.user.uid);
-    } else if (req.auth?.type === "jwt") {
-      if (req.user.firebaseUid) ids.push(req.user.firebaseUid);
-      ids.push(req.user.userId);
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-    if (!ids.includes(order.userId?.toString())) {
+    if (user._id !== order.userId?.toString()) {
       return res.status(401).json({ message: "Not authorized to download this invoice" });
     }
 

@@ -24,7 +24,7 @@ const notificationTemplateSchema = new mongoose.Schema({
     type: String,
     enum: [
       'promotional',           // Daily gold prices, sales, new collections
-      'user_specific',         // Cart abandonment, price drops, wishlist items
+      'userSpecific',         // Cart abandonment, price drops, wishlist items
       'transactional',         // Order updates, payment confirmations
       'engagement',            // App re-engagement, recommendations
       'seasonal',              // Festival wishes, seasonal promotions

@@ -9,6 +9,7 @@ const UserDevice = require("../models/UserDevice");
 const NotificationLog = require("../models/NotificationLog");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 const adminAuth = require("../middleware/adminAuth");
+const resolveUser = require("../utils/helper");
 
 // NOTE: All notification services are initialized centrally in server.js via notificationInit.js
 // No duplicate initialization here to avoid conflicts and multiple cron jobs
@@ -129,17 +130,14 @@ router.post("/devices/register", verifyAuthFlexible, async (req, res) => {
     }
 
     // Get user ID from auth
-    let userId;
-    if (req.auth?.type === "firebase") {
-      userId = req.user.uid;
-    } else if (req.auth?.type === "jwt") {
-      userId = req.user.firebaseUid || req.user.userId;
-    } else {
+    const user = await resolveUser(req);
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: "User authentication required",
       });
     }
+    const userId = user._id;
 
     const result = await safeNotificationCall(() =>
       NotificationService.registerDevice({
@@ -174,12 +172,14 @@ router.post("/devices/register", verifyAuthFlexible, async (req, res) => {
  */
 router.get("/devices", verifyAuthFlexible, async (req, res) => {
   try {
-    let userId;
-    if (req.auth?.type === "firebase") {
-      userId = req.user.uid;
-    } else if (req.auth?.type === "jwt") {
-      userId = req.user.firebaseUid || req.user.userId;
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User authentication required",
+      });
     }
+    const userId = user._id;
 
     const devices = await UserDevice.find({ userId })
       .select("-fcmToken") // Don't expose FCM tokens
@@ -203,12 +203,14 @@ router.get("/devices", verifyAuthFlexible, async (req, res) => {
  */
 router.get("/preferences", verifyAuthFlexible, async (req, res) => {
   try {
-    let userId;
-    if (req.auth?.type === "firebase") {
-      userId = req.user.uid;
-    } else if (req.auth?.type === "jwt") {
-      userId = req.user.firebaseUid || req.user.userId;
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User authentication required",
+      });
     }
+    const userId = user._id;
 
     const devices = await UserDevice.find({ userId, isActive: true })
       .select(
@@ -325,16 +327,17 @@ router.get(
   verifyAuthFlexible,
   async (req, res) => {
     try {
-      let userId;
-      if (req.auth?.type === "firebase") {
-        userId = req.user.uid;
-      } else if (req.auth?.type === "jwt") {
-        userId = req.user.firebaseUid || req.user.userId;
+      const user = await resolveUser(req);
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: "User authentication required",
+        });
       }
 
       const device = await UserDevice.findOne({
         _id: req.params.deviceId,
-        userId,
+        userId: user._id,
       }).select("preferences deviceInfo.platform deviceInfo.deviceId");
 
       if (!device) {
@@ -372,16 +375,17 @@ router.put(
   verifyAuthFlexible,
   async (req, res) => {
     try {
-      let userId;
-      if (req.auth?.type === "firebase") {
-        userId = req.user.uid;
-      } else if (req.auth?.type === "jwt") {
-        userId = req.user.firebaseUid || req.user.userId;
-      }
+      const user = await resolveUser(req);
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: "User authentication required",
+        });
+      } 
 
       const device = await UserDevice.findOne({
         _id: req.params.deviceId,
-        userId,
+        userId: user._id,
       });
 
       if (!device) {
@@ -526,12 +530,14 @@ router.get("/history", verifyAuthFlexible, async (req, res) => {
   try {
     const { page = 1, limit = 20, status, startDate, endDate, grouped = 'true' } = req.query;
 
-    let userId;
-    if (req.auth?.type === "firebase") {
-      userId = req.user.uid;
-    } else if (req.auth?.type === "jwt") {
-      userId = req.user.firebaseUid || req.user.userId;
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User authentication required",
+      });
     }
+    const userId = user._id;
 
     // Support both grouped (default) and ungrouped views
     const shouldGroup = grouped !== 'false';
@@ -857,12 +863,14 @@ async function getLegacyNotificationHistory(req, res, userId) {
  */
 router.put("/:notificationId/read", verifyAuthFlexible, async (req, res) => {
   try {
-    let userId;
-    if (req.auth?.type === "firebase") {
-      userId = req.user.uid;
-    } else if (req.auth?.type === "jwt") {
-      userId = req.user.firebaseUid || req.user.userId;
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User authentication required",
+      });
     }
+    const userId = user._id;
 
     const { notificationId } = req.params;
     const { markAllDevices = false } = req.body;
@@ -938,12 +946,14 @@ router.put("/:notificationId/read", verifyAuthFlexible, async (req, res) => {
  */
 router.put("/mark-all-read", verifyAuthFlexible, async (req, res) => {
   try {
-    let userId;
-    if (req.auth?.type === "firebase") {
-      userId = req.user.uid;
-    } else if (req.auth?.type === "jwt") {
-      userId = req.user.firebaseUid || req.user.userId;
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User authentication required",
+      });
     }
+    const userId = user._id
 
     const result = await NotificationLog.updateMany(
       {
@@ -978,13 +988,14 @@ router.put("/mark-all-read", verifyAuthFlexible, async (req, res) => {
  */
 router.get("/unread-count", verifyAuthFlexible, async (req, res) => {
   try {
-    let userId;
-    if (req.auth?.type === "firebase") {
-      userId = req.user.uid;
-    } else if (req.auth?.type === "jwt") {
-      userId = req.user.firebaseUid || req.user.userId;
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User authentication required",
+      });
     }
-
+    const userId = user._id
     // Count unique notifications that are unread on ALL devices
     // A notification is considered "read" if it's been opened on ANY device
     const unreadGroups = await NotificationLog.aggregate([
