@@ -4,6 +4,7 @@ const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 const User = require("../models/User");
 const { auth } = require("firebase-admin");
+const resolveUser = require("../utils/helper");
 
 // ✅ For Firebase-authenticated users (Google or OTP via Firebase)
 router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
@@ -181,18 +182,7 @@ router.post("/otp-login", async (req, res) => {
  */
 router.get("/whoami", verifyAuthFlexible, async (req, res) => {
   try {
-    let dbUser = null;
-    if (req.auth?.type === "firebase") {
-      dbUser = await User.findOne({
-        firebaseUid: req.user.uid,
-        isDeleted: { $ne: true },
-      }).lean();
-    } else if (req.auth?.type === "jwt") {
-      dbUser = await User.findOne({
-        _id: req.user.userId,
-        isDeleted: { $ne: true },
-      }).lean();
-    }
+    const dbUser = await resolveUser(req);
     return res.json({
       auth: req.auth || null,
       userFromToken: req.user || null,

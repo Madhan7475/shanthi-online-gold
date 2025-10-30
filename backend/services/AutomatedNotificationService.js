@@ -111,7 +111,7 @@ class AutomatedNotificationService {
         name: "Cart Abandonment - 1 Hour",
         description:
           "Sent 1 hour after user adds items to cart but doesn't checkout",
-        type: "user_specific",
+        type: "userSpecific",
         title: "Your beautiful jewelry is waiting!",
         body: "Don't miss out on {{itemCount}} stunning pieces in your cart. Complete your purchase now and get FREE shipping!",
         action: {
@@ -140,7 +140,7 @@ class AutomatedNotificationService {
         templateId: "CART_ABANDONMENT_24H",
         name: "Cart Abandonment - 24 Hours",
         description: "Sent 24 hours after cart abandonment with discount offer",
-        type: "user_specific",
+        type: "userSpecific",
         title: "Still thinking? Get 5% off your jewelry!",
         body: "Your {{itemCount}} selected pieces are still waiting. Use code SAVE5 for 5% off your ₹{{totalValue}} order!",
         action: {
@@ -169,7 +169,7 @@ class AutomatedNotificationService {
         templateId: "WISHLIST_PRICE_DROP",
         name: "Wishlist Price Drop Alert",
         description: "Notify when wishlist item price drops",
-        type: "user_specific",
+        type: "userSpecific",
         title: "Price Drop Alert!",
         body: "{{productName}} in your wishlist is now ₹{{newPrice}}! Save ₹{{savings}} on this beautiful piece.",
         action: {
@@ -439,7 +439,7 @@ class AutomatedNotificationService {
         templateId: "BACK_IN_STOCK",
         name: "Back in Stock Alert",
         description: "Notify when out-of-stock wishlist items are back",
-        type: "user_specific",
+        type: "userSpecific",
         title: "{{productName}} is Back in Stock!",
         body: "Great news! {{productName}} from your wishlist is now available for ₹{{price}}. Hurry, limited stock!",
         action: {

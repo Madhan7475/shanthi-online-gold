@@ -1,26 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/User");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
-
-// Helper: resolve user via flexible auth
-async function resolveUser(req) {
-  const ors = [];
-  if (req.auth?.type === "firebase" && req.user?.uid) {
-    ors.push({ firebaseUid: req.user.uid });
-  }
-  if (req.auth?.type === "jwt") {
-    if (req.user?.firebaseUid) ors.push({ firebaseUid: req.user.firebaseUid });
-    if (req.user?.userId) ors.push({ _id: req.user.userId });
-  }
-  if (!ors.length) return null;
-
-  // Exclude deleted users from all operations
-  return await User.findOne({
-    $or: ors,
-    $and: [{ isDeleted: { $ne: true } }],
-  });
-}
+const resolveUser = require("../utils/helper");
 
 // GET /api/users/me
 // Returns user profile based on Firebase uid
