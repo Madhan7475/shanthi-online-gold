@@ -84,7 +84,8 @@ const App = () => {
           <Route path="search" element={<SearchPage />} />
           <Route path="products" element={<FiltersPage />} />
           <Route path="/digigold" element={<DigiGold />} />
-
+          <Route path="/terms-and-conditions" element={<Termsandconditions />} /> {/* ✅ New Route */}
+          <Route path="/privacy-policy" element={<Privacypolicies />} /> {/* ✅ New Route */}
 
           {/* Protected Routes */}
           <Route
@@ -152,8 +153,6 @@ const App = () => {
         <Route path="/category/special-collection" element={<SpecialCollectionPage />} />
         <Route path="/category/Aboutus" element={<Aboutus />} />   {/* ✅ New Route */}
         <Route path="/category/ContactUs" element={<ContactUs />} />
-        <Route path="/category/Termsandconditions" element={<Termsandconditions />} /> {/* ✅ New Route */}
-        <Route path="/category/Privacypolicies" element={<Privacypolicies />} /> {/* ✅ New Route */}
         <Route path="/collection/:slug" element={<CollectionPage />} />
         <Route path="/category/RefundReturn" element={<RefundReturn />} />
         <Route path="/category/Shipping" element={<Shipping />} />

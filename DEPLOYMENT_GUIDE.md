@@ -295,7 +295,7 @@ docker-compose logs -f
 ```
 
 You should see:
-- Frontend running on port 3000
+- Frontend running on port 80 (nginx)
 - Backend running on port 9000
 
 ### Step 4: Configure Nginx
@@ -324,10 +324,10 @@ sudo systemctl enable nginx
 
 ```bash
 # Test from VPS
-curl -I http://staging.sog.kwiqwork.in
-curl http://staging.sog.api.kwiqwork.in/api/health
+curl -I http://localhost
+curl http://localhost:9000/healthz
 
-# Test from browser
+# Test from browser (use your domain)
 http://staging.sog.kwiqwork.in
 http://staging.sog.api.kwiqwork.in/api/health
 ```
@@ -419,8 +419,8 @@ docker-compose up -d
 docker-compose logs -f
 
 # Test ports locally
-curl http://localhost:3000
-curl http://localhost:9000/api/health
+curl http://localhost
+curl http://localhost:9000/healthz
 ```
 
 ### Issue: DNS Not Resolving

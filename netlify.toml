@@ -4,7 +4,7 @@
 # Change into the frontend directory before building
 base = "frontend"
 # Build the Vite app
-command = "npm run build"
+command = "npm run build:production"
 # Publish the built site (relative to base)
 publish = "dist"
 

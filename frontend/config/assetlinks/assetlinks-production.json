@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.shanthi.onlinegold",
+      "sha256_cert_fingerprints": [
+        "49:98:A9:8F:1E:D7:81:55:FD:E8:17:B1:A9:F1:AD:66:F6:2F:C5:D0:1B:4D:38:B4:FF:C2:7D:4E:4D:6D:BF:34"
+      ]
+    }
+  }
+]
