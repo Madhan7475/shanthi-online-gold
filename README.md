@@ -1,6 +1,31 @@
-# Shanthi Online Gold — Dev Hosting and Public URL (Dummy Server)
+# Shanthi Online Gold
 
-This project can be temporarily exposed to the internet using a reverse tunnel. The tunnel simply forwards your local dev servers to a public HTTPS URL. It is NOT a permanent deployment.
+A comprehensive e-commerce platform for gold and jewelry, built with React (Vite) frontend and Node.js/Express backend.
+
+## 📚 Documentation
+
+### Deployment Options
+
+Choose the deployment method that fits your needs:
+
+1. **🐳 Docker + VPS (Recommended)** → See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+   - Complete guide for deploying with Docker on your own VPS
+   - Includes nginx reverse proxy and SSL setup
+   - Single comprehensive guide with all steps
+
+2. **☁️ Cloud Hosting (Render + Vercel)** → See [DEPLOYMENT.md](./DEPLOYMENT.md)
+   - Backend on Render, Frontend on Vercel
+   - No server management required
+
+3. **🔧 Development Tunnel (Testing)** → See below
+   - Temporarily expose local dev to the internet
+   - NOT for production use
+
+---
+
+## 🚀 Development - Public URL (Temporary Tunnel)
+
+This method temporarily exposes your local dev servers to the internet using a reverse tunnel. It is NOT a permanent deployment.
 
 ## Quick Start (every time you log in)
 
