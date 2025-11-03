@@ -3,8 +3,8 @@ const router = express.Router();
 const Wishlist = require('../models/Wishlist');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
-const User = require('../models/User');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
+const resolveUser = require('../utils/helper');
 
 // Apply authentication middleware to all wishlist routes
 router.use(verifyAuthFlexible);
