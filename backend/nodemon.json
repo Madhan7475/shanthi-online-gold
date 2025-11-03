@@ -1,0 +1,17 @@
+{
+  "watch": [
+    "**/*.js",
+    "**/*.json"
+  ],
+  "ignore": [
+    "node_modules/**",
+    "uploads/product_reprice_last.json",
+    "uploads/gold_price_cache.json",
+    "**/*.log"
+  ],
+  "ext": "js,json",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": "1000"
+}

@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
 
     // Create wishlist item with product data
     const wishlistItem = new Wishlist({
-      userId: uid,
+      userId: user._id,
       productId: productId,
       product: {
         title: product.title,
@@ -175,7 +175,7 @@ router.post('/move-to-cart', async (req, res) => {
     // Find wishlist item
     const wishlistItem = await Wishlist.findOne({
       _id: itemId,
-      userId: uid
+      userId: user._id
     }).populate('productId');
 
     if (!wishlistItem) {

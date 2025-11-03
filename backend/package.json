@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "start:staging": "cross-env ENV_FILE=.env.staging node server.js",
-    "dev": "cross-env ENV_FILE=.env.staging nodemon server.js",
+    "dev": "cross-env ENV_FILE=.env.development nodemon server.js",
     "import:products": "node scripts/importProductsFromExcel.js",
     "import:products:staging": "cross-env ENV_FILE=.env.staging node scripts/importProductsFromExcel.js",
     "import:products:prod": "cross-env ENV_FILE=.env.prod node scripts/importProductsFromExcel.js"

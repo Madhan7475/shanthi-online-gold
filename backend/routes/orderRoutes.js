@@ -172,7 +172,7 @@ router.get("/:id", verifyAuthFlexible, async (req, res) => {
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
-    if (user._id !== order.userId.toString()) {
+    if (user._id.toString() !== order.userId.toString()) {
       return res.status(401).json({ msg: "User not authorized" });
     }
 
@@ -231,7 +231,7 @@ router.put("/:id/cancel", verifyAuthFlexible, async (req, res) => {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    if (user._id !== order.userId.toString()) {
+    if (user._id.toString() !== order.userId.toString()) {
       return res.status(401).json({ msg: "User not authorized" });
     }
     if (order.status?.toLowerCase() !== "pending") {
