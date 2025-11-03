@@ -179,9 +179,8 @@ router.get("/devices", verifyAuthFlexible, async (req, res) => {
         message: "User authentication required",
       });
     }
-    const userId = user._id;
-
-    const devices = await UserDevice.find({ userId })
+    
+    const devices = await UserDevice.find({ userId: user._id })
       .select("-fcmToken") // Don't expose FCM tokens
       .sort({ createdAt: -1 });
 

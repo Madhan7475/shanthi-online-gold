@@ -7,16 +7,6 @@ const Product = require('../models/Product');
 const { getLatestGoldPrice } = require('../services/goldPriceService');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
 
-// Helper function to get user ID
-const getUserId = (req) => {
-  if (req.auth?.type === 'firebase') {
-    return req.user.uid;
-  } else if (req.auth?.type === 'jwt') {
-    return req.user.firebaseUid || req.user.userId;
-  }
-  return null;
-};
-
 // Build absolute URL for image filename or relative path
 const fileToUrl = (req, value) => {
   if (!value) return null;
@@ -30,15 +20,6 @@ const mapItem = (req, item) => {
   return {
     ...obj,
     imageUrl: fileToUrl(req, obj.image),
-  };
-};
-
-const mapCart = (req, cart) => {
-  const c = cart.toObject ? cart.toObject() : cart;
-  return {
-    items: (c.items || []).map((it) => mapItem(req, it)),
-    totalAmount: c.totalAmount || 0,
-    totalItems: c.totalItems || 0,
   };
 };
 
@@ -127,15 +108,15 @@ const mapCartWithLive = async (req, cart, rates) => {
 // @access  Private
 router.get('/', verifyAuthFlexible, async (req, res) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(400).json({ message: 'Unable to identify user' });
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
     }
 
-    let cart = await Cart.findOne({ userId });
+    let cart = await Cart.findOne({ userId: user._id });
 
     if (!cart) {
-      cart = new Cart({ userId, items: [] });
+      cart = new Cart({ userId: user._id, items: [] });
       await cart.save();
     }
 
@@ -162,9 +143,9 @@ router.get('/', verifyAuthFlexible, async (req, res) => {
 // @access  Private
 router.post('/', verifyAuthFlexible, async (req, res) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(400).json({ message: 'Unable to identify user' });
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
     }
 
     const { productId, name, price, image, quantity = 1, category, description, weight, purity } = req.body;
@@ -186,10 +167,10 @@ router.post('/', verifyAuthFlexible, async (req, res) => {
       });
     }
 
-    let cart = await Cart.findOne({ userId });
+    let cart = await Cart.findOne({ userId: user._id });
 
     if (!cart) {
-      cart = new Cart({ userId, items: [] });
+      cart = new Cart({ userId: user._id, items: [] });
     }
 
     // Check if item already exists in cart
@@ -258,9 +239,9 @@ router.post('/', verifyAuthFlexible, async (req, res) => {
 // @access  Private
 router.put('/:itemId', verifyAuthFlexible, async (req, res) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(400).json({ message: 'Unable to identify user' });
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
     }
 
     const { itemId } = req.params;
@@ -273,7 +254,7 @@ router.put('/:itemId', verifyAuthFlexible, async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ userId: user._id });
     if (!cart) {
       return res.status(404).json({
         success: false,
@@ -326,14 +307,14 @@ router.put('/:itemId', verifyAuthFlexible, async (req, res) => {
 // @access  Private
 router.delete('/:itemId', verifyAuthFlexible, async (req, res) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(400).json({ message: 'Unable to identify user' });
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
     }
 
     const { itemId } = req.params;
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ userId: user._id });
     if (!cart) {
       return res.status(404).json({
         success: false,
@@ -379,12 +360,12 @@ router.delete('/:itemId', verifyAuthFlexible, async (req, res) => {
 // @access  Private
 router.delete('/', verifyAuthFlexible, async (req, res) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(400).json({ message: 'Unable to identify user' });
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
     }
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ userId: user._id });
     if (!cart) {
       return res.status(404).json({
         success: false,
@@ -419,9 +400,9 @@ router.delete('/', verifyAuthFlexible, async (req, res) => {
 // @access  Private
 router.post('/checkout', verifyAuthFlexible, async (req, res) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(400).json({ message: 'Unable to identify user' });
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
     }
 
     const { customer, paymentMethod = 'phonepe' } = req.body;
@@ -434,7 +415,7 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ userId: user._id });
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -462,7 +443,7 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
     const orderTotal = orderItems.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
 
     const newOrder = new Order({
-      userId: userId,
+      userId: user._id,
       customerName: customer.name,
       items: orderItems,
       total: orderTotal,
@@ -510,12 +491,12 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
 // @access  Private
 router.get('/count', verifyAuthFlexible, async (req, res) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(400).json({ message: 'Unable to identify user' });
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
     }
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ userId: user._id });
     const count = cart ? cart.totalItems : 0;
 
     res.json({

@@ -9,16 +9,15 @@ const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
 // Apply authentication middleware to all wishlist routes
 router.use(verifyAuthFlexible);
 
-// Resolve user id across Firebase and local OTP-JWT
-const getUserId = (req) =>
-  req.auth && req.auth.type === 'firebase' ? req.user.uid : req.user.userId;
-
 // GET /api/wishlist - Get user's wishlist items
 router.get('/', async (req, res) => {
   try {
-    const uid = getUserId(req);
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-    const wishlistItems = await Wishlist.find({ userId: uid })
+    const wishlistItems = await Wishlist.find({ userId: user._id })
       .populate('productId')
       .sort({ createdAt: -1 });
 
@@ -35,7 +34,10 @@ router.get('/', async (req, res) => {
 // POST /api/wishlist - Add item to wishlist
 router.post('/', async (req, res) => {
   try {
-    const uid = getUserId(req);
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
     const { productId } = req.body;
 
     if (!productId) {
@@ -49,7 +51,7 @@ router.post('/', async (req, res) => {
     }
 
     // Check if item already exists in wishlist
-    const existingItem = await Wishlist.findOne({ userId: uid, productId });
+    const existingItem = await Wishlist.findOne({ userId: user._id, productId });
     if (existingItem) {
       return res.status(409).json({ message: 'Item already in wishlist' });
     }
@@ -96,7 +98,10 @@ router.post('/', async (req, res) => {
 // DELETE /api/wishlist/:itemId - Remove item from wishlist
 router.delete('/:itemId', async (req, res) => {
   try {
-    const uid = getUserId(req);
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
     const { itemId } = req.params;
 
     if (!itemId) {
@@ -105,7 +110,7 @@ router.delete('/:itemId', async (req, res) => {
 
     const deletedItem = await Wishlist.findOneAndDelete({
       _id: itemId,
-      userId: uid
+      userId: user._id
     });
 
     if (!deletedItem) {
@@ -125,7 +130,10 @@ router.delete('/:itemId', async (req, res) => {
 // DELETE /api/wishlist/product/:productId - Remove item by productId
 router.delete('/product/:productId', async (req, res) => {
   try {
-    const uid = getUserId(req);
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
     const { productId } = req.params;
 
     if (!productId) {
@@ -134,7 +142,7 @@ router.delete('/product/:productId', async (req, res) => {
 
     const deletedItem = await Wishlist.findOneAndDelete({
       productId: productId,
-      userId: uid
+      userId: user._id
     });
 
     if (!deletedItem) {
@@ -154,7 +162,10 @@ router.delete('/product/:productId', async (req, res) => {
 // POST /api/wishlist/move-to-cart - Move wishlist item to cart (create order)
 router.post('/move-to-cart', async (req, res) => {
   try {
-    const uid = getUserId(req);
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
     const { itemId, quantity = 1, size } = req.body;
 
     if (!itemId) {
@@ -171,23 +182,9 @@ router.post('/move-to-cart', async (req, res) => {
       return res.status(404).json({ message: 'Wishlist item not found' });
     }
 
-    // Get user details
-    const user = req.auth && req.auth.type === 'firebase'
-      ? await User.findOne({ 
-          firebaseUid: uid,
-          isDeleted: { $ne: true }
-        })
-      : await User.findOne({ 
-          _id: uid,
-          isDeleted: { $ne: true }
-        });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found or account deleted' });
-    }
-
     // Create order (cart item)
     const orderData = {
-      userId: uid,
+      userId: user._id,
       items: [{
         productId: wishlistItem.productId._id,
         title: wishlistItem.product.title,
@@ -231,9 +228,12 @@ router.post('/move-to-cart', async (req, res) => {
 // GET /api/wishlist/count - Get wishlist items count
 router.get('/count', async (req, res) => {
   try {
-    const uid = getUserId(req);
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-    const count = await Wishlist.countDocuments({ userId: uid });
+    const count = await Wishlist.countDocuments({ userId: user._id });
 
     res.json({ count });
   } catch (error) {
@@ -248,14 +248,17 @@ router.get('/count', async (req, res) => {
 // POST /api/wishlist/check - Check if product is in wishlist
 router.post('/check', async (req, res) => {
   try {
-    const uid = getUserId(req);
+    const user = await resolveUser(req);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
     const { productId } = req.body;
 
     if (!productId) {
       return res.status(400).json({ message: 'Product ID is required' });
     }
 
-    const item = await Wishlist.findOne({ userId: uid, productId });
+    const item = await Wishlist.findOne({ userId: user._id, productId });
 
     res.json({ inWishlist: !!item });
   } catch (error) {
