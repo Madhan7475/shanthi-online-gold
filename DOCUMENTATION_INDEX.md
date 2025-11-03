@@ -21,13 +21,6 @@
   - All environment variables explained
   - Frontend and backend configuration reference
 
-- **[FIREBASE_ENV_CONFIG.md](./FIREBASE_ENV_CONFIG.md)**
-  - Firebase configuration details
-  - How to use environment variables for Firebase
-
-- **[FIREBASE_MIGRATION_SUMMARY.md](./FIREBASE_MIGRATION_SUMMARY.md)**
-  - Migration from hardcoded to environment-based Firebase config
-
 ### Architecture & Features
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)**
   - System architecture overview

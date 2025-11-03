@@ -27,20 +27,20 @@ This guide covers everything from building Docker containers to deploying on you
 
 ### Domain Configuration
 Your application uses two domains:
-- **Frontend:** `sog.staging.kwiqwork.in`
-- **Backend API:** `sog.staging.api.kwiqwork.in`
+- **Frontend:** `staging.sog.kwiqwork.in`
+- **Backend API:** `staging.sog.api.kwiqwork.in`
 
 ### DNS Setup
 Create A records pointing to your VPS IP:
 ```
-sog.staging.kwiqwork.in        → Your VPS IP
-sog.staging.api.kwiqwork.in    → Your VPS IP
+staging.sog.kwiqwork.in        → Your VPS IP
+staging.sog.api.kwiqwork.in    → Your VPS IP
 ```
 
 Verify DNS propagation:
 ```bash
-nslookup sog.staging.kwiqwork.in
-nslookup sog.staging.api.kwiqwork.in
+nslookup staging.sog.kwiqwork.in
+nslookup staging.sog.api.kwiqwork.in
 ```
 
 ---
@@ -65,7 +65,7 @@ VITE_FIREBASE_MEASUREMENT_ID=your-measurement-id
 
 **`.env.staging`** (staging/UAT environment)
 ```bash
-VITE_API_BASE_URL=https://sog.staging.api.kwiqwork.in
+VITE_API_BASE_URL=https://staging.sog.api.kwiqwork.in
 VITE_FIREBASE_API_KEY=AIzaSyBe3UPSf8M37-mIWDDyEMW1Q77_iOAwHU4
 VITE_FIREBASE_AUTH_DOMAIN=shanthi-online-gold-uat.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=shanthi-online-gold-uat
@@ -89,7 +89,7 @@ VITE_FIREBASE_API_KEY=your-prod-api-key
 # Server Configuration
 PORT=9000
 NODE_ENV=production
-FRONTEND_URL=https://sog.staging.kwiqwork.in
+FRONTEND_URL=https://staging.sog.kwiqwork.in
 
 # MongoDB
 MONGODB_URI=your-mongodb-atlas-connection-string
@@ -104,8 +104,8 @@ PHONEPE_MERCHANT_ID=your-merchant-id
 PHONEPE_SALT_KEY=your-salt-key
 PHONEPE_SALT_INDEX=1
 PHONEPE_HOST_URL=https://api-preprod.phonepe.com/apis/pg-sandbox
-PHONEPE_REDIRECT_URL=https://sog.staging.kwiqwork.in/payment-success
-PHONEPE_CALLBACK_URL=https://sog.staging.api.kwiqwork.in/api/phonepe/callback
+PHONEPE_REDIRECT_URL=https://staging.sog.kwiqwork.in/payment-success
+PHONEPE_CALLBACK_URL=https://staging.sog.api.kwiqwork.in/api/phonepe/callback
 
 # JWT Secret
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
@@ -324,12 +324,12 @@ sudo systemctl enable nginx
 
 ```bash
 # Test from VPS
-curl -I http://sog.staging.kwiqwork.in
-curl http://sog.staging.api.kwiqwork.in/api/health
+curl -I http://staging.sog.kwiqwork.in
+curl http://staging.sog.api.kwiqwork.in/api/health
 
 # Test from browser
-http://sog.staging.kwiqwork.in
-http://sog.staging.api.kwiqwork.in/api/health
+http://staging.sog.kwiqwork.in
+http://staging.sog.api.kwiqwork.in/api/health
 ```
 
 If both work, proceed to SSL setup!
@@ -353,10 +353,10 @@ sudo ufw status
 
 ```bash
 # Install certificate for frontend domain
-sudo certbot --nginx -d sog.staging.kwiqwork.in
+sudo certbot --nginx -d staging.sog.kwiqwork.in
 
 # Install certificate for backend domain
-sudo certbot --nginx -d sog.staging.api.kwiqwork.in
+sudo certbot --nginx -d staging.sog.api.kwiqwork.in
 ```
 
 **During certbot setup:**
@@ -377,8 +377,8 @@ Certbot will automatically:
 sudo certbot certificates
 
 # Test HTTPS access
-curl -I https://sog.staging.kwiqwork.in
-curl https://sog.staging.api.kwiqwork.in/api/health
+curl -I https://staging.sog.kwiqwork.in
+curl https://staging.sog.api.kwiqwork.in/api/health
 
 # Test auto-renewal
 sudo certbot renew --dry-run
@@ -396,8 +396,8 @@ sudo systemctl status certbot.timer
 ### 🎉 Deployment Complete!
 
 Your application is now live at:
-- **Frontend:** https://sog.staging.kwiqwork.in
-- **Backend API:** https://sog.staging.api.kwiqwork.in
+- **Frontend:** https://staging.sog.kwiqwork.in
+- **Backend API:** https://staging.sog.api.kwiqwork.in
 
 ---
 
@@ -430,8 +430,8 @@ curl http://localhost:9000/api/health
 **Solution:**
 ```bash
 # Check DNS
-nslookup sog.staging.kwiqwork.in
-dig sog.staging.kwiqwork.in
+nslookup staging.sog.kwiqwork.in
+dig staging.sog.kwiqwork.in
 
 # Wait for DNS propagation (5-30 minutes usually)
 # Verify A records in your DNS provider
@@ -450,7 +450,7 @@ sudo systemctl status nginx
 sudo ufw status
 
 # Ensure DNS is resolving
-nslookup sog.staging.kwiqwork.in
+nslookup staging.sog.kwiqwork.in
 
 # Check nginx is listening on port 80
 sudo netstat -tlnp | grep :80
@@ -494,7 +494,7 @@ docker-compose up -d
 # Check frontend/.env.staging
 cat frontend/.env.staging | grep VITE_API_BASE_URL
 
-# Should be: VITE_API_BASE_URL=https://sog.staging.api.kwiqwork.in
+# Should be: VITE_API_BASE_URL=https://staging.sog.api.kwiqwork.in
 # If wrong, fix it and rebuild
 docker-compose build --no-cache
 docker-compose up -d
