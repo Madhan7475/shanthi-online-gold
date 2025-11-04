@@ -36,8 +36,8 @@ const Footer = () => {
         <div>
         <h3 className="font-semibold mb-3">CUSTOMER SUPPORT</h3>
         <ul className="space-y-2">
-          <li><a href="/category/Termsandconditions">Terms & Conditions</a></li>
-          <li><a href="/category/Privacypolicies">Privacy Policies</a></li>
+          <li><a href="/terms-and-conditions">Terms & Conditions</a></li>
+          <li><a href="/privacy-policy">Privacy Policies</a></li>
           <li><a href="/category/RefundReturn">Refund & Return</a></li>
           <li><a href="/category/Shipping">Shipping</a></li>
         </ul>

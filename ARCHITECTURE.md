@@ -22,9 +22,10 @@
 │  │              Nginx Reverse Proxy (Port 80/443)             │ │
 │  │                                                             │ │
 │  │  Location Routing:                                         │ │
-│  │  • /              → http://localhost:3000 (Frontend)       │ │
+│  │  • /              → http://localhost:80 (Frontend)         │ │
 │  │  • /api/*         → http://localhost:9000 (Backend)        │ │
 │  │  • /uploads/*     → http://localhost:9000 (Backend)        │ │
+│  │  • /.well-known/* → http://localhost:80 (Deep Links)       │ │
 │  │                                                             │ │
 │  │  Features:                                                 │ │
 │  │  • SSL/TLS Termination                                     │ │
@@ -37,14 +38,14 @@
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │              Docker Container                             │  │
 │  │  ┌────────────────────┐    ┌──────────────────────────┐ │  │
-│  │  │  Frontend Service  │    │   Backend Service        │ │  │
-│  │  │  (Nginx:3000)      │    │   (Node.js:9000)         │ │  │
+│  │  │   Nginx (Port 80)  │    │   Backend Service        │ │  │
+│  │  │   Static Frontend  │    │   (Node.js:9000)         │ │  │
 │  │  │                    │    │                          │ │  │
 │  │  │  • React App       │    │  • Express Server        │ │  │
 │  │  │  • Built with Vite │    │  • REST API Endpoints    │ │  │
 │  │  │  • Static files    │    │  • Authentication        │ │  │
 │  │  │  • SPA routing     │    │  • Business Logic        │ │  │
-│  │  │                    │    │  • File uploads          │ │  │
+│  │  │  • .well-known/    │    │  • File uploads          │ │  │
 │  │  └────────────────────┘    └──────────┬───────────────┘ │  │
 │  │                                        │                  │  │
 │  │                             ┌──────────▼─────────────┐   │  │
@@ -55,7 +56,7 @@
 │  └──────────────────────────────────────────────────────────┘  │
 │                                                                 │
 │  Port Mappings:                                                 │
-│  • 3000:3000 (Frontend)                                         │
+│  • 80:80 (Frontend - nginx)                                     │
 │  • 9000:9000 (Backend)                                          │
 │                                                                 │
 │  Volume Mounts:                                                 │
@@ -109,7 +110,7 @@ https://yourdomain.com/products
     ↓
 Nginx (SSL termination)
     ↓
-Docker Container → Frontend (Port 3000)
+Docker Container → Nginx (Port 80)
     ↓
 Returns: index.html + JavaScript bundles
     ↓
@@ -180,12 +181,12 @@ Redirect to success page
 │               Docker Container                          │
 │                                                         │
 │  Layer 1: Base Image (node:24-alpine)                  │
-│  ├─ Node.js v18                                        │
+│  ├─ Node.js v24                                        │
 │  ├─ npm                                                │
 │  └─ Alpine Linux                                       │
 │                                                         │
 │  Layer 2: System Dependencies                          │
-│  ├─ nginx (web server)                                 │
+│  ├─ nginx (web server for frontend)                    │
 │  ├─ curl (health checks)                               │
 │  └─ Essential tools                                    │
 │                                                         │
@@ -204,11 +205,13 @@ Redirect to success page
 │      │   ├─ index-[hash].js                            │
 │      │   ├─ index-[hash].css                           │
 │      │   └─ images/                                    │
+│      ├─ .well-known/                                   │
+│      │   ├─ apple-app-site-association                 │
+│      │   └─ assetlinks.json                            │
 │      └─ [built static files]                           │
 │                                                         │
 │  Layer 4: Configuration                                │
 │  ├─ /etc/nginx/http.d/default.conf (nginx config)      │
-│  ├─ /app/docker-entrypoint.sh (startup script)         │
 │  └─ /app/backend/.env.staging (mounted volume)         │
 │                                                         │
 │  Layer 5: Runtime Data                                 │
@@ -217,8 +220,8 @@ Redirect to success page
 └─────────────────────────────────────────────────────────┘
 
 Exposed Ports:
-• 3000 (Frontend)
-• 9000 (Backend)
+• 80 (Frontend - nginx)
+• 9000 (Backend - Node.js)
 
 Volumes:
 • backend/.env.staging (read-only)
@@ -276,13 +279,12 @@ Stage 3: Final Image
 ```
 1. Docker Container Starts
         ↓
-2. Execute docker-entrypoint.sh
-        ↓
-3. Start Nginx (Port 3000)
-   └─ Serves frontend static files
+2. Start Nginx (Port 80)
+   └─ Serves frontend static files from /app/frontend/dist
+   └─ Serves .well-known files (deep linking)
    └─ Handles SPA routing
         ↓
-4. Start Node.js Backend (Port 9000)
+3. Start Node.js Backend (Port 9000)
    └─ Load .env.staging
    └─ Connect to MongoDB
    └─ Initialize Firebase Admin
@@ -290,10 +292,10 @@ Stage 3: Final Image
    └─ Initialize notification services
    └─ Start Express server
         ↓
-5. Health Check (after 40s)
+4. Health Check (after 40s)
    └─ curl http://localhost:9000/healthz
         ↓
-6. Ready to Accept Traffic
+5. Ready to Accept Traffic
 ```
 
 ## Network Flow
@@ -305,15 +307,15 @@ External Request → VPS Port 80/443
                     ↓
         ┌───────────┴───────────┐
         ↓                       ↓
-Docker Port 3000        Docker Port 9000
-(Frontend)              (Backend)
+Docker Port 80          Docker Port 9000
+(Frontend - Nginx)      (Backend - Node.js)
         ↓                       ↓
     Static Files            Express Routes
-        ↓                       ↓
-    HTML/JS/CSS         ┌──────┴──────┐
-                        ↓             ↓
-                   MongoDB       Firebase
-                   (Data)        (Auth)
+    .well-known/                ↓
+        ↓                  ┌──────┴──────┐
+    HTML/JS/CSS            ↓             ↓
+                       MongoDB       Firebase
+                       (Data)        (Auth)
 ```
 
 ## File System Structure in Container
@@ -335,16 +337,17 @@ Docker Port 3000        Docker Port 9000
 │       ├── product-images/
 │       └── cache files
 │
-├── frontend/
-│   └── dist/ (built static files)
-│       ├── index.html
-│       ├── assets/
-│       │   ├── index-[hash].js
-│       │   ├── index-[hash].css
-│       │   └── images/
-│       └── favicon.ico
-│
-└── docker-entrypoint.sh
+└── frontend/
+    └── dist/ (built static files)
+        ├── index.html
+        ├── assets/
+        │   ├── index-[hash].js
+        │   ├── index-[hash].css
+        │   └── images/
+        ├── .well-known/
+        │   ├── apple-app-site-association
+        │   └── assetlinks.json
+        └── favicon.ico
 
 /etc/nginx/
 └── http.d/

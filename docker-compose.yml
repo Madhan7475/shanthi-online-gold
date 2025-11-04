@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     ports:
       - "9000:9000"  # Backend API
-      - "3000:3000"  # Frontend
+      - "3000:80"    # Frontend (map host 3000 to container 80)
     environment:
       - ENV_FILE=.env.staging
       - NODE_ENV=production

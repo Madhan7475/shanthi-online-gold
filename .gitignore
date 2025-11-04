@@ -8,3 +8,7 @@ dist
 .env
 .env.local
 firebase-service-account.json
+
+# Cache and runtime files
+backend/uploads/product_reprice_last.json
+backend/uploads/gold_price_cache.json
