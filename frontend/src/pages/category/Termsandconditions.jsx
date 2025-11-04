@@ -3,7 +3,7 @@ import Layout from "../../components/Common/Layout";
 
 const TermsConditions = () => {
   return (
-    <Layout>
+    <>
       {/* Banner */}
       <div className="w-screen h-40 md:h-72 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
         <img
@@ -101,7 +101,7 @@ const TermsConditions = () => {
           </p>
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 
