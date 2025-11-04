@@ -5,12 +5,17 @@ const UserDevice = require("../models/UserDevice");
 const NotificationLog = require("../models/NotificationLog");
 const TopicNotificationLog = require("../models/TopicNotificationLog");
 const NotificationCampaign = require("../models/NotificationCampaign");
-const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 const {
   NOTIFICATION_TOPICS,
   getTopicsForPreferences,
   isValidTopic,
 } = require("../constants/notificationTopics");
+
+// Simple UUID v4 generator to replace uuid package
+function uuidv4() {
+  return crypto.randomUUID();
+}
 
 class NotificationService {
   constructor() {

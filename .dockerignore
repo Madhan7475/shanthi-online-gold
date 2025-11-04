@@ -1,0 +1,71 @@
+# Dependencies
+**/node_modules
+**/npm-debug.log
+**/yarn-error.log
+**/package-lock.json
+**/yarn.lock
+
+# Environment files (will be mounted as volumes)
+**/.env
+**/.env.local
+**/.env.development
+# Don't ignore staging/prod as they're needed for build context
+# **/.env.staging
+# **/.env.prod
+
+# Git
+.git
+.gitignore
+**/.gitattributes
+
+# IDE
+.vscode
+.idea
+**/.DS_Store
+
+# Build outputs (except what we need)
+**/dist
+**/build
+**/.next
+
+# Documentation
+*.md
+!README.md
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+netlify.toml
+render.yaml
+amplify.yml
+
+# Test files
+**/test
+**/tests
+**/*.test.js
+**/*.spec.js
+**/coverage
+
+# Misc
+**/uploads/*.json
+**/uploads/*.xlsx
+**/uploads/*.xls
+!/backend/uploads/.gitkeep
+
+# Frontend specific
+# Exclude most env files but KEEP .env.staging and .env.production for build time
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+# frontend/.env.staging - NEEDED for build
+# frontend/.env.production - NEEDED for build
+# frontend/public - NEEDED for static assets (images, etc.)
+
+# Backend specific
+backend/scripts
+backend/docs

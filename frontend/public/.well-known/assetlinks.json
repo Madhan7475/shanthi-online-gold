@@ -4,7 +4,29 @@
     "target": {
       "namespace": "android_app",
       "package_name": "com.shanthi.onlinegold",
-      "sha256_cert_fingerprints": ["98:82:46:82:E7:C8:66:60:E1:7A:15:CE:80:51:BB:2A:DB:E8:D0:7A:89:72:B0:99:47:D9:87:AD:55:90:10:1E"]
+      "sha256_cert_fingerprints": [
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.shanthi.onlinegold",
+      "sha256_cert_fingerprints": [
+        "BB:13:D2:B4:C8:A9:5C:85:60:28:2F:F3:20:C1:1D:DB:DD:BB:4E:AD:A5:09:FB:E2:5F:6B:47:8A:D5:34:83:0A"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.shanthi.onlinegold",
+      "sha256_cert_fingerprints": [
+        "98:82:46:82:E7:C8:66:60:E1:7A:15:CE:80:51:BB:2A:DB:E8:D0:7A:89:72:B0:99:47:D9:87:AD:55:90:10:1E"
+      ]
     }
   }
 ]

@@ -23,7 +23,7 @@ app.use(rawBodyParser);
 app.use(express.json());
 
 // Parse CORS origins from environment variable (comma-separated)
-const corsOriginEnv = process.env.CORS_ORIGIN || "http://localhost:5173";
+const corsOriginEnv = process.env.CORS_ORIGIN;
 const allowedOrigins = corsOriginEnv
   .split(',')
   .map(origin => origin.trim())

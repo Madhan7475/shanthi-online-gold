@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Environment files
+# .env.development and .env.staging can be committed (not sensitive)
+# .env.production can be committed (frontend env vars are public)
+# .env.local should never be committed (if used for local overrides)
+.env.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

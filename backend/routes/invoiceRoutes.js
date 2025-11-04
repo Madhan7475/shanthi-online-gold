@@ -4,6 +4,7 @@ const Invoice = require("../models/Invoice");
 const Order = require("../models/Order");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 const PDFDocument = require("pdfkit");
+const resolveUser = require("../utils/helper");
 
 // @route   GET /api/invoices
 // @desc    Get all invoices
@@ -33,7 +34,7 @@ router.get("/:orderId/pdf", verifyAuthFlexible, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    if (user._id !== order.userId?.toString()) {
+    if (user._id.toString() !== order.userId?.toString()) {
       return res.status(401).json({ message: "Not authorized to download this invoice" });
     }
 

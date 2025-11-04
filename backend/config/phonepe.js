@@ -53,7 +53,7 @@ const getPhonePeClient = () => {
  * @returns {Object} Configuration details
  */
 const getPhonePeConfig = () => {
-  const frontend = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+  const frontend = (process.env.FRONTEND_URL || window.location.origin).replace(/\/+$/, '');
   const redirectUrl = process.env.PHONEPE_REDIRECT_URL || `${frontend}/payment-success`;
   return {
     clientId,

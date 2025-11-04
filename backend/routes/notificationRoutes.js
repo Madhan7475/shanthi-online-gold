@@ -179,9 +179,8 @@ router.get("/devices", verifyAuthFlexible, async (req, res) => {
         message: "User authentication required",
       });
     }
-    const userId = user._id;
-
-    const devices = await UserDevice.find({ userId })
+    
+    const devices = await UserDevice.find({ userId: user._id })
       .select("-fcmToken") // Don't expose FCM tokens
       .sort({ createdAt: -1 });
 
@@ -214,7 +213,7 @@ router.get("/preferences", verifyAuthFlexible, async (req, res) => {
 
     const devices = await UserDevice.find({ userId, isActive: true })
       .select(
-        "preferences deviceInfo.platform deviceInfo.deviceId deviceInfo.deviceModel registeredAt lastActiveAt"
+        "preferences deviceInfo.platform deviceInfo.deviceId deviceInfo.deviceModel registeredAt lastActiveAt isActive tokenStatus"
       )
       .sort({ lastActiveAt: -1 });
 
@@ -234,6 +233,8 @@ router.get("/preferences", verifyAuthFlexible, async (req, res) => {
       deviceModel: device.deviceInfo.deviceModel,
       registeredAt: device.registeredAt,
       lastActiveAt: device.lastActiveAt,
+      isActive: device.isActive,
+      tokenStatus: device.tokenStatus,
       preferences: device.preferences,
     }));
 
@@ -338,7 +339,7 @@ router.get(
       const device = await UserDevice.findOne({
         _id: req.params.deviceId,
         userId: user._id,
-      }).select("preferences deviceInfo.platform deviceInfo.deviceId");
+      }).select("preferences deviceInfo.platform deviceInfo.deviceId deviceInfo.deviceModel registeredAt lastActiveAt isActive tokenStatus");
 
       if (!device) {
         return res.status(404).json({
@@ -352,6 +353,11 @@ router.get(
         deviceId: device._id,
         platform: device.deviceInfo.platform,
         deviceName: device.deviceInfo.deviceId,
+        deviceModel: device.deviceInfo.deviceModel,
+        registeredAt: device.registeredAt,
+        lastActiveAt: device.lastActiveAt,
+        isActive: device.isActive,
+        tokenStatus: device.tokenStatus,
         preferences: device.preferences,
       });
     } catch (error) {

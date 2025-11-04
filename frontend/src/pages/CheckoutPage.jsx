@@ -96,7 +96,7 @@ const CheckoutPage = () => {
 
       const paymentIntentResp = await phonePeService.initiateCheckout({
         amount: total,
-        redirectUrl: `http://localhost:5173/payment-success?orderId=${checkoutResponse.order._id}`,
+        redirectUrl: `${window.location.origin}/payment-success?orderId=${checkoutResponse.order._id}`,
         merchantOrderId: checkoutResponse.order._id,
       });
 
