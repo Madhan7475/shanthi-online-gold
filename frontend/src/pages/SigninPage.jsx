@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../firebase/firebaseConfig";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithCustomToken, signInWithPopup } from "firebase/auth";
 import axiosInstance from "../utils/axiosInstance";
 import { FcGoogle } from "react-icons/fc";
 import { AuthContext } from "../context/AuthContext";
@@ -89,7 +89,7 @@ const SigninPage = () => {
 
       const { token, user } = res.data;
       if (!token || !user) throw new Error("Missing token or user in response");
-
+      await signInWithCustomToken(auth, token);
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       handleSuccessfulLogin();
@@ -109,6 +109,7 @@ const SigninPage = () => {
       });
 
       const { token, user } = res.data;
+      await signInWithCustomToken(auth, token);
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       handleSuccessfulLogin();

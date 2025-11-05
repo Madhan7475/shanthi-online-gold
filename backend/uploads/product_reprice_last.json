@@ -1,0 +1,98 @@
+{
+  "timestamp": "2025-11-06T14:26:26.708Z",
+  "source": "GoldAPI.io",
+  "goldRates": {
+    "pricePerGram24kInr": 11753.99,
+    "pricePerGram22kInr": 10774.49,
+    "lastUpdated": "2025-11-06T13:05:12.251Z"
+  },
+  "inspected": 392,
+  "updated": 0,
+  "unchanged": 392,
+  "skippedNoWeight": 0,
+  "skippedNoKarat": 0,
+  "dryRun": false,
+  "sampleChanges": [],
+  "sampleUnchanged": [
+    {
+      "id": "68f288e2a790321214204990",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "31.29",
+      "price": 357362,
+      "computed": 357362
+    },
+    {
+      "id": "68f288e3a7903212142049c6",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "27.68",
+      "price": 316132,
+      "computed": 316132
+    },
+    {
+      "id": "68f288e3a7903212142049ed",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "34.82",
+      "price": 397678,
+      "computed": 397678
+    },
+    {
+      "id": "68f288e3a7903212142049f0",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "26.86",
+      "price": 306767,
+      "computed": 306767
+    },
+    {
+      "id": "68f288e4a790321214204a20",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "25.24",
+      "price": 288265,
+      "computed": 288265
+    },
+    {
+      "id": "68f288e5a790321214204a68",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "17.15",
+      "price": 195869,
+      "computed": 195869
+    },
+    {
+      "id": "68f288e5a790321214204a77",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "22.18",
+      "price": 253317,
+      "computed": 253317
+    },
+    {
+      "id": "68f288e6a790321214204acb",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "29",
+      "price": 331208,
+      "computed": 331208
+    },
+    {
+      "id": "68f288e6a790321214204ace",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "28.43",
+      "price": 324698,
+      "computed": 324698
+    },
+    {
+      "id": "68f288e7a790321214204afe",
+      "title": "Necklace & Earring",
+      "karatage": "22",
+      "grossWeight": "34.2",
+      "price": 390597,
+      "computed": 390597
+    }
+  ]
+}

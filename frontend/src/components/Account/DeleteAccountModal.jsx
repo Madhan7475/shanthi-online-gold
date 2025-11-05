@@ -31,18 +31,19 @@ const DeleteAccountModal = ({ onClose, onSuccess }) => {
       try {
         const user = auth.currentUser;
 
-        if (!user) return alert("No user signed in");
+        if (user) {
 
-        const result = await reauthenticateWithPopup(user, googleProvider);
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const accessToken = credential.accessToken;
-        await fetch(
-          `https://oauth2.googleapis.com/revoke?token=${accessToken}`,
-          {
-            method: "POST",
-            headers: { "Content-type": "application/x-www-form-urlencoded" },
-          }
-        );
+          const result = await reauthenticateWithPopup(user, googleProvider);
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          const accessToken = credential.accessToken;
+          await fetch(
+            `https://oauth2.googleapis.com/revoke?token=${accessToken}`,
+            {
+              method: "POST",
+              headers: { "Content-type": "application/x-www-form-urlencoded" },
+            }
+          );
+        }
       } catch (googleError) {
         console.warn("Google Sign-In revocation failed:", googleError);
         // Continue with deletion even if Google revocation fails
@@ -236,9 +237,8 @@ const DeleteAccountModal = ({ onClose, onSuccess }) => {
                       if (error) setError("");
                     }}
                     placeholder={requiredText}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm ${
-                      error ? "border-red-300 bg-red-50" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm ${error ? "border-red-300 bg-red-50" : "border-gray-300"
+                      }`}
                     disabled={isDeleting}
                   />
                   {error && (
