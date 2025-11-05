@@ -1,7 +1,11 @@
 const express = require("express");
 const axios = require("axios");
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const {
+  getOrCreateFirebaseUserByPhone,
+  generateCustomToken,
+  syncOrCreateUser,
+} = require("../services/firebaseAuthService");
 
 const router = express.Router();
 const API_KEY = "f10d5506-bdf4-11f0-bdde-0200cd936042" // "ce6557bd-598a-11f0-a562-0200cd936042"; // your 2Factor API key
@@ -155,23 +159,58 @@ router.post("/verify-otp", async (req, res) => {
       otpStore.set(sessId, sess);
     }
 
-    // At this point OTP is verified for this session.
-    // Try finding user by phone or email (if provided)
-    const digits = String(phone || "").replace(/\D/g, "");
+    // ✅ OTP is verified - Check if user exists in DB first
+    const digits = String(normPhone || "").replace(/\D/g, "");
     const last10 = digits.slice(-10);
     const phoneCandidates = Array.from(new Set([
       normPhone,
       last10 ? `+91${last10}` : null,
       last10 ? `91${last10}` : null,
-      phone || null,
     ].filter(Boolean)));
 
-    let user = await User.findOne({
+    let existingUser = await User.findOne({
       $or: [
         { phone: { $in: phoneCandidates } },
-        email ? { email } : null
+        email ? { email: email.toLowerCase() } : null,
       ].filter(Boolean),
+      isDeleted: { $ne: true },
     });
+
+    // 📧 For new users, require email before proceeding
+    if (!existingUser && !email) {
+      console.log(`📧 New user detected for phone ${normPhone}, email required`);
+      // Keep the session verified so they can complete registration
+      return res.status(202).json({ 
+        message: "OTP verified, email required to complete registration",
+        needEmail: true,
+        sessionId: sessId,
+      });
+    }
+
+    // Now create/get Firebase user with phone number
+    // Pass email to check for existing Firebase user and avoid duplicates
+    console.log(`🔥 Creating/getting Firebase user for phone: ${normPhone}`);
+    const phoneForFirebase = normPhone.startsWith('+') ? normPhone : `+${normPhone}`;
+    let { uid: firebaseUid, foundByEmail } = await getOrCreateFirebaseUserByPhone(phoneForFirebase, email);
+    
+    if (foundByEmail) {
+      console.log(`✅ Found existing Firebase user by email, no need to create phone-only account`);
+    }
+
+    // Sync or create DB user with Firebase UID
+    const { user, mergedFromUid, shouldUseExistingFirebaseUid } = await syncOrCreateUser({
+      firebaseUid,
+      phone: normPhone,
+      email: email || null,
+      name: name || null,
+      authMethod: 'phone',
+    });
+
+    // If we merged into an existing account, use that Firebase UID for token generation
+    if (shouldUseExistingFirebaseUid) {
+      firebaseUid = user.firebaseUid;
+      console.log(`🔄 Using existing Firebase UID for token: ${firebaseUid}`);
+    }
 
     // 🚫 Prevent deleted users from OTP verification
     if (user && user.isDeleted) {
@@ -181,38 +220,11 @@ router.post("/verify-otp", async (req, res) => {
       });
     }
 
-    if (!user && !email) {
-      // OTP is valid, but we need email to merge or create
-      return res.status(202).json({ message: "OTP verified, email required", needEmail: true });
-    }
-
-    if (!user && email) {
-      // New user - create
-      user = await User.create({ phone: normPhone, email, name: name || null });
-    } else if (user) {
-      // Merge: update missing fields
-      let updated = false;
-      if (!user.phone && normPhone) {
-        user.phone = normPhone;
-        updated = true;
-      }
-      if (!user.email && email) {
-        user.email = email;
-        updated = true;
-      }
-      if (!user.name && name) {
-        user.name = name;
-        updated = true;
-      }
-      if (updated) await user.save();
-    }
-
-    // ✅ Generate JWT
-    const token = jwt.sign(
-      { id: user._id, phone: user.phone },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    // ✅ Generate Firebase custom token instead of JWT
+    const customToken = await generateCustomToken(firebaseUid, {
+      userId: user._id.toString(),
+      phone: user.phone,
+    });
 
     // Clean up OTP session(s) for this phone
     otpStore.delete(sessId);
@@ -220,10 +232,28 @@ router.post("/verify-otp", async (req, res) => {
       if (info.phone === normPhone) otpStore.delete(sid);
     }
 
-    return res.status(200).json({ message: "OTP verified", token, user });
+    const response = {
+      message: "OTP verified",
+      token: customToken,
+      user: {
+        id: user._id,
+        firebaseUid: user.firebaseUid,
+        phone: user.phone,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    };
+
+    if (mergedFromUid) {
+      response.accountMerged = true;
+      response.message = "OTP verified and accounts merged";
+    }
+
+    return res.status(200).json(response);
   } catch (err) {
     console.error("❌ Verify OTP failed:", err.message);
-    return res.status(500).json({ message: "OTP verification failed" });
+    return res.status(500).json({ message: "OTP verification failed", error: err.message });
   }
 });
 

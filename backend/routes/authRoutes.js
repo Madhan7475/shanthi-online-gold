@@ -3,8 +3,8 @@ const router = express.Router();
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 const User = require("../models/User");
-const { auth } = require("firebase-admin");
 const resolveUser = require("../utils/helper");
+const { syncOrCreateUser } = require("../services/firebaseAuthService");
 
 // ✅ For Firebase-authenticated users (Google or OTP via Firebase)
 router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
@@ -12,16 +12,21 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
   const { name } = req.body;
 
   try {
-    // 🔍 Find user by any identifier (important for case #3)
-    let user = await User.findOne({
-      $or: [
-        { firebaseUid: uid },
-        email ? { email } : null,
-        phone ? { phone } : null,
-      ].filter(Boolean),
+    // Determine auth method based on available data
+    const authMethod = email && !phone ? 'google' : 'phone';
+    
+    console.log(`🔄 Syncing user - UID: ${uid}, Email: ${email}, Phone: ${phone}, Method: ${authMethod}`);
+
+    // Use the new service to handle user sync and account merging
+    const { user, mergedFromUid } = await syncOrCreateUser({
+      firebaseUid: uid,
+      phone: phone || null,
+      email: email || null,
+      name: name || null,
+      authMethod,
     });
 
-    // � Handle deleted users - clean up old deleted records and allow fresh registration
+    // Handle deleted users
     if (user && user.isDeleted) {
       console.log(
         `🗑️ Found deleted user record: ${user._id}, cleaning up for fresh registration`
@@ -65,59 +70,36 @@ router.post("/sync-user", verifyFirebaseToken, async (req, res) => {
         }
       }
 
-      // Set user to null so a fresh account can be created below
-      user = null;
+      // Return error for deleted account
+      return res.status(403).json({
+        message: "Account has been deleted. Please contact support if you believe this is an error.",
+        code: "ACCOUNT_DELETED"
+      });
     }
 
-    if (user) {
-      let updated = false;
+    const response = {
+      message: "User synced",
+      user: {
+        id: user._id,
+        firebaseUid: user.firebaseUid,
+        phone: user.phone,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    };
 
-      if (!user.firebaseUid) {
-        user.firebaseUid = uid;
-        updated = true;
-      }
-      if (!user.email && email) {
-        user.email = email;
-        updated = true;
-      }
-      if (!user.phone && phone) {
-        user.phone = phone;
-        updated = true;
-      }
-      if (!user.name && name) {
-        user.name = name;
-        updated = true;
-      }
-
-      if (updated) {
-        await user.save();
-        await auth().updateUser(uid, { phoneNumber: phone || null });
-        console.log("🔄 Updated user:", user._id);
-      } else {
-        console.log("📌 Existing user found:", user._id);
-      }
-    } else {
-      // 🛡️ Prevent inserting null phone/email
-      if (!email && !phone) {
-        return res.status(400).json({ message: "Phone or Email required." });
-      }
-
-      const newUserData = {
-        firebaseUid: uid,
-        name: name || null,
-      };
-      if (email) newUserData.email = email;
-      if (phone) newUserData.phone = phone;
-
-      user = await User.create(newUserData);
-      await auth().updateUser(uid, { phoneNumber: phone });
-      console.log("✅ Created new user:", user._id);
+    if (mergedFromUid) {
+      response.accountMerged = true;
+      response.mergedFromUid = mergedFromUid;
+      response.message = "User synced and accounts merged";
+      console.log(`✅ Accounts merged: ${mergedFromUid} -> ${uid}`);
     }
 
-    res.status(200).json({ message: "User synced", user });
+    res.status(200).json(response);
   } catch (error) {
     console.error("❌ Error syncing user:", error.message);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
 
