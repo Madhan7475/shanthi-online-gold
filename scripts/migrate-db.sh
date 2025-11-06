@@ -24,7 +24,7 @@ MIGRATE_ALL=true
 
 # MongoDB connection strings
 PROD_URI="mongodb+srv://visualfry:TCTNgksFE20ajB0z@cluster0.haaic6h.mongodb.net/SHANTHIONLINEGOLD?retryWrites=true&w=majority&appName=Cluster0"
-STAGING_URI="mongodb+srv://hardikdce7008_db_user:solkn6fLWM4PISGx@cluster0.rqjhn0p.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0"
+STAGING_URI="mongodb+srv://hardikdce7008_db_user:solkn6fLWM4PISGx@cluster0.rqjhn0p.mongodb.net/SHANTHIONLINEGOLD?retryWrites=true&w=majority&appName=Cluster0"
 
 PROD_DB="SHANTHIONLINEGOLD"
 STAGING_DB="SHANTHIONLINEGOLD"

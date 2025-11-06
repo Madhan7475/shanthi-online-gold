@@ -137,7 +137,7 @@ router.post("/devices/register", verifyAuthFlexible, async (req, res) => {
         message: "User authentication required",
       });
     }
-    const userId = user._id;
+    const userId = user._id.toString();
 
     const result = await safeNotificationCall(() =>
       NotificationService.registerDevice({
@@ -180,7 +180,7 @@ router.get("/devices", verifyAuthFlexible, async (req, res) => {
       });
     }
     
-    const devices = await UserDevice.find({ userId: user._id })
+    const devices = await UserDevice.find({ userId: user._id.toString() })
       .select("-fcmToken") // Don't expose FCM tokens
       .sort({ createdAt: -1 });
 
@@ -209,7 +209,7 @@ router.get("/preferences", verifyAuthFlexible, async (req, res) => {
         message: "User authentication required",
       });
     }
-    const userId = user._id;
+    const userId = user._id.toString();
 
     const devices = await UserDevice.find({ userId, isActive: true })
       .select(
@@ -338,7 +338,7 @@ router.get(
 
       const device = await UserDevice.findOne({
         _id: req.params.deviceId,
-        userId: user._id,
+        userId: user._id.toString(),
       }).select("preferences deviceInfo.platform deviceInfo.deviceId deviceInfo.deviceModel registeredAt lastActiveAt isActive tokenStatus");
 
       if (!device) {
@@ -391,7 +391,7 @@ router.put(
 
       const device = await UserDevice.findOne({
         _id: req.params.deviceId,
-        userId: user._id,
+        userId: user._id.toString(),
       });
 
       if (!device) {
@@ -543,7 +543,7 @@ router.get("/history", verifyAuthFlexible, async (req, res) => {
         message: "User authentication required",
       });
     }
-    const userId = user._id;
+    const userId = user._id.toString();
 
     // Support both grouped (default) and ungrouped views
     const shouldGroup = grouped !== 'false';
@@ -876,7 +876,7 @@ router.put("/:notificationId/read", verifyAuthFlexible, async (req, res) => {
         message: "User authentication required",
       });
     }
-    const userId = user._id;
+    const userId = user._id.toString();
 
     const { notificationId } = req.params;
     const { markAllDevices = false } = req.body;
@@ -959,7 +959,7 @@ router.put("/mark-all-read", verifyAuthFlexible, async (req, res) => {
         message: "User authentication required",
       });
     }
-    const userId = user._id
+    const userId = user._id.toString()
 
     const result = await NotificationLog.updateMany(
       {
@@ -1001,13 +1001,13 @@ router.get("/unread-count", verifyAuthFlexible, async (req, res) => {
         message: "User authentication required",
       });
     }
-    const userId = user._id
+    const userId = user._id.toString()
     // Count unique notifications that are unread on ALL devices
     // A notification is considered "read" if it's been opened on ANY device
     const unreadGroups = await NotificationLog.aggregate([
       {
         $match: {
-          userId,
+          userId: userId,
           "delivery.status": { $in: ["sent", "delivered"] }
         }
       },
@@ -1116,7 +1116,7 @@ router.post("/admin/templates", adminAuth, async (req, res) => {
   try {
     const templateData = {
       ...req.body,
-      createdBy: req.user._id,
+      createdBy: req.user._id.toString(),
       templateId:
         req.body.templateId ||
         `TPL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1162,7 +1162,7 @@ router.put("/admin/templates/:id", adminAuth, async (req, res) => {
       }
     });
 
-    template.lastModifiedBy = req.user._id;
+    template.lastModifiedBy = req.user._id.toString();
     template.version += 1;
 
     await template.save();
@@ -1191,7 +1191,7 @@ router.post("/admin/campaigns", adminAuth, async (req, res) => {
   try {
     const campaignData = {
       ...req.body,
-      createdBy: req.user._id,
+      createdBy: req.user._id.toString(),
       campaignId:
         req.body.campaignId ||
         `CAM_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
