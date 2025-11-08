@@ -9,7 +9,7 @@ const clientId = (process.env.PHONEPE_CLIENT_ID || '').trim();
 const clientSecret = (process.env.PHONEPE_CLIENT_SECRET || '').trim();
 let clientVersion =
   process.env.PHONEPE_CLIENT_VERSION ||
-  (process.env.PHONEPE_ENV === 'production' ? 'v2' : 'v1');
+  (process.env.PHONEPE_ENV === 'production' ? '1' : '1');
 const environment = process.env.PHONEPE_ENV === 'production' ? Env.PRODUCTION : Env.SANDBOX;
 
 // Validate required environment variables

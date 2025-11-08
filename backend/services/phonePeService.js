@@ -130,7 +130,7 @@ class PhonePeService {
         .redirectUrl(redirectUrl)
         .build();
 
-      // Make API call with timeout + fallback once to v1 if v2 400 in PRODUCTION
+      // Make API call with timeout + fallback once to v1 if 1 400 in PRODUCTION
       let response;
       try {
         response = await this.client.pay(request);
@@ -138,10 +138,10 @@ class PhonePeService {
         const isProd = this.config.environment === 'PRODUCTION';
         const currentVersion = this.config.clientVersion;
         const httpStatus = err?.httpStatusCode || err?.status || err?.response?.status;
-        if (isProd && currentVersion === 'v2' && httpStatus === 400) {
-          console.warn('[PhonePe] pay() failed with 400 on v2; retrying once with v1 credentials');
+        if (isProd && currentVersion === '1' && httpStatus === 400) {
+          console.warn('[PhonePe] pay() failed with 400 on 1; retrying once with v1 credentials');
           // Force-reinit client with v1 to match v1 keys
-          forcePhonePeClientVersion('v1');
+          forcePhonePeClientVersion('1');
           this.client = getPhonePeClient();
           this.config = { ...this.config, clientVersion: 'v1' };
           response = await this.client.pay(request);
@@ -202,8 +202,7 @@ class PhonePeService {
       const amountInPaisa = Math.round(orderData.amount * 100); // Convert to paisa
       const redirectUrl = orderData.redirectUrl || this.config.redirectUrl;
 
-      console.log(`[PhonePe] Using env=${this.config.environment} clientVersion=${this.config.clientVersion} redirectUrl=${redirectUrl}`);
-      console.log(`Creating PhonePe SDK order: ${merchantOrderId} for ₹${orderData.amount}`);
+      console.log(`[PhonePe] Using env=${this.config.environment} clientVersion=${this.config.clientVersion} redirectUrl=${redirectUrl} and Creating PhonePe SDK order: ${merchantOrderId} for ₹${orderData.amount}`);
 
       // Create SDK order request
       const request = CreateSdkOrderRequest.StandardCheckoutBuilder()
@@ -211,27 +210,14 @@ class PhonePeService {
         .amount(amountInPaisa)
         .redirectUrl(redirectUrl)
         .build();
-
-      // Make API call with timeout + fallback once to v1 if v2 400 in PRODUCTION
+      console.log('PhonePe SDK CreateSdkOrderRequest prepared:', request);
+      // Make API call with timeout + fallback once to v1 if 1 400 in PRODUCTION
       let response;
       try {
         response = await this.client.createSdkOrder(request);
       } catch (err) {
-        const isProd = this.config.environment === 'PRODUCTION';
-        const currentVersion = this.config.clientVersion;
-        const httpStatus = err?.httpStatusCode || err?.status || err?.response?.status;
-        if (isProd && currentVersion === 'v2' && httpStatus === 400) {
-          console.warn('[PhonePe] createSdkOrder() failed with 400 on v2; retrying once with v1 credentials');
-          // Force-reinit client with v1 to match v1 keys
-          forcePhonePeClientVersion('v1');
-          this.client = getPhonePeClient();
-          this.config = { ...this.config, clientVersion: 'v1' };
-          response = await this.client.createSdkOrder(request);
-        } else {
-          throw err;
-        }
+        throw err;
       }
-
       console.log(`PhonePe SDK order created: ${response.orderId} for ₹${orderData.amount}`);
       return {
         ...response,
@@ -250,6 +236,8 @@ class PhonePeService {
         stack: error?.stack,
         environment: this.config?.environment,
         clientVersion: this.config?.clientVersion,
+        type: error?.type,
+        code: error?.code,
       };
       try {
         console.error('PhonePe SDK order creation failed:', JSON.stringify(details, null, 2));
@@ -279,9 +267,9 @@ class PhonePeService {
       const cleanOrderId = orderId.trim();
 
       // Make API call with timeout
-      const orderStatus = await this.client.getOrderStatus(cleanOrderId);
+      const orderStatus = await this.client.getOrderStatus(cleanOrderId, true);
 
-      console.log(`PhonePe order status: ${cleanOrderId} - ${orderStatus.state}`);
+      console.log(`PhonePe order status: ${cleanOrderId} - ${orderStatus.state} - ${JSON.stringify(orderStatus)}`);
       return orderStatus;
 
     } catch (error) {
