@@ -985,13 +985,14 @@ class NotificationService {
           templateName: template.name,
           templateType: template.type,
           templateSlug: template.templateId,
+          clickAction: renderedAction?.value,
+
         },
         android: {
           priority: priority === "high" ? "high" : "normal",
           notification: {
             imageUrl: template.imageUrl,
             icon: template.iconUrl,
-            clickAction: renderedAction?.value,
           },
         },
         apns: {
@@ -1325,15 +1326,15 @@ class NotificationService {
       if (targeting.behavior.lastAppOpen) {
         const minDate = targeting.behavior.lastAppOpen.min
           ? new Date(
-              Date.now() -
-                targeting.behavior.lastAppOpen.min * 24 * 60 * 60 * 1000
-            )
+            Date.now() -
+            targeting.behavior.lastAppOpen.min * 24 * 60 * 60 * 1000
+          )
           : null;
         const maxDate = targeting.behavior.lastAppOpen.max
           ? new Date(
-              Date.now() -
-                targeting.behavior.lastAppOpen.max * 24 * 60 * 60 * 1000
-            )
+            Date.now() -
+            targeting.behavior.lastAppOpen.max * 24 * 60 * 60 * 1000
+          )
           : null;
 
         if (minDate && maxDate) {
@@ -1554,7 +1555,7 @@ class NotificationService {
           // Use the model method for consistent deregistration
           device.markTokenInvalid(
             device.tokenStatus.failureReason ||
-              "Cleaned up due to invalid token status"
+            "Cleaned up due to invalid token status"
           );
 
           await device.save();
