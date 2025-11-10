@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 const router = express.Router();
-const API_KEY = "ce6557bd-598a-11f0-a562-0200cd936042"; // your 2Factor API key
+const API_KEY = "f10d5506-bdf4-11f0-bdde-0200cd936042" // "ce6557bd-598a-11f0-a562-0200cd936042"; // your 2Factor API key
 
 // Demo account configuration for app review
 // Phone: 9979994465 (with country code: 919979994465)
