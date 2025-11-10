@@ -26,17 +26,17 @@ const Footer = () => {
               href={appStoreUrls.android} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="hover:opacity-80 transition-opacity"
+              className="hover:opacity-80 transition-opacity w-24"
             >
-              <img src="/google-play.svg" alt="Google Play" className="h-8" />
+              <img src="/google-play.svg" alt="Google Play" className="w-full h-auto rounded border-2 border-[#400F45]" />
             </a>
             <a 
               href={appStoreUrls.ios} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="hover:opacity-80 transition-opacity"
+              className="hover:opacity-80 transition-opacity w-24"
             >
-              <img src="/app-store.svg" alt="App Store" className="h-8" />
+              <img src="/app-store.svg" alt="App Store" className="w-full h-auto bg-white rounded border-2 border-[#400F45]" />
             </a>
           </div>
         </div>
