@@ -8,6 +8,19 @@ command = "npm run build:production"
 # Publish the built site (relative to base)
 publish = "dist"
 
+# Custom headers for Apple Universal Links and Android App Links
+[[headers]]
+for = "/.well-known/apple-app-site-association"
+[headers.values]
+Content-Type = "application/json"
+Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+for = "/.well-known/assetlinks.json"
+[headers.values]
+Content-Type = "application/json"
+Cache-Control = "public, max-age=0, must-revalidate"
+
 # Single Page App fallback so client routing works on refresh
 [[redirects]]
 from = "/*"

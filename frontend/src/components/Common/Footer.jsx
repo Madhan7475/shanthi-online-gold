@@ -1,4 +1,11 @@
 const Footer = () => {
+  // App Store URLs - These should match your AppDownload page configuration
+  const appStoreUrls = {
+    ios: import.meta.env.VITE_IOS_APP_STORE_URL || 'https://apps.apple.com/app/shanthi-online-gold/id123456789',
+    android: import.meta.env.VITE_ANDROID_APP_STORE_URL || 'https://play.google.com/store/apps/details?id=com.shanthionlinegold.app',
+    download: '/app-download'
+  };
+
   return (
     <footer className="bg-[#400F45] text-[#e2c98d] pt-10 pb-6 text-sm">
       <div className="max-w-screen-xl mx-auto px-6 grid grid-cols-1 md:grid-cols-5 gap-10">
@@ -11,10 +18,26 @@ const Footer = () => {
             className="h-14 mb-2"
           />
           <p className="mb-2 text-sm">Scan for app</p>
-          <img src="/qr.svg" alt="QR Code" className="w-24 mb-3" />
+          <a href={appStoreUrls.download} className="block mb-3 hover:opacity-80 transition-opacity">
+            <img src="/app-download-qr.svg" alt="QR Code" className="w-24" />
+          </a>
           <div className="flex space-x-2">
-            <img src="/google-play.svg" alt="Google Play" className="h-8" />
-            <img src="/app-store-01.svg" alt="App Store" className="h-8" />
+            <a 
+              href={appStoreUrls.android} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img src="/google-play.svg" alt="Google Play" className="h-8" />
+            </a>
+            <a 
+              href={appStoreUrls.ios} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img src="/app-store.svg" alt="App Store" className="h-8" />
+            </a>
           </div>
         </div>
 

@@ -7,7 +7,7 @@ import RequireAuthPage from "./utils/RequireAuthPage";
 import DebugFirebaseToken from "./utils/DebugFirebaseToken";
 
 // Development tools
-if (process.env.NODE_ENV === 'development') {
+if (import.meta.env.MODE === 'development') {
   import('./utils/testCartAPI');
 }
 
@@ -60,6 +60,7 @@ import AdminPanel from "./pages/Panel";
 import AdminDashboard from "./components/Admin/products/AdminDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import GoldRateAdmin from "./components/Admin/Market/GoldRateAdmin";
+import AppDownload from "./pages/AppDownload";
 
 // Admin Features
 import ProductUpload from "./components/Admin/products/ProductUpload";
@@ -84,6 +85,7 @@ const App = () => {
           <Route path="search" element={<SearchPage />} />
           <Route path="products" element={<FiltersPage />} />
           <Route path="/digigold" element={<DigiGold />} />
+          <Route path="/app-download" element={<AppDownload />} /> {/* ✅ App Download Route */}
           <Route path="/terms-and-conditions" element={<Termsandconditions />} /> {/* ✅ New Route */}
           <Route path="/privacy-policy" element={<Privacypolicies />} /> {/* ✅ New Route */}
 
