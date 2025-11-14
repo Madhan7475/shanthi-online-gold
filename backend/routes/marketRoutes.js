@@ -116,6 +116,7 @@ router.post("/admin/gold/set-manual", adminAuth, async (req, res) => {
             pricePerGram18kInr: p18,
             source: "Manual-Override",
         });
+        AutomatedNotificationService.sendDailyGoldPriceUpdate(data);
 
         let repriced = null;
         if (String(reprice || "").toLowerCase() === "true") {

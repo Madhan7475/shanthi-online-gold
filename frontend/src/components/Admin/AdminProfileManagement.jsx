@@ -53,8 +53,9 @@ const AdminProfileManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [editingUser, setEditingUser] = useState(null);
 
+  const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
   // API Base URL
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:9000/api';
+  const API_BASE = `${API_HOST}/api`;
 
   // Get auth token
   const getAuthToken = () => {
