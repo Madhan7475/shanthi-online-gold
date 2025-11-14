@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Cart = require('../models/Cart');
 const Order = require('../models/Order');
+const OrderStatusHistory = require('../models/OrderStatusHistory');
 const Invoice = require('../models/Invoice');
 const Product = require('../models/Product');
 const { getLatestGoldPrice } = require('../services/goldPriceService');
@@ -455,6 +456,16 @@ router.post('/checkout', verifyAuthFlexible, async (req, res) => {
     });
 
     await newOrder.save();
+
+    // Create initial status history entry
+    await OrderStatusHistory.addStatusChange(
+      newOrder._id,
+      'pending',
+      'system',
+      'Order created',
+      user._id.toString(),
+      { source: 'cart_checkout' }
+    );
 
     // Create invoice
     const newInvoice = new Invoice({

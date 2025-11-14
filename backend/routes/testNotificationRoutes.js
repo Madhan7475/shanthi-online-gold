@@ -6,7 +6,6 @@ const NotificationManager = require("../services/NotificationManager");
 const AutomatedNotificationService = require("../services/AutomatedNotificationService");
 const NotificationTemplate = require("../models/NotificationTemplate");
 const UserDevice = require("../models/UserDevice");
-const User = require("../models/User");
 const adminAuth = require("../middleware/adminAuth");
 const {
   NOTIFICATION_TOPICS,

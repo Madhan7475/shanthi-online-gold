@@ -28,7 +28,6 @@ router.get("/:orderId/pdf", verifyAuthFlexible, async (req, res) => {
     const orderId = req.params.orderId;
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ message: "Order not found" });
-
     // Authorize: allow only the order owner (supports firebase/jwt via verifyAuthFlexible)
     const user = await resolveUser(req);
     if (!user) {
@@ -37,7 +36,6 @@ router.get("/:orderId/pdf", verifyAuthFlexible, async (req, res) => {
     if (user._id.toString() !== order.userId?.toString()) {
       return res.status(401).json({ message: "Not authorized to download this invoice" });
     }
-
     // Fetch invoice if exists (optional)
     const invoice = await Invoice.findOne({ orderId: order._id }).lean();
 

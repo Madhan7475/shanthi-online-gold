@@ -1,6 +1,7 @@
 const express = require('express');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
 const Order = require('../models/Order');
+const OrderStatusHistory = require('../models/OrderStatusHistory');
 const { getPhonePeConfig } = require('../config/phonepe');
 const NotificationManager = require('../services/NotificationManager');
 
@@ -304,6 +305,20 @@ router.get('/order-status/:orderId',
             }
             await order.save();
 
+            // Log status change to history
+            await OrderStatusHistory.addStatusChange(
+              order._id,
+              'processing',
+              'system',
+              'Payment completed - Status check confirmed',
+              null,
+              {
+                previousStatus: prevStatus,
+                trigger: 'status_check',
+                phonepeState: result.state
+              }
+            );
+
             console.log(`Updated order ${order._id} status to Processing (payment completed)`);
 
             // Trigger order confirmation notification - Enterprise system (non-blocking)
@@ -335,6 +350,20 @@ router.get('/order-status/:orderId',
               order.statusUpdatedAt = new Date();
             }
             await order.save();
+
+            // Log status change to history
+            await OrderStatusHistory.addStatusChange(
+              order._id,
+              'processing',
+              'system',
+              'Payment completed after initial failure - Retry succeeded',
+              null,
+              {
+                previousStatus: prevStatus,
+                trigger: 'status_check_retry',
+                phonepeState: result.state
+              }
+            );
             // console.log(`No order found with transactionId: ${orderId}`);
           } else {
             console.log(`Order ${order._id} already has Processing status`);
@@ -453,132 +482,6 @@ router.get('/outbound-ip', requestLogger, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch outbound IP', message: e?.message || String(e) });
   }
 });
-
-// /**
-//  * Webhook endpoints (for going LIVE)
-//  * Note:
-//  * - Do NOT put your redirect URL here. This is for server-to-server callbacks.
-//  * - Protect with a simple token header to prevent abuse.
-//  * - Set env PHONEPE_WEBHOOK_TOKEN in Render and configure the same in PhonePe Dashboard.
-//  */
-// router.get('/webhook/ping', requestLogger, async (req, res) => {
-//   return res.json({ ok: true, time: new Date().toISOString() });
-// });
-
-// router.post('/webhook', requestLogger, async (req, res) => {
-//   try {
-//     // Accept either a shared header token or HTTP Basic Auth (username/password)
-//     const expectedToken = process.env.PHONEPE_WEBHOOK_TOKEN || null;
-//     const basicUser = process.env.PHONEPE_WEBHOOK_BASIC_USER || null;
-//     const basicPass = process.env.PHONEPE_WEBHOOK_BASIC_PASS || null;
-
-//     // Extract header/query token
-//     const headerToken = req.get('X-Webhook-Token') || req.query.token || null;
-
-//     // Parse Basic Authorization header
-//     const authHeader = req.get('authorization') || req.get('Authorization');
-//     let basicOk = false;
-//     if (authHeader && authHeader.startsWith('Basic ') && basicUser && basicPass) {
-//       try {
-//         const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
-//         const [u, p] = decoded.split(':');
-//         if (u === basicUser && p === basicPass) basicOk = true;
-//       } catch { }
-//     }
-
-//     // Enforce auth only if any method is configured
-//     if ((expectedToken && headerToken !== expectedToken) && !(basicUser && basicPass && basicOk)) {
-//       return res.status(401).json({ ok: false, error: 'Unauthorized webhook' });
-//     }
-
-//     const payload = req.body || {};
-//     // Common fields (PhonePe payloads can vary by product/version)
-//     const phonepeOrderId =
-//       payload.orderId ||
-//       payload.data?.orderId ||
-//       payload.transactionId ||
-//       payload.data?.transactionId ||
-//       null;
-
-//     const merchantOrderId =
-//       payload.merchantOrderId ||
-//       payload.data?.merchantOrderId ||
-//       payload.orderIdMerchant ||
-//       null;
-
-//     const state =
-//       payload.state ||
-//       payload.data?.state ||
-//       payload.status ||
-//       payload.data?.status ||
-//       null;
-
-//     console.log('[PhonePe Webhook] Received:', {
-//       hasBody: !!req.body,
-//       phonepeOrderId,
-//       merchantOrderId,
-//       state,
-//       keys: Object.keys(payload || {}),
-//     });
-
-//     // Try update by merchantOrderId first (your local Order _id)
-//     let matchedBy = 'none';
-//     if (merchantOrderId) {
-//       try {
-//         const order = await Order.findById(merchantOrderId);
-//         if (order) {
-//           if (phonepeOrderId && !order.transactionId) {
-//             order.transactionId = phonepeOrderId;
-//           }
-//           if (state === 'COMPLETED') {
-//             const prev = order.status;
-//             order.status = 'Processing';
-//             if (prev !== order.status) order.statusUpdatedAt = new Date();
-//           } else if (state === 'FAILED' || state === 'CANCELLED') {
-//             order.status = 'Cancelled';
-//             order.statusUpdatedAt = new Date();
-//           }
-//           await order.save();
-//           matchedBy = 'merchantOrderId';
-//         }
-//       } catch (e) {
-//         console.warn('[PhonePe Webhook] Update by merchantOrderId failed:', e?.message || e);
-//       }
-//     }
-
-//     // Fallback: try update by PhonePe order/transaction id
-//     if (matchedBy === 'none' && phonepeOrderId) {
-//       try {
-//         const order = await Order.findOne({ transactionId: phonepeOrderId });
-//         if (order) {
-//           if (state === 'COMPLETED') {
-//             const prev = order.status;
-//             order.status = 'Processing';
-//             if (prev !== order.status) order.statusUpdatedAt = new Date();
-//           } else if (state === 'FAILED' || state === 'CANCELLED') {
-//             order.status = 'Cancelled';
-//             order.statusUpdatedAt = new Date();
-//           }
-//           await order.save();
-//           matchedBy = 'transactionId';
-//         }
-//       } catch (e) {
-//         console.warn('[PhonePe Webhook] Update by transactionId failed:', e?.message || e);
-//       }
-//     }
-
-//     return res.status(200).json({
-//       ok: true,
-//       matchedBy,
-//       state,
-//       merchantOrderId,
-//       phonepeOrderId,
-//     });
-//   } catch (e) {
-//     console.error('[PhonePe Webhook] Handler error:', e?.message || e);
-//     return res.status(500).json({ ok: false, error: e?.message || String(e) });
-//   }
-// });
 
 /**
  * Error handling middleware specific to payment routes
