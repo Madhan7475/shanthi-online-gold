@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
 const Payment = require("../models/Payment");
-const Invoice = require("../models/Invoice");
+const OrderStatusHistory = require("../models/OrderStatusHistory");
 const verifyAuthFlexible = require("../middleware/verifyAuthFlexible");
 const NotificationManager = require("../services/NotificationManager");
 const resolveUser = require("../utils/helper");
@@ -32,6 +32,7 @@ router.put("/:id", async (req, res) => {
     }
     const prevStatus = order.status?.toLowerCase();
     const newStatus = req.body.status?.toLowerCase();
+    const note = req.body.note || '';
 
     order.status = newStatus?.toLowerCase();
     order.paymentStatus = order.paymentStatus?.toLowerCase(); // Keep existing payment status unless specified otherwise
@@ -40,6 +41,16 @@ router.put("/:id", async (req, res) => {
     );
     if (prevStatus !== order.status) {
       order.statusUpdatedAt = new Date();
+      
+      // Log status change to history
+      await OrderStatusHistory.addStatusChange(
+        order._id,
+        newStatus,
+        'admin',
+        note || `Status changed from ${prevStatus} to ${newStatus}`,
+        null, // adminId can be added if available
+        { previousStatus: prevStatus }
+      );
     }
     await order.save();
 
@@ -120,6 +131,40 @@ router.get("/my-orders", verifyAuthFlexible, async (req, res) => {
 
     const filter = { userId: user._id };
 
+    // Apply status filter if provided
+    if (req.query.status) {
+      filter.status = req.query.status.toLowerCase();
+    }
+
+    // Apply date range filter if provided
+    const { startDate, endDate } = req.query;
+    if (startDate) {
+      const dateFilter = {};
+      
+      // Parse startDate
+      const start = new Date(startDate);
+      if (isNaN(start.getTime())) {
+        return res.status(400).json({ msg: "Invalid startDate format" });
+      }
+      start.setHours(0, 0, 0, 0); // Start of day
+      dateFilter.$gte = start;
+
+      // Parse endDate or use today if not provided
+      let end;
+      if (endDate) {
+        end = new Date(endDate);
+        if (isNaN(end.getTime())) {
+          return res.status(400).json({ msg: "Invalid endDate format" });
+        }
+      } else {
+        end = new Date(); // Today
+      }
+      end.setHours(23, 59, 59, 999); // End of day
+      dateFilter.$lte = end;
+
+      filter.date = dateFilter;
+    }
+
     const [items, total] = await Promise.all([
       Order.find(filter).sort({ date: -1 }).skip(skip).limit(limit),
       Order.countDocuments(filter),
@@ -178,6 +223,9 @@ router.get("/:id", verifyAuthFlexible, async (req, res) => {
 
     // Get payment details for this order
     const payment = await Payment.findOne({ orderId: order._id });
+    
+    // Get status history for this order
+    const statusHistory = await OrderStatusHistory.getOrderHistory(order._id);
 
     const orderResponse = {
       ...order.toObject(),
@@ -203,6 +251,7 @@ router.get("/:id", verifyAuthFlexible, async (req, res) => {
             remainingAmount: payment.remainingAmount,
           }
         : null,
+      statusHistory: statusHistory || [],
     };
 
     res.json(orderResponse);
@@ -242,6 +291,16 @@ router.put("/:id/cancel", verifyAuthFlexible, async (req, res) => {
     order.status = "cancelled";
     if (prevStatus !== order.status) {
       order.statusUpdatedAt = new Date();
+      
+      // Log cancellation to history
+      await OrderStatusHistory.addStatusChange(
+        order._id,
+        'cancelled',
+        'user',
+        'Order cancelled by customer',
+        user._id.toString(),
+        { previousStatus: prevStatus }
+      );
     }
     await order.save();
     res.json(order);

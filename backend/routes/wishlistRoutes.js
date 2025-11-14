@@ -3,6 +3,7 @@ const router = express.Router();
 const Wishlist = require('../models/Wishlist');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const OrderStatusHistory = require('../models/OrderStatusHistory');
 const verifyAuthFlexible = require('../middleware/verifyAuthFlexible');
 const resolveUser = require('../utils/helper');
 
@@ -208,6 +209,16 @@ router.post('/move-to-cart', async (req, res) => {
 
     const order = new Order(orderData);
     await order.save();
+
+    // Create initial status history entry
+    await OrderStatusHistory.addStatusChange(
+      order._id,
+      'pending',
+      'system',
+      'Order created from wishlist',
+      user._id.toString(),
+      { source: 'wishlist' }
+    );
 
     // Remove from wishlist
     await Wishlist.findByIdAndDelete(itemId);
