@@ -1,6 +1,7 @@
 const { getPhonePeClient } = require("../config/phonepe");
 const Order = require("../models/Order");
 const Payment = require("../models/Payment");
+const OrderStatusHistory = require("../models/OrderStatusHistory");
 const { WebhookErrorHandler } = require("../utils/webhookErrorHandler");
 const NotificationManager = require("./NotificationManager");
 
@@ -239,6 +240,24 @@ class PhonePeWebhookService {
 
       await order.save();
 
+      // Log status change to history
+      if (previousStatus !== "processing") {
+        await OrderStatusHistory.addStatusChange(
+          order._id,
+          "processing",
+          "system",
+          `Payment completed - Transaction: ${callbackData.transactionId}`,
+          null,
+          {
+            previousStatus,
+            transactionId: callbackData.transactionId,
+            amount: callbackData.amountInRupees,
+            paymentMethod: callbackData.paymentDetails?.method || 'phonepe',
+            trigger: 'webhook_payment_success'
+          }
+        );
+      }
+
       console.log(`Order ${order._id} completed: ${previousStatus} → Processing, Payment ${previousPaymentStatus} → Paid`);
 
       // Send push notification for successful payment (Pending → Processing) - Non-blocking
@@ -372,14 +391,31 @@ class PhonePeWebhookService {
       const previousStatus = order.status;
       const previousPaymentStatus = order.paymentStatus;
 
-      // Don't overwrite orders that are already successfully processing
-      if (!["processing", "shipped", "delivered"].includes(order.status?.toLowerCase())) {
+            // Don't overwrite orders that are already successfully processing
+      if (![
+"processing", "shipped", "delivered"].includes(order.status?.toLowerCase())) {
         order.status = "payment_failed";
         order.paymentStatus = "failed";
         order.transactionId = callbackData.transactionId || order.transactionId;
         order.phonepeOrderId = callbackData.orderId;
 
         await order.save();
+
+        // Log status change to history
+        await OrderStatusHistory.addStatusChange(
+          order._id,
+          "payment_failed",
+          "system",
+          `Payment failed - ${payment.errorMessage || callbackData.errorMessage || 'Unknown error'}`,
+          null,
+          {
+            previousStatus,
+            errorCode: callbackData.errorCode,
+            errorMessage: payment.errorMessage,
+            transactionId: callbackData.transactionId,
+            trigger: 'webhook_payment_failed'
+          }
+        );
 
         console.log(`Order ${order._id} failed: ${previousStatus} → Payment Failed, Payment ${previousPaymentStatus} → Failed`);
         
