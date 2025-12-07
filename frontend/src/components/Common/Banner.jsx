@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const bannerImages = ["/gold5.jpg", "/gold9.jpg", "/gold10.jpg", "/gold15.jpg"];
+const bannerImages = ["/gold16.jpg", "/gold9.jpg", "/gold10.jpg", "/gold15.jpg"];
 
 const HeaderBanner = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
