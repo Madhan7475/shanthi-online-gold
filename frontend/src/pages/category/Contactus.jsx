@@ -257,7 +257,7 @@ const ContactUs = () => {
           <div className="bg-white shadow-xl rounded-3xl overflow-hidden">
             <iframe
               title="Shanthi Online Gold Location"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.8427853854394!2d80.23496751482251!3d13.043478590805205!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a526650e0b6c595%3A0x4f74ddbff946af6b!2sT.%20Nagar%2C%20Chennai%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1641234567890!5m2!1sen!2sin"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.0334142007314!2d77.58332159999999!3d13.0970689!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae191f39b05c67%3A0xdfeeb069f96dd1b9!2sSHANTHI%20ONLINE%20GOLD!5e0!3m2!1sen!2sin!4v1764835872747!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
               width="100%"
               height="400"
               style={{ border: 0 }}
@@ -289,7 +289,7 @@ const ContactUs = () => {
                 <i className="fas fa-certificate text-2xl"></i>
               </div>
               <h4 className="text-xl font-semibold mb-2">100% Pure Gold</h4>
-              <p className="opacity-80">Certified hallmarked jewelry with authenticity guarantee</p>
+              <p className="opacity-80">Certified hallmarked jewelry</p>
             </div>
             
             <div className="text-center">
@@ -297,7 +297,7 @@ const ContactUs = () => {
                 <i className="fas fa-truck text-2xl"></i>
               </div>
               <h4 className="text-xl font-semibold mb-2">Free Delivery</h4>
-              <p className="opacity-80">Secure and insured delivery across Tamil Nadu</p>
+              <p className="opacity-80">Secure and insured delivery across India</p>
             </div>
             
             <div className="text-center">
@@ -305,7 +305,7 @@ const ContactUs = () => {
                 <i className="fas fa-exchange-alt text-2xl"></i>
               </div>
               <h4 className="text-xl font-semibold mb-2">Easy Exchange</h4>
-              <p className="opacity-80">Lifetime exchange policy with transparent pricing</p>
+              <p className="opacity-80">Exchange policy within 24hrs</p>
             </div>
           </div>
         </div>
